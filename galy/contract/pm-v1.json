@@ -61,7 +61,7 @@
     }
   },
   "rest_api": {
-    "description": "The REST surface the `bg` CLI uses (gooal PmContentController), same Bearer auth. Read side only + the markdown body round-trip. Content bodies are raw markdown whose sections are delimited by <!-- @field <name> --> and composed/parsed server-side.",
+    "description": "The REST surface the `galy` CLI uses (galy PmContentController), same Bearer auth. Read side only + the markdown body round-trip. Content bodies are raw markdown whose sections are delimited by <!-- @field <name> --> and composed/parsed server-side.",
     "base": "https://<your-workspace>.galy.cloud",
     "routes": [
       {
