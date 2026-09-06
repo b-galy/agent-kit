@@ -68,7 +68,8 @@ check, concrete enough to run without you.
 
 ### 6. Hand it over
 
-Use `bg:ship`. It commits in the house style, opens the pull request, runs the self-review
+Use `bg:ship` before reporting completion, including when the fix is already applied locally.
+It commits in the house style, opens the pull request, runs the self-review
 panel and fixes what it finds.
 
 **Where it hands over is the user's decision, and they have already made it.** Apply
