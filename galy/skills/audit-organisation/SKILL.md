@@ -229,6 +229,20 @@ whether a push to the default branch deploys, the rollback, the commands that al
 without them the adaptation writes no delivery skill at all. It reads ninety days of history once
 either way, so moving it forward costs nothing.
 
+**`bg:ground` hands back one question that is not a finding.** Whether a site can be translated is
+judged on the pages being written now; whether the ones already in place are in scope is the team's
+call and not the audit's. The agent cannot ask — put it yourself, with `AskUserQuestion`, and
+record the answer in that criterion's evidence **in their own words**:
+
+> **Les pages déjà en place comptent-elles dans ce constat ?**
+> — *Non, seulement les nouvelles* (recommandé)
+> — *Oui, tout le site*
+> — *Je ne sais pas encore* — the finding stays on the new pages and says so
+
+Never widen the verdict to pages nobody put in scope. And if their instance's catalogue does not
+name this criterion yet, say the line and record nothing: a finding filed under a neighbouring
+criterion is one nobody ever finds again.
+
 If this harness cannot launch agents, do the work yourself — each agent file is a readable
 procedure.
 
