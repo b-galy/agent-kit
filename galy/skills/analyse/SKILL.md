@@ -52,8 +52,12 @@ button before declaring the fix done").
 The deliverable. Concrete diffs the user can approve or reject. Targets, in order of preference:
 0. **The file that is actually wrong** — a script, a config, the code itself. If the root cause is a bug
    there, fix it there; do not write a `.md` explaining why it keeps failing.
-1. **A plugin skill** (`${CLAUDE_PLUGIN_ROOT}/skills/**`) — if the behavior is skill-specific.
-2. **A plugin instruction** (`${CLAUDE_PLUGIN_ROOT}/instructions/*.md`) — a cross-skill convention.
+1. **A plugin skill** (`skills/**`) — if the behavior is skill-specific.
+2. **A plugin instruction** (`instructions/*.md`) — a cross-skill convention.
+
+Both live in the plugin's own repository — edit and push there. `${CLAUDE_PLUGIN_ROOT}` is a build
+output: a fix written there lasts one workstation, until the next update.
+
 3. **The client's `CLAUDE.md`** — last resort, cross-cutting rules only.
 
 **If a rule that covers this already exists and did not fire, diagnose why** — wrong file, too far from
