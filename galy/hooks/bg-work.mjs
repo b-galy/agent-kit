@@ -5,7 +5,7 @@
 // repository says which those are, and asking the workspace cannot answer it: two
 // worktrees of the same repository share an account, a token and a queue, and differ
 // only in what each is doing. So the answer is written where the difference lives —
-// in the copy's own `.bg/work.json`, gitignored, one file per copy.
+// in the copy's own `.bg/work.json`, kept out of git, one file per copy.
 //
 // What it watches is the writes. A copy HOLDS a spec when it claims or creates one, and
 // a brief when it writes into one; it LETS GO of a spec when it completes it. Reading
@@ -15,33 +15,43 @@
 // It runs after every call to the workspace and must never make one fail: it writes a
 // small file, says nothing, and exits 0 whatever happens.
 
-import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 
 const HELD_AT_MOST = 8;                                    // the row has a budget, and shows "+n"
-const STAMP = join(tmpdir(), "bg-statusline", "catalog.stamp");
+const CACHE_DIR = join(tmpdir(), "bg-statusline");
 
 // `id` does not mean the same thing twice. On `feature_spec_pick` it is the spec; on
 // `feature_spec_set_phase_status` it is the PHASE, on `feature_spec_update_risk` the
 // risk, on `feature_spec_update_acceptance_test` the test. So every tool is named with
 // the field to read: a rule guessed from the shape of the name would file a phase id as
 // a spec, and put a stranger's title on the row of someone who never opened it.
+//
+// Two workspaces speak the same tools and spell the field differently — `id` on one,
+// `specId` on the other — so each rule names every spelling of the field it reads, and
+// never one that means something else: `featureBriefId` on `feature_spec_update` moves
+// the spec under another brief, it does not name the spec.
+const SPEC = ["id", "specId", "spec_id", "feature_spec_id", "featureSpecId"];
+const BRIEF = ["id", "briefId", "brief_id", "feature_brief_id", "featureBriefId"];
 const CLAIMS = {
-  feature_spec_pick:                { of: "specs",  read: "id" },
-  feature_spec_update:              { of: "specs",  read: "id" },
+  feature_spec_pick:                { of: "specs",  read: SPEC },
+  feature_spec_update:              { of: "specs",  read: SPEC },
   feature_spec_create:              { of: "specs",  read: "@answer" },
-  feature_spec_add_phase:           { of: "specs",  read: "feature_spec_id" },
-  feature_spec_add_risk:            { of: "specs",  read: "feature_spec_id" },
-  feature_spec_add_acceptance_test: { of: "specs",  read: "feature_spec_id" },
-  feature_spec_add_sql_script:      { of: "specs",  read: "feature_spec_id" },
+  feature_spec_add_phase:           { of: "specs",  read: SPEC },
+  feature_spec_add_risk:            { of: "specs",  read: SPEC },
+  feature_spec_add_acceptance_test: { of: "specs",  read: SPEC },
+  feature_spec_add_sql_script:      { of: "specs",  read: SPEC },
   feature_brief_create:             { of: "briefs", read: "@answer" },
-  feature_brief_update:             { of: "briefs", read: "id" },
-  feature_brief_add_user_story:     { of: "briefs", read: "feature_brief_id" },
+  feature_brief_update:             { of: "briefs", read: BRIEF },
+  feature_brief_add_user_story:     { of: "briefs", read: BRIEF },
 };
 const RELEASES = {
-  feature_spec_complete:            { of: "specs",  read: "id" },
+  feature_spec_complete:            { of: "specs",  read: SPEC },
 };
+// What a creation answers with, in the spellings the workspaces use.
+const CREATED = ["feature_spec_id", "spec_id", "feature_brief_id", "brief_id", "id", "SpecId", "BriefId", "Id"];
 
 // An answer reaches a hook as the content envelope, as a string, or already parsed,
 // depending on the harness. All three are read; none of them is required.
@@ -62,6 +72,26 @@ function workingCopyRoot(from) {
   }
 }
 
+function first(record, names) {
+  return names.map((name) => record?.[name]).find((value) => value !== undefined && value !== null);
+}
+
+// The file is this copy's and nobody else's: it must never show up as something to commit.
+// The kit does not edit the repository's `.gitignore` — that file is the team's — so the
+// exclusion goes into the repository's own private list, which git reads and never ships.
+function keepOutOfGit(root, file) {
+  try {
+    const git = (...args) => execFileSync("git", ["-C", root, ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], timeout: 3000, windowsHide: true }).trim();
+    try { git("check-ignore", "-q", file); return; } catch { /* not ignored yet */ }
+    const exclude = resolve(root, git("rev-parse", "--git-path", "info/exclude"));
+    mkdirSync(dirname(exclude), { recursive: true });
+    const lines = existsSync(exclude) ? readFileSync(exclude, "utf8") : "";
+    if (!/^\.bg\/work\.json$/m.test(lines)) {
+      appendFileSync(exclude, (lines && !lines.endsWith("\n") ? "\n" : "") + ".bg/work.json\n", "utf8");
+    }
+  } catch { /* outside a repository, or no git on the path: the file stays, unlisted */ }
+}
+
 function main(event) {
   const called = String(event.tool_name || "");
   const names = { ...CLAIMS, ...RELEASES };
@@ -74,7 +104,7 @@ function main(event) {
   if (body.success === false || event.tool_response?.isError) return;   // a refused write holds nothing
 
   const rule = names[verb];
-  const raw = rule.read === "@answer" ? (body.spec_id ?? body.brief_id ?? body.id) : event.tool_input?.[rule.read];
+  const raw = rule.read === "@answer" ? first(body, CREATED) : first(event.tool_input, rule.read);
   const id = Number(raw);
   if (!Number.isInteger(id) || id <= 0) return;
 
@@ -91,11 +121,16 @@ function main(event) {
   held = { ...(held && typeof held === "object" ? held : {}), [rule.of]: next.slice(0, HELD_AT_MOST) };
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, JSON.stringify(held, null, 2) + "\n", "utf8");
+  keepOutOfGit(root, file);
 
-  // The row may now have to name something the cached list has never heard of — a spec
-  // created a second ago. Dropping the stamp makes the next render fetch the names
-  // instead of falling back on `#42` for the three minutes the cache had left.
-  try { unlinkSync(STAMP); } catch { /* already due */ }
+  // The row may now have to name something the cache has never heard of — a spec created
+  // a second ago. Dropping the stamps makes the next render fetch the names instead of
+  // falling back on `#42` for the three minutes the cache had left.
+  try {
+    for (const name of readdirSync(CACHE_DIR)) {
+      if (name.endsWith(".stamp")) { try { unlinkSync(join(CACHE_DIR, name)); } catch { /* already due */ } }
+    }
+  } catch { /* no cache yet */ }
 }
 
 let input = "";
