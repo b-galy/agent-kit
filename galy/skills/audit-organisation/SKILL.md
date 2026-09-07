@@ -368,6 +368,10 @@ When the verb answers `has_procedure: false`, that criterion has no written meth
 plainly. **Never write one from memory**: a method invented on a subject that touches production
 is worse than no method, because it looks like one.
 
+**What the reader accepted, somebody has to carry out**, and it is not this pass: `maturity-actions`
+drains that queue afterwards, one gesture at a time. Name it once at the close if anything was
+accepted — a queue nobody knows about fills up and never empties, which is worse than not proposing.
+
 ## Where this work hangs: the objective
 
 **At the END of the pass, never at the start.** This section used to run first, and it was the
