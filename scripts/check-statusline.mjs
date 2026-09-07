@@ -97,10 +97,10 @@ check("so does the one beside it", bare(row(b)) === "");
 wrote(a, "mcp__bg__feature_spec_pick", { id: 11 });
 wrote(b, "mcp__bg__feature_brief_create", { title: "x" }, { success: true, feature_brief_id: 32 });
 holdStamp();
-check("the copy that picked spec 11 names the objective, the brief and the spec",
-  bare(row(a)) === "bg objectif Croissance › brief La porte d'un locataire s'o… › spec Profil");
+check("the copy that picked spec 11 reads objective > brief > spec",
+  bare(row(a)) === "Croissance > La porte d'un locataire s'o… > Profil");
 check("the copy beside it names its own brief, under its objective",
-  bare(row(b)) === "bg objectif Croissance › brief La porte d'un locataire s'o…");
+  bare(row(b)) === "Croissance > La porte d'un locataire s'o…");
 check("neither row mentions the other's spec", !bare(row(b)).includes("Profil"));
 const links = row(a);
 check("the spec clicks through to its page", links.includes(`${BASE}/specs/11`));
@@ -119,7 +119,7 @@ wrote(a, "mcp__bg__feature_spec_pick", { id: 9 });
 holdStamp();
 check("the newest claim is named first", specs(a) === "9,11");
 check("the row names the newest spec and counts the other",
-  bare(row(a)) === "bg objectif Croissance › brief La porte d'un locataire s'o… › spec Le vocal passe sous pavillo… +1");
+  bare(row(a)) === "Croissance > La porte d'un locataire s'o… > Le vocal passe sous pavillo… +1");
 
 // 6. Completing lets go.
 wrote(a, "mcp__bg__feature_spec_complete", { id: 9 });
@@ -147,7 +147,7 @@ check("a claim older than the horizon is no longer in hand", bare(row(a)) === ""
 writeFileSync(join(b, ".bg", "work.json"), JSON.stringify({ specs: [{ id: 41, at: new Date().toISOString() }] }));
 holdStamp();
 const unknown = row(b);
-check("an unnamed spec falls back on its number", bare(unknown) === "bg spec #41");
+check("an unnamed spec falls back on its number", bare(unknown) === "#41");
 check("and keeps its link", unknown.includes(`${BASE}/specs/41`));
 
 // 10. What a copy holds never shows up as something to commit.

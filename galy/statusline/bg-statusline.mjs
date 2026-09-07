@@ -360,9 +360,11 @@ function pageUrl(catalog, kind, id) {
   return /^https?:\/\//i.test(path) ? path : `${catalog.base}${path}`;
 }
 
-// One chain — objective › brief › spec — for the spec picked up last; the others are a
-// count. A spec the catalog has not heard of yet is still named by its number and still
-// clicks through: a spec created a second ago is exactly the one being worked on.
+// A breadcrumb — objective > brief > spec — for the spec picked up last; the other specs
+// held are a count. Names only: where a name stands in the chain says what it is, and a
+// label before each one would spend the row on words the reader already knows. A spec the
+// catalog has not heard of yet is still named by its number and still clicks through: a
+// spec created a second ago is exactly the one being worked on.
 function render(catalog, held) {
   const spec = held.specs[0] ?? null;
   const specRecord = spec === null ? null : catalog.specs?.[spec];
@@ -378,12 +380,12 @@ function render(catalog, held) {
     return url ? link(url, name) : `${TEXT}${name}${RESET}`;
   };
   const parts = [];
-  if (objective !== null) parts.push(`${DIM}objectif${RESET} ${item("objective", objective, objectiveRecord)}`);
-  if (brief !== null) parts.push(`${DIM}brief${RESET} ${item("brief", brief, briefRecord)}`);
-  if (spec !== null) parts.push(`${DIM}spec${RESET} ${item("spec", spec, specRecord)}`);
+  if (objective !== null) parts.push(item("objective", objective, objectiveRecord));
+  if (brief !== null) parts.push(item("brief", brief, briefRecord));
+  if (spec !== null) parts.push(item("spec", spec, specRecord));
   const others = Math.max(0, held.specs.length - 1);
   const more = others ? ` ${DIM}+${others}${RESET}` : "";
-  return `${DIM}bg${RESET} ` + parts.join(` ${DIM}›${RESET} `) + more;
+  return parts.join(` ${DIM}>${RESET} `) + more;
 }
 
 // ── Modes ─────────────────────────────────────────────────────────────────
