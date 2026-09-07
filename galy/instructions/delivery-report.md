@@ -2,7 +2,8 @@
 
 The single source of truth for every end-of-work report a ship/close skill prints:
 spec, follow-up, ship. Each skill renders the variant for its entity instead of re-defining a format
-inline. Referenced by `feature-implement`, `feature-followup`, `ship`, `end`.
+inline. Applies to any report that work is finished, including outside `feature-implement`,
+`feature-followup`, `ship`, `end`.
 
 Reports are **written in the user's language**, in full sentences readable by a non-specialist,
 **printed to the terminal** — never to a file unless the user explicitly asks.
@@ -15,7 +16,8 @@ Reports are **written in the user's language**, in full sentences readable by a 
   just below it. Never bury the verdict inside prose.
 - **The status word reflects the real end state, never the intention** — `Merged`, `Deployed` (released
   and verified), or `PR ready` (a human merges). Never say "Delivered" for a PR that only opened.
-- **Every entity reference is a clickable link** (the Galy detail page, or your PR) — never a bare id.
+- **Every entity reference is a clickable link** (the Galy detail page, or your PR) — never a bare id,
+  and never a bare route: give the full address the product returned, never one you assembled.
 - **`👁️ <live link>` on the very last line** — the running page that shows the change working. Gated,
   queued, or unobserved → write *"deployed, not visually verified — confirm"*. No user-facing page at
   all (local tooling) → omit the line silently. Never claim "live" on a pipeline status alone.
