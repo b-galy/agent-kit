@@ -18,7 +18,8 @@ Reports are **written in the user's language**, in full sentences readable by a 
   and verified), or `PR ready` (a human merges). Never say "Delivered" for a PR that only opened.
 - **Every entity reference is a clickable link** (the Galy detail page, or your PR) — never a bare id,
   and never a bare route: give the full address the product returned, never one you assembled.
-- **`👁️ <live link>` on the very last line** — the running page that shows the change working. Gated,
+- **`👁️ <live link>` on the very last line** — the running page that shows the change working. Not
+  released yet → the link still goes last, saying what it serves **today**. Gated,
   queued, or unobserved → write *"deployed, not visually verified — confirm"*. No user-facing page at
   all (local tooling) → omit the line silently. Never claim "live" on a pipeline status alone.
 - **Objective.** A feature report names the Galy objective the work serves.
