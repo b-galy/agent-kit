@@ -1,6 +1,6 @@
 ---
 name: acceptance
-description: Run an acceptance pass on a running feature — you fire remarks in rapid succession while you click through the product, each one is written to a local queue the instant it lands and then pushed to Galy, then coded one at a time in the order received, one commit per remark, a single PR. Trivia is decided on the spot; a real product decision parks without stopping the queue. Ends at "PR ready" and hands the drained pass to the environment's release step; it merges nothing itself.
+description: Run an acceptance pass on a running feature — you fire remarks in rapid succession while you click through the product, each one is written to a local queue the instant it lands and then pushed to Galy, then coded one at a time in the order received, one commit per remark, a single PR. Trivia is decided on the spot; a real product decision parks without stopping the queue. Ends by invoking the environment's release step on the drained pass; it merges nothing directly.
 allowed-tools: Bash, Read, Edit, Write, Glob, Grep, Skill, mcp__bg__whoami, mcp__bg__acceptance_open, mcp__bg__acceptance_add_remark, mcp__bg__acceptance_list, mcp__bg__acceptance_claim_next, mcp__bg__acceptance_resolve, mcp__bg__acceptance_park, mcp__bg__acceptance_answer, mcp__bg__acceptance_set_pr, mcp__bg__acceptance_close
 ---
 
@@ -107,8 +107,8 @@ Pick the **oldest** `pending` item. Not the last one typed: a fresh remark joins
 6. Mark it `done` with the commit sha and one line of what changed; then
    `acceptance_resolve(galy_id, status="done", commit_sha=…, result_md=…)`.
 
-Then pick the next oldest. Repeat until nothing is `pending` — an emptied queue is a release, so run the
-environment's release step, then go back to taking remarks.
+Then pick the next oldest. Repeat until nothing is `pending` — an emptied queue is a release, so invoke
+the environment's release step yourself, then go back to taking remarks.
 
 **A remark you looked at and chose to leave alone is `wont_fix`, never `done`.** Put the reason in
 `result_md` — that is the whole point of the state. What you fixed is readable in the commits; what you
@@ -143,8 +143,8 @@ person gave still holds.
    other thing that legitimately blocks.
 4. Hand the single PR to `ship` — the review panel runs on the whole session's diff at once.
 5. `acceptance_close(galy_session, status="merged")`, and print the Galy link to the pass.
-6. The kit ends at **PR ready** and hands over: run the environment's release step if it has one.
-   Merging is that step's call, and its gate.
+6. Invoke the environment's release step. The kit merges nothing **directly** — that step does, on
+   its own gate. Having one is not a reason to stop: not invoking it is stopping.
 
 ## Discipline
 
