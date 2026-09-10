@@ -33,16 +33,23 @@ watchdog never fires — ideal.
    `Done` phases; finish `InProgress` ones first; target `NotStarted` next.
 4. **Implement phase by phase, same turn.** For each phase:
    - Mark it `mcp__bg__feature_spec_set_phase_status(phaseId, status="InProgress")`.
-   - Write the code following the repo's own conventions (its `CLAUDE.md`/`AGENTS.md`). Cut PRs at
-     natural seams; a small spec is a single PR.
+   - Read `${CLAUDE_PLUGIN_ROOT}/instructions/acceptance-criteria.md` and the phase's
+     `validationCriterionMd`. Fill missing legacy cases before the relevant code and reuse exact
+     existing coverage. Implement **one case at a time: relevant failing test → code → passing tests**,
+     using the convention's proportional alternatives and resume rules. Follow the repo's own coding
+     conventions. Cut PRs at natural seams; a small spec is a single PR.
+   - Persist test references and observed evidence in the phase's coverage cells through
+     `mcp__bg__feature_spec_update_phase(phaseId, validationCriterionMd=...)`, preserving expected outcomes.
    - Re-read the phase plan; if the implementation deviated, record it via
      `mcp__bg__feature_spec_update_phase(phaseId, actionPlanMd=<updated with a "deviation" note>)` —
      never silence a deviation.
    - Build + run the change to prove it works (not just green tests). On failure, fix and retry.
-   - Mark it `mcp__bg__feature_spec_set_phase_status(phaseId, status="Done", prUrl=<your PR url>)`.
+   - Reconcile every required case with executed evidence and the actual CI selection before marking
+     it `mcp__bg__feature_spec_set_phase_status(phaseId, status="Done", prUrl=<your PR url>)`.
 5. **Verify against acceptance tests.** Walk the spec's acceptance tests (see
    `${CLAUDE_PLUGIN_ROOT}/instructions/acceptance-criteria.md`); set each status; screenshot visual blocks.
-6. **PR ready.** Invoke `ship` to open/finish the PR through the self-review panel. Apply the
+6. **PR ready.** Invoke `ship` with the spec/phase ids and case evidence to open/finish the PR through
+   the self-review panel; it reuses the coverage and checks for gaps. Apply the
    `feature-implement`/`merge_mode` default (see `${CLAUDE_PLUGIN_ROOT}/instructions/workflow-defaults.md`):
    `stop-before-merge` → stop at PR ready; `auto-merge` → hand the ready PR to your own merge process;
    `merge-and-release` → hand it over, then trigger your release too. **This kit never merges and never
@@ -56,10 +63,12 @@ watchdog never fires — ideal.
 ## Autonomy contract
 
 Runs for hours; the developer is gone. The only acceptable stops: a real merge conflict on business
-logic, a hard build/test failure you cannot fix, or an action only the user can take (report it + the
+logic, an unresolved business expectation that only the user can settle, a hard build/test failure
+you cannot fix, or an action only the user can take (report it + the
 resume command, then `CronDelete`). Naming, formatting, file layout, which seam to cut — decide from the
 repo's patterns and keep going. You are not the final reviewer: build + the `ship` panel + your CI are
-behind you, so shipping imperfect-but-compiling code is the correct mode.
+behind you. Continue independent work during a clarification; those later checks never authorize
+silently changing a required outcome or treating an unverified case as complete.
 
 ## Report
 

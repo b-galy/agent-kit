@@ -16,8 +16,9 @@ and metadata are written to Galy.
 
 ## Model
 
-A dev should be able to read the spec top-to-bottom and implement it. The executive summary at the top
-is the only block they must read. The body lives in a local buffer synced by the CLI.
+A dev should be able to read the spec top-to-bottom and implement it. The executive summary orients
+them; the active phase's plan and cases are required before coding. The body lives in a local buffer
+synced by the CLI.
 
 ## Steps
 
@@ -30,13 +31,18 @@ is the only block they must read. The body lives in a local buffer synced by the
 3. **Design.** Weigh 1-2 realistic options; pick the durable one (implementation speed is never a factor
    — see the repo's own conventions). If a decision is genuinely contested, invoke `contrarian` before
    committing.
+   Read `${CLAUDE_PLUGIN_ROOT}/instructions/acceptance-criteria.md` and define each phase's **Cases to
+   cover** before its action plan: concrete states, expected outcomes, forbidden effects, verification
+   level and existing coverage. Resolve meaningful business ambiguities before handoff. Plan scenarios,
+   not executable test code; use proportional alternatives for wording, spacing or instruction changes.
 4. **Create the spec (metadata only):**
    `mcp__bg__feature_spec_create(featureBriefId=<briefId>, title, scope, category, initialEstimateHours?)`
    → capture `spec_id`. Write the body via `bg content pull feature-spec <spec_id>`, edit the buffer
    (fields `executive`, `problem`, `solution`), `bg content push feature-spec <spec_id>`.
 5. **Phases.** One `mcp__bg__feature_spec_add_phase(specId, title, objectiveMd, actionPlanMd,
    validationCriterionMd, estimateHours)` per phase — cut at natural seams (layers, page sets,
-   independent modules), each a coherent unit an implementer can finish and verify.
+   independent modules), each a coherent unit an implementer can finish and verify. Store its observable
+   completion criterion and case table in `validationCriterionMd`; no separate database structure.
 6. **Risks.** `mcp__bg__feature_spec_add_risk(specId, label, riskType, severity, probability, mitigation)`
    for each real risk (technical/business/timeline).
 7. **Acceptance tests.** `mcp__bg__feature_spec_add_acceptance_test(specId, kind, label, verificationMd)`
@@ -54,4 +60,6 @@ the next step.
 
 - **Body and code stay local.** Only plan text and metadata reach Galy — never a file's contents or a diff.
 - **Empty phases = unfinished spec.** Never hand an implementer a spec with no phases.
+- **Check case completeness before handoff.** Each phase has concrete expected outcomes, suitable
+  verification and existing tests considered; a green CI alone is never its completion criterion.
 - **Acceptance tests describe *how to check*, not code.** URLs, commands, queries.
