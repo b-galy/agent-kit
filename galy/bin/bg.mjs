@@ -20,7 +20,7 @@
 //   delimited by <!-- @field <name> -->. The server composes/parses it; the CLI
 //   round-trips the document verbatim.
 //
-// Routes (gooal PmContentController):
+// Routes (galy PmContentController):
 //   GET  /api/pm/search?q=<q>              -> { briefs, specs }
 //   GET  /api/pm/brief/<id>                -> { brief, user_stories }
 //   GET  /api/pm/spec/<id>                 -> { spec, phases, risks, acceptance_tests }
