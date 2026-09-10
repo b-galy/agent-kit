@@ -17,7 +17,8 @@ conversation transcript are not canonical knowledge stores.
 Use `knowledge_source_list` and `knowledge_source_get` to inspect retained evidence. A source is
 an immutable snapshot identified by its source id and exact version. Use `knowledge_search` or
 `knowledge_list` for published articles; use `include_review=true` when the user explicitly wants
-proposals or articles requiring review. `knowledge_get` returns the article's validity, versions,
+published articles requiring review. Find pending proposals with `knowledge_review_list` and inspect
+them with `knowledge_get(include_review=true)`. `knowledge_get` returns the article's validity, versions,
 citations, dependencies and open issues. Every result is scoped to the current tenant and the
 same access rules apply to the browser and MCP.
 
@@ -52,9 +53,10 @@ dependent articles; keep the review state visible until a new version is verifie
 ## Optional generation
 
 Generation is tenant opt-in and runs as bounded background work in the B.Galy product. Inspect or
-change the provider, model, named secret, call limits and output budget with
+change the provider, model, approved credential, call limits and output budget with
 `knowledge_settings_get` and `knowledge_settings_update`; the secret value never belongs in a
-tool argument, article, source or local file. If generation is unavailable, use the manual draft
+tool argument, article, source or local file. Select only credentials explicitly authorized by the
+instance for this workspace. If generation is unavailable, use the manual draft
 flow. Treat generated text as a proposal and retain its input manifest and citations before review.
 
 ## Rights and failure handling
@@ -63,5 +65,6 @@ The same tenant ACL applies to screen and MCP: active owners and members can edi
 read, and publication requires the owner or article owner. Never work around a `forbidden`,
 `not_found`, `conflict`, `source_stale`, `source_unavailable`, `invalid_citation`,
 `incomplete_coverage`, `generation_unavailable` or `budget_exceeded` result. Refresh the record
-and retry a conflict; ask the user for a review decision when the product needs one. Do not invent
+after a conflict, preserving the proposed text and comparing it with the current version before
+retrying; ask the user for a review decision when the product needs one. Do not invent
 success or copy durable knowledge into a client repository to bypass the boundary.
