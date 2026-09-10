@@ -11,6 +11,15 @@ merges** — merging is your own CI/process (the extension point below).
 
 ## Steps
 
+When the change has a linked spec, read its covered phases and
+`${CLAUDE_PLUGIN_ROOT}/instructions/acceptance-criteria.md`. Reconcile planned cases with existing
+executed evidence before PR ready, using the repository's QA process when it has one. Reuse tests;
+do not create a spec or a second test suite for an unlinked change. Give the review panel the case
+expectations and test references alongside the diff, so it can challenge missing or weakened coverage.
+After review fixes, verify the affected cases on the delivered commit. An unverified required case
+prevents PR ready; report local-only coverage separately from actual CI selection. Keep the detailed
+reconciliation in QA/PR evidence and update the linked phase's coverage cells.
+
 1. **Stage + commit.** Review the diff; write a clear commit message in the repo's convention. Branch if
    you are on the default branch.
 2. **Open the PR** (draft) against the base branch, with a concise body: what changed, why, how it was

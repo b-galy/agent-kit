@@ -1,9 +1,73 @@
 # Acceptance criteria — shared convention
 
-Every spec must list explicitly how **the assistant itself** verifies, at the end of dev, that the
-requested outcome is delivered. These are **not** automated tests (build / unit / integration are
-already covered by your CI) — they are the manual checks the assistant runs against the running app
-before it says "done". Referenced by `feature-spec`, `feature-implement`, `feature-followup`.
+Every spec defines the expected behavior before coding and how the assistant verifies delivery.
+CI runs the tests that exist; it does not establish that the expected cases are covered.
+The phase cases below guide implementation. Acceptance tests remain the final walkthrough of the
+running product. Referenced by `feature-spec`, `feature-implement`, `ship`, `feature-followup`.
+
+## Cases to cover — in each phase
+
+After exploring the code and existing tests, identify the essential cases before finalizing the
+action plan. Derive expected outcomes from the requirement, not the implementation's output.
+Include relevant normal, boundary, refusal, error and forbidden-side-effect cases according to
+risk, without a test quota or a test-per-method rule.
+
+Keep the phase's observable completion criterion and append this table to its existing
+**`validationCriterionMd`**, using `feature_spec_add_phase` / `feature_spec_update_phase`.
+Do not duplicate the list in the spec body or add database fields, tables or acceptance kinds.
+
+| Case | Initial state and action | Expected outcome | Planned verification | Coverage / evidence |
+|---|---|---|---|---|
+| T1 | <state, actor, input, trigger> | <precise result and forbidden effects> | <unit / integration / journey / evaluation; existing test project or harness> | <existing test to reuse, or pending> |
+
+Keep case ids stable within the phase; use `<phaseId>/T1` across phases. Each case names a behavior,
+which may need several tests. Test source stays in Git and execution artifacts in the repository/CI;
+only descriptions and references travel to Galy, never source code or a copied test body.
+
+Prefer fast deterministic tests for calculations, permissions, transitions, deduplication and
+retries. Use integration tests for real database or service contracts, and journeys for critical
+interactions. For LLM work, separate deterministic contract tests from answer-quality evaluations.
+For wording, spacing or instruction-only changes, name the appropriate check and why another
+automated test adds no value; do not manufacture tests or bypass the repository's existing gates.
+A separate test-preparation phase needs a concrete harness or fixture dependency. Do not write all
+executable tests for the entire spec up front or freeze internal design to accommodate them.
+
+## Implement one case at a time
+
+1. Read the active phase's cases before changing behavior. For an older spec, fill missing cases
+   from the requirement and existing tests without rewriting completed phases. Resolve a business
+   ambiguity that changes an expected outcome before coding that part; continue independent work.
+2. Reuse a test that already proves the exact case. If it passes, mark it **already covered**;
+   do not duplicate it or manufacture a failure. Characterization of unchanged behavior may stay green.
+3. For new or corrected behavior suited to automation, write or extend a test that calls production
+   code, observe its relevant failure, implement to make it and the affected tests pass, then refactor
+   if needed before the next case. If the interface is absent, introduce the smallest compilable
+   skeleton; unrelated compilation or environment failures are not behavioral evidence.
+4. Fill **Coverage / evidence** with test references (relative file and test name), command, result
+   and links to the observed failure/success or justified alternative. Reuse recorded red/green
+   evidence rather than reverting again just to repeat it. On resume, inspect the code and evidence;
+   never invent an execution order. If a fix already exists with no red evidence, replay without it
+   in an isolated baseline or safely remove only your change, then restore and rerun. Preserve others'
+   work. The final successful verification must concern the delivered commit, after cleanup/review.
+5. Add discovered cases without renumbering or weakening the original expectations. Do not copy
+   computed outputs into assertions to obtain green. Trace an agreed requirement change with its
+   reason before adapting the case.
+
+## Reconcile planned and executed coverage
+
+Before a phase is Done and before PR ready, compare each required case with an actually executed
+test or justified alternative. Reuse existing tests and add only missing coverage. A green global
+suite cannot substitute for an unverified case; keep that gap explicit and do not report completion.
+An added regression test protecting delivered behavior is intended as durable coverage: verify that
+the repository's CI selects it and fix selection if necessary. Report a justified one-off check or
+a locally passing but excluded test separately; neither proves CI protection. If CI is not available,
+record that limitation rather than claiming a gate ran.
+
+Update the phase's **Coverage / evidence** cells, preserving the criterion and expected outcomes.
+Keep the detailed reconciliation with local QA/PR evidence: case id, test reference or alternative,
+executed result, verified commit and CI selection. Mark cases first discovered in QA so later review
+can distinguish early coverage from late rework. An acceptance status is not a CI result. Existing
+reviews, running-product walkthroughs and production follow-ups still apply.
 
 Acceptance tests are stored on the spec via `feature_spec_add_acceptance_test` (kind `visual` or
 `nonvisual`); the `verificationMd` field holds *how to check* — a URL, a command, a query — never
@@ -26,7 +90,8 @@ source code.
 
 ## When to fill it
 
-- **`feature-spec`**: add the acceptance tests as the spec is written, before the phases.
+- **`feature-spec`**: define the phase cases before action plans, persist them with the phases,
+  and add the separate final acceptance walkthrough before handing over the spec.
 - **`feature-implement`**: walk each test, screenshot every visual block, attach to the final report,
   and set each test's status.
 - **`feature-followup`**: replay the same tests in production and report pass/fail.

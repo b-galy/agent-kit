@@ -44,6 +44,9 @@ usually a missing check at a boundary, and it is worth more than the fix.
 
 ### 3. Fix the cause
 
+- First extend existing regression coverage and observe the relevant failure before implementing
+  the fix, following `${CLAUDE_PLUGIN_ROOT}/instructions/acceptance-criteria.md`. Keep the case and
+  evidence in the bug's own tracker when there is no spec; do not create a spec just for this table.
 - Repair the layer where the state first went wrong, not the one where it became visible.
 - Change as little as the cause requires. A refactor bundled with a fix makes the fix
   unreviewable, and a reviewer who cannot isolate the fix approves the refactor by accident.
@@ -55,8 +58,10 @@ usually a missing check at a boundary, and it is worth more than the fix.
 
 Two proofs, both required:
 
-- **A regression test** that fails before your change and passes after. Run it both ways and say
-  so. A test written after the fix, never seen red, proves only that it compiles.
+- **A regression test** observed failing before the change and passing after, or the justified
+  alternative for a change that does not warrant an automated test. Reuse the evidence from step 3;
+  do not revert solely to repeat it. A resumed fix without red evidence follows the shared convention's
+  baseline replay. Confirm the delivered commit and actual CI selection before claiming durable coverage.
 - **The user's own path**, replayed. Same input, same screen, same query — the reproduction from
   step 1, now producing the right answer. This is what "verified" means; a green suite is not it.
 
