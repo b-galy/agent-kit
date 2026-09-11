@@ -115,6 +115,10 @@ at every start, and the line landed in front of somebody who had come to do some
 that says its own name before the user has said theirs is a tool people turn off, and the practices
 are worth more than the reminder that they exist.
 
+The only thing the kit does at the other end is let go. When a session closes, the row under the
+prompt drops the work it was naming, so the next one opens on an empty row rather than on yesterday's
+spec — a row that names the wrong work is read as the right one, every time.
+
 Nothing has to be typed as a command. **A plain sentence starts the first pass** — "démarre
 l'onboarding Galy", "start the Galy onboarding", "où en sont nos pratiques ?", "fais le point" — and
 the `audit` skill takes it from there.
@@ -285,7 +289,8 @@ The output is gitignored. It is a build artifact, not a second copy to maintain.
 .claude-plugin/marketplace.json   # marketplace entry
 galy/
   .claude-plugin/plugin.json      # plugin manifest
-  hooks/hooks.json                # the guard on CLAUDE.md, and two Stop hooks: work recorded, slot given back
+  hooks/hooks.json                # the guard on CLAUDE.md, the work in hand (taken on a write, let go when the session ends), and two Stop hooks: work recorded, slot given back
+  statusline/bg-statusline.mjs    # the row under the prompt: objective > brief > spec, for this copy's own work
   agents/<name>.md                # the 6 subject agents the first pass dispatches
   skills/<name>/SKILL.md          # the 17 skills
   instructions/                   # shared conventions the skills reference

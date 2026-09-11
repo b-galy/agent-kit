@@ -7,8 +7,9 @@
 // that reads "spec 365 · brief 233" tells nobody what they are on. Every assertion below
 // is one sentence of that: nothing claimed shows nothing, two copies show two rows, one
 // spec is named with its brief and its objective, an `id` that belongs to a phase never
-// lands on a spec, and a workspace that spells the field `specId` is heard as well as one
-// that spells it `id`.
+// lands on a spec, a workspace that spells the field `specId` is heard as well as one that
+// spells it `id`, and a session that ends hands the next one an empty row rather than
+// yesterday's spec.
 //
 //   node scripts/check-statusline.mjs
 //
@@ -18,7 +19,7 @@
 
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -72,6 +73,10 @@ const row = (cwd) => execFileSync(process.execPath, [STATUSLINE], {
 const wrote = (cwd, tool_name, tool_input, answer = { success: true }) => execFileSync(process.execPath, [HOOK], {
   cwd, env: ENV, encoding: "utf8",
   input: JSON.stringify({ cwd, tool_name, tool_input, tool_response: { content: [{ type: "text", text: JSON.stringify(answer) }] } }),
+});
+const ended = (cwd) => execFileSync(process.execPath, [HOOK], {
+  cwd, env: ENV, encoding: "utf8",
+  input: JSON.stringify({ cwd, hook_event_name: "SessionEnd", reason: "other" }),
 });
 const held = (dir) => { try { return JSON.parse(readFileSync(join(dir, ".bg", "work.json"), "utf8")); } catch { return {}; } };
 const specs = (dir) => (held(dir).specs || []).map((e) => e.id).join();
@@ -157,6 +162,23 @@ execFileSync("git", ["init", "-q", repo], { encoding: "utf8" });
 wrote(repo, "mcp__bg__feature_spec_pick", { id: 11 });
 const untracked = execFileSync("git", ["-C", repo, "status", "--porcelain", "--untracked-files=all"], { encoding: "utf8" });
 check("the held work is not listed by git", specs(repo) === "11" && !untracked.includes("work.json"));
+
+// 11. The session ends and the copy lets go. Reopened tomorrow on another subject, it must
+//     start on an empty row — and the file must still be there, because a row cached
+//     elsewhere is redrawn when this file becomes newer than it, never when it disappears.
+const d = copy("wt-d");
+wrote(d, "mcp__bg__feature_spec_pick", { id: 11 });
+holdStamp();
+check("a copy that has just picked a spec has a row", bare(row(d)) !== "");
+ended(d);
+holdStamp();
+check("the session that ends leaves the next one an empty row", bare(row(d)) === "");
+check("and the file stays, so a row cached elsewhere is redrawn", existsSync(join(d, ".bg", "work.json")));
+check("the copy beside it keeps what it holds", specs(b) === "41");
+
+const e = copy("wt-e");
+ended(e);
+check("a copy that claimed nothing is left untouched by the end of a session", !existsSync(join(e, ".bg")));
 
 rmSync(BENCH, { recursive: true, force: true });
 
