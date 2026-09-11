@@ -34,7 +34,35 @@ jobs:
         run: |
           node --check setup/setup.mjs
           node --check galy/bin/bg.mjs
+          node --check galy/bin/bug-evaluation-runner.mjs
           node --check scripts/validate.mjs
           # Les hooks par le motif, jamais par la liste : un hook ajoute sans etre ajoute ici
           # serait le seul script publie que rien ne lit avant un poste de client.
           for hook in galy/hooks/*.mjs; do node --check "$hook"; done
+
+      - name: Le bac bwrap est obligatoire pour les contrats d'isolation
+        run: |
+          if ! command -v bwrap >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y bubblewrap
+          fi
+          bwrap --version
+
+      - name: Le runner bug-evaluation rejoue ses contrats
+        env:
+          GALY_BUG_EVALUATION_REQUIRE_SANDBOX: "1"
+        run: |
+          # Ubuntu's AppArmor user-namespace restriction blocks bwrap's loopback setup with
+          # RTM_NEWADDR. This is an ephemeral GitHub VM: temporarily relax only that kernel
+          # switch, keep the test as the normal checkout user, and restore the exact value even
+          # when the test fails. File capabilities are deliberately not used because bwrap
+          # rejects them unless installed setuid.
+          apparmor_key=kernel.apparmor_restrict_unprivileged_userns
+          if apparmor_value="$(sudo sysctl -n "$apparmor_key" 2>/dev/null)"; then
+            echo "$apparmor_key before=$apparmor_value"
+            sudo sysctl -w "$apparmor_key=0"
+            trap 'sudo sysctl -w "$apparmor_key=$apparmor_value"' EXIT
+          else
+            echo "$apparmor_key is unavailable; continuing with the host sandbox policy"
+          fi
+          npm run test:bug-evaluation --prefix galy

@@ -7,7 +7,8 @@
     "bg": "./bin/bg.mjs"
   },
   "scripts": {
-    "conformance": "node contract/conformance/runner.mjs"
+    "conformance": "node contract/conformance/runner.mjs",
+    "test:bug-evaluation": "node bin/bug-evaluation-runner.test.mjs"
   },
   "engines": {
     "node": ">=18"
