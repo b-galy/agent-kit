@@ -32,7 +32,13 @@ assert.deepEqual(manifest.files.map(file => file.path), ["main.txt", "src/app.js
 const limited = cli("snapshot", "create", "--root", source, "--archive", join(root, "limited"), "--archive-limit-bytes", "1");
 assert.notEqual(limited.status, 0); assert.match(limited.stderr, /archive_limit_exceeded/);
 const qualified = cli("can-run");
-if (qualified.status === 0 && JSON.parse(qualified.stdout).qualified) {
+const qualification = qualified.status === 0 ? JSON.parse(qualified.stdout) : null;
+const requireSandbox = process.env.GALY_BUG_EVALUATION_REQUIRE_SANDBOX === "1" || process.env.CI === "true";
+if (requireSandbox) {
+  assert.equal(qualified.status, 0, qualified.stderr || "sandbox qualification command failed");
+  assert.equal(qualification?.qualified, true, "CI requires a qualified bwrap/WSL sandbox");
+}
+if (qualification?.qualified) {
   const selfTest = cli("run", "self-test", "--root", source, "--archive", join(root, "self-test"));
   assert.equal(selfTest.status, 0, selfTest.stderr);
   assert.match(selfTest.stdout, /"status": "accepted"/);
@@ -55,6 +61,7 @@ if (qualified.status === 0 && JSON.parse(qualified.stdout).qualified) {
   const rejectedOracle = cli("oracle", "verify", "--oracle-file", independentOracle, "--snapshot-root", source, "--candidate-root", candidate);
   assert.notEqual(rejectedOracle.status, 0); assert.match(rejectedOracle.stderr, /oracle_shared_script_required/);
 }
+else if (!requireSandbox) console.log("sandbox qualification unavailable; sandbox contract checks skipped outside CI");
 
 // Provider adapters are tested against controlled responses in-process. This verifies the
 // named provider wire formats and identity/usage facts without making a paid request.
@@ -213,6 +220,70 @@ await runCli(["run", "settle", "--run-id", "7", "--role", "judge", "--attempt-nu
   "--worker-id", "3", "--lease-generation", "4", "--billed-cost", "0.10", "--currency", "EUR",
   "--cost-source", "estimated", "--pricing-version", "fixture-v1"]);
 assert.equal(JSON.parse(readFileSync(join(rejudgePath, "attempts", "judge-4.json"), "utf8")).settledCost.basis, "estimated");
+
+// A resumed run whose durable journal already exceeds the frozen token budget must stop
+// before constructing or calling any paid adapter. This protects a retry after an earlier
+// response/ACK from buying another step merely because the process was restarted.
+if (qualified.status === 0 && JSON.parse(qualified.stdout).qualified) {
+  const budgetEndpoint = "https://budget.invalid";
+  const budgetTenant = "budget-fixture";
+  const budgetNamespace = createHash("sha256").update(`${budgetEndpoint}\n${budgetTenant}`, "utf8").digest("hex").slice(0, 24);
+  const budgetArchive = join(root, "over-budget-archive");
+  const budgetProfileArchive = join(root, "over-budget-profile");
+  await runCli(["profile", "qualify", "--root", source, "--archive", budgetProfileArchive,
+    "--sandbox-timeout-seconds", "10"]);
+  const budgetProfile = JSON.parse(readFileSync(join(budgetProfileArchive, "profile.json"), "utf8"));
+  await runCli(["snapshot", "create", "--root", source,
+    "--archive", join(budgetArchive, budgetNamespace), "--run-id", "8"]);
+  const budgetSnapshot = JSON.parse(readFileSync(join(budgetArchive, budgetNamespace, "8", "manifest.json"), "utf8"));
+  const budgetPath = join(budgetArchive, budgetNamespace, "8");
+  mkdirSync(join(budgetPath, "attempts"), { recursive: true });
+  writeFileSync(join(budgetPath, "attempts", "analyst-1.json"), JSON.stringify({
+    protocol: "bug-evaluation-runner-v1", runId: 8, role: "analyst", attemptNumber: 1,
+    idempotencyKey: `bg-bug-evaluation-${budgetNamespace}-8-analyst-1`, requestHash: "replayed",
+    status: "completed", result: { usage: { inputTokens: 8, outputTokens: 5 },
+      effectiveModel: { provider: "openai", modelId: "gpt-5.6-luna", harness: "openai-responses-v1", harnessVersion: "v1", effort: "xhigh" } }
+  }, null, 2));
+  const modelContract = (id, modelId) => ({ Id: id, Provider: "openai", ModelId: modelId,
+    Harness: "openai-responses-v1", HarnessVersion: "v1", Effort: "xhigh", ParametersJson: "{}", LimitsJson: "{}" });
+  const budgetContract = { RunId: 8, TenantSlug: budgetTenant, CampaignId: 1, CaseId: 1, ConfigurationId: 1,
+    Mode: "replay", ProtocolVersion: "1", GridVersion: "1", JudgePromptVersion: "1",
+    SnapshotHash: budgetSnapshot.snapshotHash, IsolationProfileHash: budgetProfile.profileHash,
+    BaselineSha: "a".repeat(40), ReferenceHeadSha: "b".repeat(40), TokenBudget: 10,
+    BudgetMinutes: 60, ApprovedBudget: 10, BudgetCurrency: "USD", ReservedCost: 10, ReservedTokens: 10,
+    Analyst: modelContract(1, "gpt-5.6-luna"), Solver: modelContract(2, "gpt-5.6-luna"), Judge: modelContract(3, "gpt-5.6-luna"),
+    Criteria: [{ Id: 1, Code: "behavior" }] };
+  const budgetMcpMethods = []; let budgetProviderCalls = 0;
+  const mcpText = value => ({ ok: true, status: 200, text: async () => JSON.stringify({ result: { content: [{ type: "text", text: JSON.stringify(value) }] } }) });
+  globalThis.fetch = async (url, options) => {
+    if (String(url) !== `${budgetEndpoint}/mcp`) { budgetProviderCalls++; throw new Error("paid_adapter_must_not_be_called"); }
+    const request = JSON.parse(options.body);
+    if (request.method === "initialize") return { ok: true, status: 200, text: async () => JSON.stringify({ result: {} }) };
+    const name = request.params.name; budgetMcpMethods.push(name);
+    if (name === "bug_evaluation_run_claim") return mcpText({ LeaseGeneration: 1 });
+    if (name === "bug_evaluation_run_get") return mcpText(budgetContract);
+    if (name === "bug_evaluation_run_record") return mcpText({ Id: 8, Status: "budget_exhausted" });
+    throw new Error(`unexpected_budget_mcp:${name}`);
+  };
+  process.env.GALY_TOKEN = "synthetic-budget-token";
+  const savedLog = console.log; let stopped;
+  console.log = value => { stopped = JSON.parse(value); };
+  try {
+    await runCli(["run", "resume", "--endpoint", budgetEndpoint, "--worker-id", "1", "--run-id", "8",
+      "--archive", budgetArchive, "--adapter", "openai", "--profile-file", join(budgetProfileArchive, "profile.json"),
+      "--profile-root", source, "--sandbox-timeout-seconds", "10"]);
+  } finally { console.log = savedLog; }
+  assert.equal(stopped.status, "budget_exhausted");
+  assert.equal(budgetProviderCalls, 0, "token overrun must stop before a paid adapter call");
+  assert.deepEqual(budgetMcpMethods, ["bug_evaluation_run_claim", "bug_evaluation_run_get", "bug_evaluation_run_record"]);
+  mkdirSync(join(budgetArchive, "0".repeat(24), "8"), { recursive: true });
+  const ambiguousInspect = cli("inspect", "--run-id", "8", "--archive", budgetArchive);
+  assert.notEqual(ambiguousInspect.status, 0);
+  assert.match(ambiguousInspect.stderr, /inspect_namespace_required/);
+  const namespacedInspect = result("inspect", "--run-id", "8", "--archive", budgetArchive, "--namespace", budgetNamespace);
+  assert.equal(namespacedInspect.runId, "8");
+  assert.equal(namespacedInspect.archivePath, budgetPath);
+}
 globalThis.fetch = oldFetch;
 if (oldOpenAiKey === undefined) delete process.env.OPENAI_API_KEY; else process.env.OPENAI_API_KEY = oldOpenAiKey;
 if (oldAnthropicKey === undefined) delete process.env.ANTHROPIC_API_KEY; else process.env.ANTHROPIC_API_KEY = oldAnthropicKey;

@@ -10,7 +10,7 @@ import { existsSync, lstatSync, readFileSync, writeFileSync, mkdirSync, readdirS
   copyFileSync, linkSync, rmSync, renameSync } from "node:fs";
 import { promises as fsp } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
-import { spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { pathToFileURL } from "node:url";
 import { homedir } from "node:os";
 
@@ -18,6 +18,7 @@ const MAX_SNAPSHOT_BYTES = 2 * 1024 * 1024 * 1024;
 const MAX_PATCH_BYTES = 20 * 1024 * 1024;
 const MAX_LOG_BYTES = 50 * 1024 * 1024;
 const MAX_ARCHIVE_BYTES = 4 * 1024 * 1024 * 1024;
+const MAX_ATTEMPT_NUMBER = 200;
 const RETENTION_DAYS = 180;
 const EXCLUDED_DIRS = new Set([".git", ".hg", ".svn", ".tmp", ".cache", ".codex", ".claude", ".bg", ".galy",
   ".agents", "node_modules", "bin", "obj", "coverage", "dist", "packages", "artifacts", ".vs"]);
@@ -248,25 +249,53 @@ function profileData(requiredTools = [], toolchainRoot = null, toolchainVersion 
     publicEnvironment: ["GALY_RUNNER_PUBLIC", "HOME", "USER", "NUGET_PACKAGES", "DOTNET_ROOT", "DOTNET_CLI_HOME", "DOTNET_PROCESSOR_COUNT", "DOTNET_CLI_TELEMETRY_OPTOUT",
       "DOTNET_SKIP_FIRST_TIME_EXPERIENCE", "DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE", "DOTNET_NOLOGO", "MSBuildEnableWorkloadResolver"] };
 }
-function bwrapAvailable() {
-  if (process.platform === "win32") return spawnSync("wsl.exe", ["-d", "Ubuntu", "--", "bwrap", "--version"], { encoding: "utf8" }).status === 0;
-  return spawnSync("bwrap", ["--version"], { encoding: "utf8" }).status === 0;
+function runShortProcess(executable, args, timeoutMs = 30000) {
+  return new Promise(resolvePromise => {
+    let child; let settled = false; let output = ""; let timer;
+    const finish = result => {
+      if (settled) return;
+      settled = true;
+      if (timer) clearTimeout(timer);
+      resolvePromise(result);
+    };
+    const collect = chunk => {
+      output += chunk.toString();
+      if (Buffer.byteLength(output, "utf8") > 64 * 1024) finish({ status: null, error: "short_process_output_limit" });
+    };
+    try {
+      child = spawn(executable, args, { windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
+    } catch (error) { finish({ status: null, error: error.message }); return; }
+    child.stdout.on("data", collect); child.stderr.on("data", collect);
+    child.on("error", error => finish({ status: null, error: error.message }));
+    child.on("close", status => finish({ status, output }));
+    timer = setTimeout(() => {
+      try { child.kill("SIGKILL"); } catch { /* already exited */ }
+      finish({ status: null, error: `short_process_timeout:${timeoutMs}` });
+    }, timeoutMs);
+  });
 }
-function wslPath(path) {
+async function bwrapAvailable() {
+  const result = process.platform === "win32"
+    ? await runShortProcess("wsl.exe", ["-d", "Ubuntu", "--", "bwrap", "--version"])
+    : await runShortProcess("bwrap", ["--version"]);
+  return result.status === 0;
+}
+async function wslPath(path) {
   if (process.platform !== "win32") return path;
-  const result = spawnSync("wsl.exe", ["-d", "Ubuntu", "--", "wslpath", "-a", path.replaceAll("\\", "/")], { encoding: "utf8" });
+  const result = await runShortProcess("wsl.exe", ["-d", "Ubuntu", "--", "wslpath", "-a", path.replaceAll("\\", "/")]);
   if (result.status !== 0) die(`isolation_unavailable: cannot translate ${path} to WSL`);
-  return result.stdout.trim();
+  return result.output.trim();
 }
-function sandboxRunMounts(mounts, script, { toolchainRoot = null, timeoutMs = 120000 } = {}) {
-  if (!bwrapAvailable()) die("isolation_unavailable: bwrap/WSL is not available");
-  const roBinds = mounts.flatMap(([name, path]) => ["--ro-bind", wslPath(path), `/${name}`]);
+async function sandboxRunMounts(mounts, script, { toolchainRoot = null, timeoutMs = 120000, signal = null } = {}) {
+  if (!await bwrapAvailable()) die("isolation_unavailable: bwrap/WSL is not available");
+  const translatedMounts = await Promise.all(mounts.map(async ([name, path]) => [name, await wslPath(path)]));
+  const roBinds = translatedMounts.flatMap(([name, path]) => ["--ro-bind", path, `/${name}`]);
   const pathEntries = ["/usr/local/bin", "/usr/bin", "/bin"];
   if (toolchainRoot) {
     const root = resolve(String(toolchainRoot));
     const info = lstatSync(root, { throwIfNoEntry: false });
     if (!info?.isDirectory() || info.isSymbolicLink()) die("isolation_unavailable: invalid private toolchain root");
-    roBinds.push("--ro-bind", wslPath(root), "/toolchain");
+    roBinds.push("--ro-bind", await wslPath(root), "/toolchain");
     pathEntries.unshift("/toolchain/dotnet", "/toolchain/node/bin");
   }
   // Do not expose the host's user database or resolver configuration to an evaluator. A few
@@ -274,51 +303,78 @@ function sandboxRunMounts(mounts, script, { toolchainRoot = null, timeoutMs = 12
   // smallest deterministic POSIX view instead of omitting /etc altogether or binding host /etc.
   const syntheticEtc = join(process.cwd(), ".tmp", `.galy-sandbox-etc-${process.pid}-${randomUUID()}`);
   ensureDir(syntheticEtc);
-  writeFileSync(join(syntheticEtc, "passwd"), "sandbox:x:1000:1000:Sandbox:/tmp:/bin/sh\n", { mode: 0o600 });
-  writeFileSync(join(syntheticEtc, "group"), "sandbox:x:1000:\n", { mode: 0o600 });
-  writeFileSync(join(syntheticEtc, "nsswitch.conf"), "passwd: files\ngroup: files\nhosts: files\n", { mode: 0o600 });
-  writeFileSync(join(syntheticEtc, "hosts"), "127.0.0.1 localhost\n::1 localhost\n", { mode: 0o600 });
-  writeFileSync(join(syntheticEtc, "resolv.conf"), "nameserver 127.0.0.1\n", { mode: 0o600 });
-  const common = ["--die-with-parent", "--new-session", "--clearenv", "--unshare-user", "--unshare-pid",
-    "--unshare-net", "--unshare-uts", "--unshare-ipc", "--unshare-cgroup", "--ro-bind", "/usr", "/usr",
-    "--ro-bind", "/bin", "/bin", "--ro-bind", "/lib", "/lib", "--ro-bind", "/lib64", "/lib64",
-    "--proc", "/proc", "--dev", "/dev", "--tmpfs", "/tmp", "--dir", "/etc",
-    "--ro-bind", wslPath(join(syntheticEtc, "passwd")), "/etc/passwd", "--ro-bind", wslPath(join(syntheticEtc, "group")), "/etc/group",
-    "--ro-bind", wslPath(join(syntheticEtc, "nsswitch.conf")), "/etc/nsswitch.conf", "--ro-bind", wslPath(join(syntheticEtc, "hosts")), "/etc/hosts",
-    "--ro-bind", wslPath(join(syntheticEtc, "resolv.conf")), "/etc/resolv.conf", "--dir", "/workspace",
-    ...roBinds, "--setenv", "GALY_RUNNER_PUBLIC", "1", "--setenv", "PATH", pathEntries.join(":")];
-  common.push("--setenv", "HOME", "/tmp/dotnet-home", "--setenv", "USER", "sandbox", "--setenv", "NUGET_PACKAGES", "/tmp/dotnet-home/.nuget/packages");
-  if (toolchainRoot) common.push("--setenv", "DOTNET_ROOT", "/toolchain/dotnet", "--setenv", "DOTNET_CLI_HOME", "/tmp/dotnet-home",
-    "--setenv", "DOTNET_PROCESSOR_COUNT", "2",
-    "--setenv", "DOTNET_CLI_TELEMETRY_OPTOUT", "1", "--setenv", "DOTNET_SKIP_FIRST_TIME_EXPERIENCE", "1",
-    "--setenv", "DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE", "1", "--setenv", "DOTNET_NOLOGO", "1",
-    "--setenv", "MSBuildEnableWorkloadResolver", "false");
-  // wsl.exe performs its own command-line expansion of `$VAR` before invoking Linux. Passing
-  // the evaluator script directly would silently erase shell variables on Windows. Transfer a
-  // base64 payload (alphabet-only) and decode it inside the isolated shell before execution.
-  const encodedScript = Buffer.from(String(script), "utf8").toString("base64");
-  const launcher = `printf '%s' '${encodedScript}' | /usr/bin/base64 -d > /tmp/galy-runner-script; exec /bin/sh -ceu 'exec /bin/sh -s < /tmp/galy-runner-script'`;
-  common.push("--", "/bin/sh", "-ceu", launcher);
-  const timeoutSeconds = Math.max(1, Math.ceil(timeoutMs / 1000));
-  const command = process.platform === "win32"
-    ? ["-d", "Ubuntu", "--", "/usr/bin/timeout", "--signal=KILL", String(timeoutSeconds), "/usr/bin/bwrap", ...common]
-    : ["--signal=KILL", String(timeoutSeconds), "/usr/bin/bwrap", ...common];
-  const executable = process.platform === "win32" ? "wsl.exe" : "/usr/bin/timeout";
-  let result;
   try {
-    result = spawnSync(executable, command, {
-      encoding: "utf8", maxBuffer: 1024 * 1024, timeout: timeoutMs, killSignal: "SIGKILL",
-      env: { ...process.env, GALY_REVIEW_FAKE_SECRET: "spec42-synthetic-canary" },
+    writeFileSync(join(syntheticEtc, "passwd"), "sandbox:x:1000:1000:Sandbox:/tmp:/bin/sh\n", { mode: 0o600 });
+    writeFileSync(join(syntheticEtc, "group"), "sandbox:x:1000:\n", { mode: 0o600 });
+    writeFileSync(join(syntheticEtc, "nsswitch.conf"), "passwd: files\ngroup: files\nhosts: files\n", { mode: 0o600 });
+    writeFileSync(join(syntheticEtc, "hosts"), "127.0.0.1 localhost\n::1 localhost\n", { mode: 0o600 });
+    writeFileSync(join(syntheticEtc, "resolv.conf"), "nameserver 127.0.0.1\n", { mode: 0o600 });
+    const [passwdPath, groupPath, nsswitchPath, hostsPath, resolvPath] = await Promise.all([
+      wslPath(join(syntheticEtc, "passwd")), wslPath(join(syntheticEtc, "group")),
+      wslPath(join(syntheticEtc, "nsswitch.conf")), wslPath(join(syntheticEtc, "hosts")),
+      wslPath(join(syntheticEtc, "resolv.conf"))]);
+    const common = ["--die-with-parent", "--new-session", "--clearenv", "--unshare-user", "--unshare-pid",
+      "--unshare-net", "--unshare-uts", "--unshare-ipc", "--unshare-cgroup", "--ro-bind", "/usr", "/usr",
+      "--ro-bind", "/bin", "/bin", "--ro-bind", "/lib", "/lib", "--ro-bind", "/lib64", "/lib64",
+      "--proc", "/proc", "--dev", "/dev", "--tmpfs", "/tmp", "--dir", "/etc",
+      "--ro-bind", passwdPath, "/etc/passwd", "--ro-bind", groupPath, "/etc/group",
+      "--ro-bind", nsswitchPath, "/etc/nsswitch.conf", "--ro-bind", hostsPath, "/etc/hosts",
+      "--ro-bind", resolvPath, "/etc/resolv.conf", "--dir", "/workspace",
+      ...roBinds, "--setenv", "GALY_RUNNER_PUBLIC", "1", "--setenv", "PATH", pathEntries.join(":")];
+    common.push("--setenv", "HOME", "/tmp/dotnet-home", "--setenv", "USER", "sandbox", "--setenv", "NUGET_PACKAGES", "/tmp/dotnet-home/.nuget/packages");
+    if (toolchainRoot) common.push("--setenv", "DOTNET_ROOT", "/toolchain/dotnet", "--setenv", "DOTNET_CLI_HOME", "/tmp/dotnet-home",
+      "--setenv", "DOTNET_PROCESSOR_COUNT", "2",
+      "--setenv", "DOTNET_CLI_TELEMETRY_OPTOUT", "1", "--setenv", "DOTNET_SKIP_FIRST_TIME_EXPERIENCE", "1",
+      "--setenv", "DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE", "1", "--setenv", "DOTNET_NOLOGO", "1",
+      "--setenv", "MSBuildEnableWorkloadResolver", "false");
+    // wsl.exe performs its own command-line expansion of `$VAR` before invoking Linux. Passing
+    // the evaluator script directly would silently erase shell variables on Windows. Transfer a
+    // base64 payload (alphabet-only) and decode it inside the isolated shell before execution.
+    const encodedScript = Buffer.from(String(script), "utf8").toString("base64");
+    const launcher = `printf '%s' '${encodedScript}' | /usr/bin/base64 -d > /tmp/galy-runner-script; exec /bin/sh -ceu 'exec /bin/sh -s < /tmp/galy-runner-script'`;
+    common.push("--", "/bin/sh", "-ceu", launcher);
+    const timeoutSeconds = Math.max(1, Math.ceil(timeoutMs / 1000));
+    const command = process.platform === "win32"
+      ? ["-d", "Ubuntu", "--", "/usr/bin/timeout", "--signal=KILL", String(timeoutSeconds), "/usr/bin/bwrap", ...common]
+      : ["--signal=KILL", String(timeoutSeconds), "/usr/bin/bwrap", ...common];
+    const executable = process.platform === "win32" ? "wsl.exe" : "/usr/bin/timeout";
+    if (signal?.aborted) die("sandbox_aborted");
+    return await new Promise((resolvePromise, rejectPromise) => {
+      let child; let settled = false; let output = ""; let outputBytes = 0;
+      let timer; let abortHandler;
+      const finish = (error, value = null) => {
+        if (settled) return;
+        settled = true; if (timer) clearTimeout(timer);
+        if (signal && abortHandler) signal.removeEventListener("abort", abortHandler);
+        if (error) rejectPromise(error); else resolvePromise(value);
+      };
+      const terminate = () => { try { child?.kill("SIGKILL"); } catch { /* already exited */ } };
+      const collect = chunk => {
+        const text = chunk.toString(); outputBytes += Buffer.byteLength(text, "utf8");
+        if (outputBytes > 1024 * 1024) { terminate(); finish(new Error("sandbox_output_limit_exceeded")); return; }
+        output += text;
+      };
+      try {
+        child = spawn(executable, command, { env: { ...process.env, GALY_REVIEW_FAKE_SECRET: "spec42-synthetic-canary" },
+          stdio: ["ignore", "pipe", "pipe"] });
+      } catch (error) { finish(error); return; }
+      child.stdout.on("data", collect); child.stderr.on("data", collect);
+      child.on("error", error => finish(error));
+      child.on("close", code => {
+        if (settled) return;
+        const trimmed = output.trim();
+        if (code === 124 || code === 137) { finish(new Error(`sandbox_timeout: ${timeoutMs}ms`)); return; }
+        if (trimmed.includes("spec42-synthetic-canary")) { finish(new Error("isolation_failed: inherited secret reached sandbox output")); return; }
+        if (code !== 0) { finish(new Error(`sandbox_failed: exit ${code}; ${trimmed.slice(0, 500)}`)); return; }
+        finish(null, trimmed);
+      });
+      timer = setTimeout(() => { terminate(); finish(new Error(`sandbox_timeout: ${timeoutMs}ms`)); }, timeoutMs);
+      abortHandler = () => { terminate(); finish(new Error("sandbox_aborted")); };
+      if (signal) signal.addEventListener("abort", abortHandler, { once: true });
     });
   } finally { rmSync(syntheticEtc, { recursive: true, force: true }); }
-  const output = `${result.stdout || ""}${result.stderr || ""}`;
-  if (result.error?.code === "ETIMEDOUT" || result.status === 124 || result.status === 137)
-    die(`sandbox_timeout: ${timeoutMs}ms`);
-  if (output.includes("spec42-synthetic-canary")) die("isolation_failed: inherited secret reached sandbox output");
-  if (result.status !== 0) die(`sandbox_failed: exit ${result.status}; ${output.slice(0, 500)}`);
-  return output.trim();
 }
-function sandboxRun(inputPath, script) { return sandboxRunMounts([["input", inputPath]], script); }
+function sandboxRun(inputPath, script, options = {}) { return sandboxRunMounts([["input", inputPath]], script, options); }
 function parseRequiredTools(value) {
   if (!value) return [];
   const tools = String(value).split(",").map(item => item.trim()).filter(Boolean);
@@ -333,11 +389,11 @@ function qualificationScript(requiredTools = []) {
     + 'if touch /input/.galy-runner-write-probe 2>/dev/null; then exit 22; fi;\n'
     + 'printf profile_probe_ok';
 }
-function qualifySandbox(root, requiredTools = [], toolchainRoot = null, timeoutMs = 120000) {
+async function qualifySandbox(root, requiredTools = [], toolchainRoot = null, timeoutMs = 120000) {
   const candidate = resolve(String(root || process.cwd()));
   const info = lstatSync(candidate, { throwIfNoEntry: false });
   if (!info?.isDirectory() || info.isSymbolicLink()) die("isolation_unavailable: invalid or linked profile root");
-  const output = sandboxRunMounts([["input", candidate]], qualificationScript(requiredTools), { toolchainRoot, timeoutMs });
+  const output = await sandboxRunMounts([["input", candidate]], qualificationScript(requiredTools), { toolchainRoot, timeoutMs });
   if (output !== "profile_probe_ok") die("isolation_unavailable: qualification probe returned an unexpected result");
   return output;
 }
@@ -347,7 +403,7 @@ async function qualifyProfile(args) {
   const toolchainVersion = args["toolchain-version"] || process.env.BUG_EVALUATION_TOOLCHAIN_VERSION || null;
   const timeoutSeconds = Number(args["sandbox-timeout-seconds"] || process.env.BUG_EVALUATION_SANDBOX_TIMEOUT_SECONDS || 120);
   if (!Number.isSafeInteger(timeoutSeconds) || timeoutSeconds < 1 || timeoutSeconds > 3600) die("invalid_sandbox_timeout");
-  const probe = qualifySandbox(args.root || process.cwd(), requiredTools, toolchainRoot, timeoutSeconds * 1000);
+  const probe = await qualifySandbox(args.root || process.cwd(), requiredTools, toolchainRoot, timeoutSeconds * 1000);
   const data = profileData(requiredTools, toolchainRoot, toolchainVersion, timeoutSeconds);
   const hash = sha256Buffer(Buffer.from(JSON.stringify(data), "utf8"));
   ensureDir(archiveRoot(args));
@@ -381,7 +437,7 @@ async function verifyProfileQualification(args, expectedHash, timeoutSeconds) {
     die("isolation_profile_mismatch");
   // Re-run the actual profile probe for this invocation. A caller cannot satisfy the hash by
   // merely declaring the same JSON or by copying a profile from another machine.
-  qualifySandbox(profileRoot, requiredTools, toolchainRoot, timeoutSeconds * 1000);
+  await qualifySandbox(profileRoot, requiredTools, toolchainRoot, timeoutSeconds * 1000);
   return computed;
 }
 async function verifySnapshotManifest(root, manifest) {
@@ -551,20 +607,21 @@ function oracleDescriptor(args) {
   if (!referenceInfo?.isDirectory() || referenceInfo.isSymbolicLink()) die("oracle_reference_root_required");
   return { ...value, referenceRoot, baselineExpectedExitCode: expectedBaselineExitCode };
 }
-function oracleCheck(mounts, script, toolchainRoot = null, timeoutMs = 120000) {
-  try { return { status: "passed", exitCode: 0, output: sandboxRunMounts(mounts, script, { toolchainRoot, timeoutMs }) }; }
+async function oracleCheck(mounts, script, toolchainRoot = null, timeoutMs = 120000, signal = null) {
+  try { return { status: "passed", exitCode: 0, output: await sandboxRunMounts(mounts, script, { toolchainRoot, timeoutMs, signal }) }; }
   catch (error) {
+    if (signal?.aborted) throw error;
     const message = journalError(error); const match = message.match(/sandbox_failed: exit (-?\d+)/);
     return { status: "failed", exitCode: match ? Number(match[1]) : null, error: message };
   }
 }
-function runLocalOracle(descriptor, snapshotRoot, workspace, toolchainRoot = null, timeoutMs = 120000) {
+async function runLocalOracle(descriptor, snapshotRoot, workspace, toolchainRoot = null, timeoutMs = 120000, signal = null) {
   // The same frozen script must exercise all three roots.  The selected root is always
   // mounted as /input; no variant-specific command or reference/candidate mount is exposed.
   const script = descriptor.script;
-  const baseline = oracleCheck([["input", snapshotRoot]], script, toolchainRoot, timeoutMs);
-  const reference = oracleCheck([["input", descriptor.referenceRoot]], script, toolchainRoot, timeoutMs);
-  const candidate = oracleCheck([["input", workspace]], script, toolchainRoot, timeoutMs);
+  const baseline = await oracleCheck([["input", snapshotRoot]], script, toolchainRoot, timeoutMs, signal);
+  const reference = await oracleCheck([["input", descriptor.referenceRoot]], script, toolchainRoot, timeoutMs, signal);
+  const candidate = await oracleCheck([["input", workspace]], script, toolchainRoot, timeoutMs, signal);
   const expectedBaselineExitCode = descriptor.baselineExpectedExitCode ?? 1;
   const status = baseline.status === "failed" && baseline.exitCode === expectedBaselineExitCode
     && reference.status === "passed" && candidate.status === "passed" ? "passed" : "failed";
@@ -621,7 +678,7 @@ function adapterAttemptKey(namespace, runId, role, attemptNumber) {
   return `bg-bug-evaluation-${namespace}-${runId}-${role}-${attemptNumber}`;
 }
 function attemptJournalPath(runPath, role, attemptNumber) {
-  if (!/^[a-z]+$/.test(role) || !Number.isInteger(attemptNumber) || attemptNumber < 1 || attemptNumber > 10)
+  if (!/^[a-z]+$/.test(role) || !Number.isInteger(attemptNumber) || attemptNumber < 1 || attemptNumber > MAX_ATTEMPT_NUMBER)
     die("invalid_attempt_journal");
   const path = join(runPath, "attempts", `${role}-${attemptNumber}.json`);
   if (!under(runPath, path)) die("invalid_archive_path");
@@ -757,8 +814,8 @@ class FixtureAdapter {
   async analyze() { return { diagnosis: "fixture: bug.txt contains the failing baseline marker" }; }
   async solve() { return { changes: [{ path: "bug.txt", content: "fixed\n" }] }; }
   async oracle({ snapshotRoot, workspace }) {
-    const baseline = sandboxRun(snapshotRoot, "test \"${GALY_REVIEW_FAKE_SECRET-}\" = \"\"; grep -qx bad /input/bug.txt; printf baseline_failed");
-    const reference = sandboxRun(workspace, "test \"${GALY_REVIEW_FAKE_SECRET-}\" = \"\"; grep -qx fixed /input/bug.txt; printf reference_passed");
+    const baseline = await sandboxRun(snapshotRoot, "test \"${GALY_REVIEW_FAKE_SECRET-}\" = \"\"; grep -qx bad /input/bug.txt; printf baseline_failed");
+    const reference = await sandboxRun(workspace, "test \"${GALY_REVIEW_FAKE_SECRET-}\" = \"\"; grep -qx fixed /input/bug.txt; printf reference_passed");
     return { status: "passed", baseline, reference };
   }
   async judge({ oracle }) { return { oracleStatus: oracle.status, criteria: { behavior: true, regression: true, edge_cases: true, tests: true, maintenance: true } }; }
@@ -1129,7 +1186,7 @@ async function selfTest(args) {
   const profile = await qualifyProfile(args);
   const snapshot = await snapshotCreate({ ...args, root: fixtureRoot });
   const runPath = snapshot.archivePath;
-  const baseline = sandboxRun(snapshot.snapshotPath, "test \"${GALY_REVIEW_FAKE_SECRET-}\" = \"\"; grep -qx bad /input/bug.txt; printf baseline_failed");
+  const baseline = await sandboxRun(snapshot.snapshotPath, "test \"${GALY_REVIEW_FAKE_SECRET-}\" = \"\"; grep -qx bad /input/bug.txt; printf baseline_failed");
   const adapter = new FixtureAdapter();
   const analysis = await adapter.analyze({ snapshotHash: snapshot.snapshotHash });
   const patch = strictPatch(await adapter.solve({ diagnosis: analysis.diagnosis }));
@@ -1214,6 +1271,7 @@ async function execute(args) {
       if (controlState.reason === "heartbeat_failed") die(`run_heartbeat_failed: ${controlState.error || "lease unavailable"}`);
       if (controlState.reason === "provider_usage_unknown") die("provider_usage_unreported");
       if (controlState.reason === "provider_cost_unknown") die("provider_cost_unreported_before_next_step");
+      if (controlState.reason === "budget_exhausted") { abortController.abort(); die("budget_exhausted"); }
       if (cancelFile && existsSync(resolve(String(cancelFile)))) {
         controlState = { reason: "canceled" }; abortController.abort(); die("run_canceled");
       }
@@ -1366,8 +1424,8 @@ async function execute(args) {
     }
     const oracle = prior.phase && ["oracled", "judged", "published", "completed", "evaluation_incomplete"].includes(prior.phase)
       ? reportState.oracle
-      : oracleConfig ? runLocalOracle(oracleConfig, root, workspace,
-          args["toolchain-root"] || process.env.BUG_EVALUATION_TOOLCHAIN_ROOT || null, sandboxTimeoutSeconds * 1000)
+      : oracleConfig ? await runLocalOracle(oracleConfig, root, workspace,
+          args["toolchain-root"] || process.env.BUG_EVALUATION_TOOLCHAIN_ROOT || null, sandboxTimeoutSeconds * 1000, abortController.signal)
         : oracleAdapter.adapter instanceof FixtureAdapter
           ? await invokeRole(oracleAdapter.adapter, "oracle", { snapshotRoot: root, workspace }, 1, null, true)
           : args["allow-remote-oracle"] === true
@@ -1481,7 +1539,7 @@ async function verifyOracle(args) {
   }
   const timeoutSeconds = Number(args["sandbox-timeout-seconds"] || process.env.BUG_EVALUATION_SANDBOX_TIMEOUT_SECONDS || 120);
   if (!Number.isSafeInteger(timeoutSeconds) || timeoutSeconds < 1 || timeoutSeconds > 3600) die("invalid_sandbox_timeout");
-  const result = runLocalOracle(descriptor, snapshotRoot, candidateRoot,
+  const result = await runLocalOracle(descriptor, snapshotRoot, candidateRoot,
     args["toolchain-root"] || process.env.BUG_EVALUATION_TOOLCHAIN_ROOT || null, timeoutSeconds * 1000);
   print({ protocol: descriptor.protocol, status: result.status, baseline: result.baseline.status,
     reference: result.reference.status, candidate: result.candidate.status,
@@ -1508,7 +1566,7 @@ async function settleAttempt(args) {
   const workerId = Number(args["worker-id"] || process.env.BUG_EVALUATION_WORKER_ID);
   const generation = Number(args["lease-generation"] || process.env.BUG_EVALUATION_LEASE_GENERATION);
   if (!Number.isSafeInteger(runId) || runId <= 0) die("run_id_required");
-  if (!Number.isSafeInteger(attemptNumber) || attemptNumber < 1 || attemptNumber > 10) die("attempt_number_required");
+  if (!Number.isSafeInteger(attemptNumber) || attemptNumber < 1 || attemptNumber > MAX_ATTEMPT_NUMBER) die("attempt_number_required");
   if (!Number.isSafeInteger(revision) || revision < 1 || revision > 100) die("protocol_revision_invalid");
   if (!["analyst", "solver", "judge"].includes(role)) die("attempt_role_required");
   if (!Number.isInteger(workerId) || workerId <= 0 || !Number.isInteger(generation) || generation <= 0)
@@ -1710,7 +1768,47 @@ function humanReviewProjection(runPath, report) {
 }
 async function inspectRun(args) {
   const id = String(args["run-id"] || args._[0] || ""); if (!id || !/^[A-Za-z0-9-]+$/.test(id)) die("run_id_required");
-  const path = join(archiveRoot(args), id); if (!under(archiveRoot(args), path) || !existsSync(path)) die("run_not_found");
+  const namespaceValue = args.namespace || args["workspace-namespace"] || process.env.BUG_EVALUATION_WORKSPACE_NAMESPACE;
+  const root = archiveRoot(args);
+  const rootInfo = lstatSync(root, { throwIfNoEntry: false });
+  if (!rootInfo?.isDirectory() || rootInfo.isSymbolicLink()) die("run_not_found");
+  let path;
+  if (namespaceValue) {
+    const namespace = String(namespaceValue).trim().toLowerCase();
+    if (!/^[0-9a-f]{24}$/.test(namespace)) die("inspect_namespace_invalid");
+    const namespaceRoot = join(root, namespace);
+    path = join(namespaceRoot, id);
+    if (!under(root, namespaceRoot) || !under(namespaceRoot, path) || !existsSync(path)) die("run_not_found");
+  } else {
+    const endpoint = args.endpoint || process.env.GALY_ENDPOINT;
+    const tenant = args.tenant || args["tenant-slug"] || args["workspace-id"] || process.env.BUG_EVALUATION_WORKSPACE_ID;
+    if (endpoint && tenant) {
+      const namespace = workspaceNamespace(String(endpoint), { TenantSlug: tenant }, args);
+      const namespaceRoot = join(root, namespace);
+      path = join(namespaceRoot, id);
+      if (!under(root, namespaceRoot) || !under(namespaceRoot, path) || !existsSync(path)) die("run_not_found");
+    } else {
+      // Keep legacy direct archives inspectable while preventing a numeric RunId from silently
+      // selecting the wrong tenant when several namespace-scoped archives exist.
+      const candidates = [];
+      const direct = join(root, id);
+      const directInfo = lstatSync(direct, { throwIfNoEntry: false });
+      if (directInfo?.isDirectory() && !directInfo.isSymbolicLink()) candidates.push(direct);
+      for (const name of readdirSync(root)) {
+        if (!/^[0-9a-f]{24}$/.test(name)) continue;
+        const namespaceRoot = join(root, name);
+        const namespaceInfo = lstatSync(namespaceRoot, { throwIfNoEntry: false });
+        if (!namespaceInfo?.isDirectory() || namespaceInfo.isSymbolicLink()) continue;
+        const candidate = join(namespaceRoot, id);
+        const candidateInfo = lstatSync(candidate, { throwIfNoEntry: false });
+        if (candidateInfo?.isDirectory() && !candidateInfo.isSymbolicLink()) candidates.push(candidate);
+      }
+      if (candidates.length !== 1) die(candidates.length > 1
+        ? "inspect_namespace_required: run id exists in multiple workspace namespaces"
+        : "run_not_found");
+      path = candidates[0];
+    }
+  }
   if (args.human === true || args["human-review"] === true) {
     const reportPath = join(path, "report.json");
     if (!existsSync(reportPath)) die("human_review_report_missing");
@@ -1762,7 +1860,7 @@ const HELP = `bg bug-evaluation — local, isolated runner
   bg bug-evaluation profile qualify       qualify the bwrap/WSL profile and print its hash
   bg bug-evaluation can-run               report whether the local sandbox is available
   bg bug-evaluation snapshot create       snapshot --root <workspace> with exclusions and a 2 GiB preflight
-  bg bug-evaluation inspect --run-id <id> inspect the archive linked to one run id
+  bg bug-evaluation inspect --run-id <id> [--namespace <24-hex>] inspect one archive run; an unambiguous local match is accepted
   bg bug-evaluation purge                 purge local archives after 180 days
   bg bug-evaluation oracle verify         run one shared baseline/reference/candidate oracle script in the sandbox
   bg bug-evaluation run self-test         execute fixture analyst → solver → oracle → judge with no billing
@@ -1792,7 +1890,8 @@ export async function runCli(argv) {
     const toolchainRoot = args["toolchain-root"] || process.env.BUG_EVALUATION_TOOLCHAIN_ROOT || null;
     const timeoutSeconds = Number(args["sandbox-timeout-seconds"] || process.env.BUG_EVALUATION_SANDBOX_TIMEOUT_SECONDS || 120);
     if (!Number.isSafeInteger(timeoutSeconds) || timeoutSeconds < 1 || timeoutSeconds > 3600) die("invalid_sandbox_timeout");
-    const qualified = bwrapAvailable() && (() => { qualifySandbox(args.root || process.cwd(), requiredTools, toolchainRoot, timeoutSeconds * 1000); return true; })();
+    let qualified = false;
+    if (await bwrapAvailable()) { await qualifySandbox(args.root || process.cwd(), requiredTools, toolchainRoot, timeoutSeconds * 1000); qualified = true; }
     const toolchainVersion = args["toolchain-version"] || process.env.BUG_EVALUATION_TOOLCHAIN_VERSION || null;
     return print({ qualified, profileVersion: profileData(requiredTools, toolchainRoot, toolchainVersion, timeoutSeconds).profileVersion, requiredTools,
       toolchainConfigured: Boolean(toolchainRoot) });

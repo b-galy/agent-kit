@@ -40,5 +40,15 @@ jobs:
           # serait le seul script publie que rien ne lit avant un poste de client.
           for hook in galy/hooks/*.mjs; do node --check "$hook"; done
 
+      - name: Le bac bwrap est obligatoire pour les contrats d'isolation
+        run: |
+          if ! command -v bwrap >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y bubblewrap
+          fi
+          bwrap --version
+
       - name: Le runner bug-evaluation rejoue ses contrats
+        env:
+          GALY_BUG_EVALUATION_REQUIRE_SANDBOX: "1"
         run: npm run test:bug-evaluation --prefix galy
