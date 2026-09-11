@@ -1,5 +1,5 @@
 {
-  "description": "Galy — hold the door on the one file every session pays for, keep the row under the prompt on this working copy's own work, ask once when a pull request leaves no trace, and once when a merge leaves the working copy on its branch.",
+  "description": "Galy — hold the door on the one file every session pays for, keep the row under the prompt on this working copy's own work and empty it when the session ends, ask once when a pull request leaves no trace, and once when a merge leaves the working copy on its branch.",
   "hooks": {
     "PreToolUse": [
       {
@@ -36,6 +36,17 @@
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/slot-given-back.mjs\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/bg-work.mjs\"",
             "timeout": 5
           }
         ]

@@ -40,6 +40,12 @@ jobs:
           # serait le seul script publie que rien ne lit avant un poste de client.
           for hook in galy/hooks/*.mjs; do node --check "$hook"; done
 
+      # La ligne sous le prompt et le hook qui l'alimente, rejoués ensemble sur un banc
+      # d'essai en dossier temporaire : aucun réseau, aucune ligne de développeur touchée.
+      # Ces contrats existaient sans être joués nulle part, donc sans rien garantir.
+      - name: La ligne sous le prompt rejoue ses contrats
+        run: npm run check:statusline
+
       - name: Le bac bwrap est obligatoire pour les contrats d'isolation
         run: |
           if ! command -v bwrap >/dev/null 2>&1; then

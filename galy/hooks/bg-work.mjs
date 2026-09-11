@@ -12,6 +12,12 @@
 // marks nothing: a session that opens spec 9 to answer a question is not working on it,
 // and a row that said otherwise would be back to naming things nobody asked about.
 //
+// And a copy lets go of everything when the session ends. What it has in hand is what the
+// session working in it took up; the same copy reopened tomorrow, on another subject, has
+// nothing in hand, and a row still naming yesterday's spec is read as today's — the one
+// mistake this file exists to prevent. The horizon the row applies is the backstop for a
+// session that never got to say goodbye, not the rule.
+//
 // It runs after every call to the workspace and must never make one fail: it writes a
 // small file, says nothing, and exits 0 whatever happens.
 
@@ -92,7 +98,24 @@ function keepOutOfGit(root, file) {
   } catch { /* outside a repository, or no git on the path: the file stays, unlisted */ }
 }
 
+// A session ends and takes its work with it: the file is emptied, and the next claim fills
+// it again. Emptied, never removed — a row drawn elsewhere is redrawn because this file has
+// become newer than the cache holding it, and a file that is gone never becomes newer than
+// anything. The row would then outlive the session for good, which is exactly what ends here.
+function letGoOfEverything(cwd) {
+  const root = workingCopyRoot(cwd || process.cwd());
+  if (!root) return;
+  const file = join(root, ".bg", "work.json");
+  if (!existsSync(file)) return;                    // a copy that claimed nothing has nothing to let go of
+  writeFileSync(file, JSON.stringify({ specs: [], briefs: [] }, null, 2) + "\n", "utf8");
+  keepOutOfGit(root, file);
+}
+
 function main(event) {
+  // Every way a session ends is one: the window closed, `/clear` typed, the account logged
+  // out. Each leaves a working copy that the next prompt may open on something else.
+  if (event.hook_event_name === "SessionEnd") return letGoOfEverything(event.cwd);
+
   const called = String(event.tool_name || "");
   const names = { ...CLAIMS, ...RELEASES };
   // The server is registered under an alias the user chose, so the prefix is not known
