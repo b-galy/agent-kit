@@ -52,14 +52,17 @@ jobs:
         env:
           GALY_BUG_EVALUATION_REQUIRE_SANDBOX: "1"
         run: |
-          # GitHub-hosted Ubuntu denies RTM_NEWADDR to the unprivileged runner user. Grant the
-          # ephemeral bwrap binary only the capability needed to configure its own empty net
-          # namespace, then run the test as the normal checkout user so private synthetic files
-          # remain readable after bwrap's user remapping.
-          if ! command -v setcap >/dev/null 2>&1; then
-            sudo apt-get update
-            sudo apt-get install -y libcap2-bin
+          # Ubuntu's AppArmor user-namespace restriction blocks bwrap's loopback setup with
+          # RTM_NEWADDR. This is an ephemeral GitHub VM: temporarily relax only that kernel
+          # switch, keep the test as the normal checkout user, and restore the exact value even
+          # when the test fails. File capabilities are deliberately not used because bwrap
+          # rejects them unless installed setuid.
+          apparmor_key=kernel.apparmor_restrict_unprivileged_userns
+          if apparmor_value="$(sudo sysctl -n "$apparmor_key" 2>/dev/null)"; then
+            echo "$apparmor_key before=$apparmor_value"
+            sudo sysctl -w "$apparmor_key=0"
+            trap 'sudo sysctl -w "$apparmor_key=$apparmor_value"' EXIT
+          else
+            echo "$apparmor_key is unavailable; continuing with the host sandbox policy"
           fi
-          sudo setcap cap_net_admin+ep "$(command -v bwrap)"
-          getcap "$(command -v bwrap)"
           npm run test:bug-evaluation --prefix galy
