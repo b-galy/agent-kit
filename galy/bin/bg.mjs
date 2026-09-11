@@ -168,12 +168,17 @@ const HELP = `bg — Galy project-management CLI
   bg spec <id>                      # a spec with its phases, risks, acceptance tests
   bg content pull <type> <id>       # type = feature-brief | feature-spec
   bg content push <type> <id>
+  bg bug-evaluation help              # local isolated bug-evaluation runner
 
 Config: env GALY_ENDPOINT / GALY_TOKEN, or .bg/config.json { "endpoint", "token" }.
 Galy never sees your code — this CLI only carries work items and their text.`;
 
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
+  if (cmd === "bug-evaluation") {
+    const runner = await import("./bug-evaluation-runner.mjs");
+    return runner.runCli(rest);
+  }
   const args = parseArgs(rest);
   switch (cmd) {
     case "search": return cmdSearch(args);

@@ -34,7 +34,11 @@ jobs:
         run: |
           node --check setup/setup.mjs
           node --check galy/bin/bg.mjs
+          node --check galy/bin/bug-evaluation-runner.mjs
           node --check scripts/validate.mjs
           # Les hooks par le motif, jamais par la liste : un hook ajoute sans etre ajoute ici
           # serait le seul script publie que rien ne lit avant un poste de client.
           for hook in galy/hooks/*.mjs; do node --check "$hook"; done
+
+      - name: Le runner bug-evaluation rejoue ses contrats
+        run: npm run test:bug-evaluation --prefix galy

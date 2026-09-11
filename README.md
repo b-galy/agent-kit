@@ -20,6 +20,40 @@ This is the core guarantee, enforced end to end:
 
 You are connecting *your assistant* to *your Galy workspace* — not giving Galy access to your repository.
 
+## Local bug evaluation runner
+
+The plugin ships the portable `bg bug-evaluation` command. It qualifies a Linux bubblewrap profile,
+creates a content-addressed local snapshot, polls and claims a server run, and keeps reports, patches
+and prompts in the workstation archive. The server receives only the typed run contract and opaque
+hashes. Use `bg bug-evaluation run self-test` for the controlled analyst → solver → oracle → judge
+qualification; it makes no model or billing request. Real runs use a named provider adapter
+(`openai` Responses API or `anthropic` Messages API; `--adapter <name>`) whose model, harness and
+effort identity must match the server contract. Unknown providers and harnesses are refused, and
+the fixture adapter is accepted only by the self-test path.
+Real runs also require an evaluator-owned `bug-evaluation-oracle-v1` JSON descriptor containing one
+shared shell check and a local reference root. The runner mounts each fresh baseline, reference and
+candidate root as `/input` and executes that exact check inside the qualified read-only bubblewrap
+sandbox; variant-specific commands and reference/candidate mounts are refused.
+A remote oracle is available only for explicit adapter qualification with `--allow-remote-oracle`.
+Each provider request is journaled before dispatch with a stable workspace/run/role identity and
+idempotency key. A `requesting` or `unknown` journal is reconciled by the adapter before any retry;
+an unresolved billable request stays recoverable and is never dispatched a second time. When a
+provider supplies its receipt later, `bg bug-evaluation run settle` attaches the immutable amount,
+currency, cost basis and pricing version to that same attempt without another provider request.
+
+Snapshots exclude Git history, caches, instruction files, secrets and links. Archive retention is 180
+days by default, with preflight limits of 2 GiB per snapshot, 20 MiB per patch, 50 MiB per log and a
+4 GiB local archive. Every published run requires a frozen `IsolationProfileHash`, an explicit
+`--profile-file` and `--profile-root`; the runner re-runs the qualification probe before any model
+call. Production Galy endpoints require an explicit `--allow-production` after the approved budget
+and worker are ready; otherwise point a qualification at a disposable local or staging endpoint.
+Keep `GALY_TOKEN` in the process environment. `bg bug-evaluation inspect --human` emits a separate
+opaque reviewer projection without model, configuration, verdict or billing fields, and
+`bg bug-evaluation rejudge` approves (or reuses `--protocol-revision`) and executes one judge-only
+protocol against the existing final archive. It records a new attempt/evaluation revision without
+rerunning analysis or solver work; pass the approved worker and lease generation for publication.
+Use `--approve-only` when preparing a protocol without executing its judge.
+
 ## Install
 
 ### Option A — one command (recommended)
