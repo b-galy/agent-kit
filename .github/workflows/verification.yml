@@ -51,4 +51,9 @@ jobs:
       - name: Le runner bug-evaluation rejoue ses contrats
         env:
           GALY_BUG_EVALUATION_REQUIRE_SANDBOX: "1"
-        run: npm run test:bug-evaluation --prefix galy
+        run: |
+          # GitHub-hosted Ubuntu denies RTM_NEWADDR to the unprivileged runner user even
+          # though bubblewrap is installed. Root here is the ephemeral job VM, so preserve the
+          # exact command and environment while letting bwrap create its isolated net namespace.
+          npm_bin="$(command -v npm)"
+          sudo -E "$npm_bin" run test:bug-evaluation --prefix galy
