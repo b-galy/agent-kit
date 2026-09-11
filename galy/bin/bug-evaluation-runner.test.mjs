@@ -140,6 +140,33 @@ assert.equal(projection.preSolutionNeed.description, "need");
 assert.doesNotMatch(JSON.stringify(projection), /ANALYST_TRAJECTORY_MODEL_CANARY/);
 await assert.rejects(() => runCli(["run", "execute", "--adapter", "fixture"]), /fixture_adapter_only_for_controlled_self_test/);
 
+// The public bg entry point accepts both `inspect <run-id>` and `--run-id`.
+// The command token must never be passed to inspectRun as a positional id.
+const inspectCliArchive = join(root, "inspect-cli-archive");
+const inspectCliPath = join(inspectCliArchive, "123");
+mkdirSync(inspectCliPath, { recursive: true });
+writeFileSync(join(inspectCliPath, "report.json"), JSON.stringify({
+  finalArtifactHash: "a".repeat(64), preSolutionNeed: { description: "synthetic review need" },
+  contract: { model: "private-model", cost: "private-cost" }, analysis: { diagnosis: "private-analysis" },
+  judge: { score: 100 }
+}));
+const positionalInspect = result("inspect", "123", "--human", "--archive", inspectCliArchive);
+assert.equal(positionalInspect.preSolutionNeed.description, "synthetic review need");
+const optionInspect = result("inspect", "--run-id", "123", "--human", "--archive", inspectCliArchive);
+assert.deepEqual(optionInspect, positionalInspect);
+assert.doesNotMatch(JSON.stringify(positionalInspect), /private-model|private-cost|private-analysis/);
+
+// An id shared by two namespaces must still be refused without a workspace hint.
+const ambiguousCliArchive = join(root, "inspect-cli-ambiguous");
+for (const namespace of ["1".repeat(24), "2".repeat(24)]) {
+  const candidate = join(ambiguousCliArchive, namespace, "123");
+  mkdirSync(candidate, { recursive: true });
+  writeFileSync(join(candidate, "manifest.json"), "{}\n");
+}
+const ambiguousPositionalInspect = cli("inspect", "123", "--archive", ambiguousCliArchive);
+assert.notEqual(ambiguousPositionalInspect.status, 0);
+assert.match(ambiguousPositionalInspect.stderr, /inspect_namespace_required/);
+
 const mcpMethods = [];
 globalThis.fetch = async (_url, options) => {
   const request = JSON.parse(options.body); mcpMethods.push(request.method === "tools/call" ? request.params.name : request.method);

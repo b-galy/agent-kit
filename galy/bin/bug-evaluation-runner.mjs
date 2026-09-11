@@ -1897,7 +1897,10 @@ export async function runCli(argv) {
       toolchainConfigured: Boolean(toolchainRoot) });
   }
   if (command === "snapshot" && action === "create") return print(await snapshotCreate(args));
-  if (command === "inspect") return inspectRun(args);
+  // `args._[0]` is the runner command itself. Forward only business
+  // positionals so `inspect <run-id>` is interpreted by inspectRun as the id,
+  // while option-form `inspect --run-id <id>` keeps using the named option.
+  if (command === "inspect") return inspectRun({ ...args, _: args._.slice(1) });
   if (command === "purge") return purge(args);
   if (command === "oracle" && action === "verify") return verifyOracle(args);
   if (command === "run" && action === "self-test") return selfTest(args);
