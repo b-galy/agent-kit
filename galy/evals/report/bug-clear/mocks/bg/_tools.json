@@ -1,0 +1,7 @@
+{
+  "tools": [
+    {"name":"whoami","description":"Return the authenticated user and workspace.","inputSchema":{"type":"object","properties":{}}},
+    {"name":"pm_search","description":"Search briefs, specs and tickets by title or identifier.","inputSchema":{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}},
+    {"name":"bug_create","description":"Create one defect or feature ticket and return its id.","inputSchema":{"type":"object","properties":{"ticket_type":{"type":"string","enum":["bug","feature"]},"title":{"type":"string","maxLength":255},"description_md":{"type":"string"},"severity":{"type":"string"},"feature_brief_id":{"type":"integer"},"source":{"type":"string"}},"required":["title"]}}
+  ]
+}
