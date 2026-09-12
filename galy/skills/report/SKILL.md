@@ -12,7 +12,7 @@ workspace.
 
 ## Where the report lands
 
-1. Call `mcp__bg__whoami` first. Use the authenticated workspace and the current connected
+1. Call `whoami` first. Use the authenticated workspace and the current connected
    instance as the destination. Never guess a workspace address, ask the person to choose a
    tenant, or hard-code an instance host.
 2. Keep the person's original wording exactly. The report may be clarified and structured, but
@@ -61,7 +61,7 @@ question: use `minor` for a bug unless the wording clearly supplies another supp
 
 As soon as there is enough information for a useful title, make a concise title without losing
 the original wording and run `pm_search` on the title's meaningful words before creating anything.
-Use the matching `mcp__bg__pm_search` tool exposed by the connected server. Look for an open,
+Use the matching `pm_search` tool exposed by the connected server. Look for an open,
 close ticket, not merely a similarly worded brief. If an obvious brief is the subject of the
 request, retain its id for `feature_brief_id`.
 
@@ -73,7 +73,7 @@ Use the existing ticket's id for the final ticket link.
 
 ## Create
 
-Create exactly one ticket when no duplicate was confirmed. Call `mcp__bg__bug_create` once with:
+Create exactly one ticket when no duplicate was confirmed. Call `bug_create` once with:
 
 - `ticket_type = "bug"` for a defect, or `ticket_type = "feature"` for an improvement;
 - a human title of **255 characters or fewer**. The server refuses a longer title; never pass a
@@ -142,11 +142,11 @@ context. Let `feature-brief` own the brief, its objective, and its follow-up.
 When the person asks “What happened to my report?” or an equivalent question, identify the ticket
 id from their link or ask for that id only in this follow-up path. Do not start a new report.
 
-1. Call `mcp__bg__bug_get(id=<id>)` for the ticket.
-2. Call `mcp__bg__discussion_read(entity_type="bug", entity_id=<id>)` for the ticket's
+1. Call `bug_get(id=<id>)` for the ticket.
+2. Call `discussion_read(entity_type="bug", entity_id=<id>)` for the ticket's
    discussion. Use the same id returned from the link; do not retry a successful read.
 3. If `is_awaiting_feedback` is true, show the latest question from the ticket's latest message,
-   ask for the answer, then post that answer with `mcp__bg__discussion_post`. If the person's
+   ask for the answer, then post that answer with `discussion_post`. If the person's
    current message already contains the answer, post it immediately instead of asking again. Do
    not create a second ticket. Use `entity_type="bug"`, `entity_id=<id>`, `body_md=<answer>`, and
    `author_kind="agent"` for that post. When a post succeeds, read the ticket and discussion once
