@@ -1,0 +1,5 @@
+{
+  "tools": [
+    {"name":"whoami","description":"Return the authenticated user and workspace.","inputSchema":{"type":"object","properties":{}}}
+  ]
+}

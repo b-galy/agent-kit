@@ -31,6 +31,8 @@ in disguise.** Count the verbs, say what they operate on — business entities, 
 If the team reaches this repository's own Galy through the MCP you are speaking to right now,
 that counts, and you may say so.
 
+Users have a door when the domain is reachable through a typed action their agent can perform.
+
 ## `scheduled_loop_fixes`
 
 A loop that runs with nobody watching, fixes anomalies, and reports **even when it did nothing**

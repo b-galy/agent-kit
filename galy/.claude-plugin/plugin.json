@@ -1,5 +1,6 @@
 {
   "name": "bg",
+  "version": "1.1.0",
   "description": "B.Galy project-management kit, invoked as /bg:<skill>: read the strategy, briefs and specs you manage in Galy, then plan, implement and ship inside your own repository. Galy never sees your code.",
   "author": {
     "name": "B.Galy"
