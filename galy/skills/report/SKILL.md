@@ -78,6 +78,13 @@ Create exactly one ticket when no duplicate was confirmed. Use the server's form
 skill and the intake API share one rule for title, severity, brief and description. Call
 `bug_create` once with:
 
+Before this call, inspect the `bug_create` schema actually exposed by this session's `tools/list`.
+This is a hard capability gate, not a source-code or health-endpoint inference: use the formatted
+path only when both `format` and `text` are exposed. If either field is absent, do not send
+unsupported arguments, do not call `bug_create` with `format=true`, and do not claim that the
+server formatter is available. Stop with a concise discovery-blocker message and preserve the raw
+report for a retry after the session's MCP discovery has been refreshed.
+
 - `ticket_type = "bug"` for a defect, or `ticket_type = "feature"` for an improvement;
 - `text` containing the person's original wording exactly, followed by only the context that was
   collected or observed during this flow;
@@ -148,8 +155,10 @@ id from their link or ask for that id only in this follow-up path. Do not start 
 ## Discipline
 
 - Ask no more than three questions in one report flow, and skip questions already answered.
-- Call `bug_create` at most once, and never after a confirmed duplicate. When creating, use
-  `format=true` with raw `text`; let the server propose the structured fields.
+- Call `bug_create` at most once, and never after a confirmed duplicate. When the current session
+  exposes both formatter fields, use `format=true` with raw `text`; let the server propose the
+  structured fields. Never infer capability from another session, a source checkout, or a health
+  endpoint.
 - Use only existing verbs: `whoami`, `pm_search`, `bug_create`, `discussion_post`, `bug_get`,
   `discussion_read`, and `domain_suggest` when it is already exposed. Never add a verb or edit
   `contract/pm-v1.json` for this skill.
