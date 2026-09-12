@@ -2,6 +2,6 @@
   "tools": [
     {"name":"whoami","description":"Return the authenticated user and workspace.","inputSchema":{"type":"object","properties":{}}},
     {"name":"pm_search","description":"Search briefs, specs and tickets by title or identifier.","inputSchema":{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}},
-    {"name":"bug_create","description":"Create one defect or feature ticket and return its id.","inputSchema":{"type":"object","properties":{"ticket_type":{"type":"string","enum":["bug","feature"]},"title":{"type":"string","maxLength":255},"description_md":{"type":"string"},"severity":{"type":"string"},"feature_brief_id":{"type":"integer"},"source":{"type":"string"}},"required":["title"]}}
+    {"name":"bug_create","description":"File a defect or feature. Set format to true to let the server structure raw text and propose the title, severity and brief.","inputSchema":{"type":"object","properties":{"ticket_type":{"type":"string","enum":["bug","feature"]},"title":{"type":"string","maxLength":255},"description_md":{"type":"string"},"technical_detail_md":{"type":"string"},"severity":{"type":"string"},"feature_brief_id":{"type":"integer"},"feature_spec_id":{"type":"integer"},"source":{"type":"string"},"text":{"type":"string"},"format":{"type":"boolean"}},"required":[]}}
   ]
 }
