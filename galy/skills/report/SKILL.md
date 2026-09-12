@@ -52,18 +52,19 @@ For an improvement, collect only what is missing:
 1. **Who would benefit from this?**
 2. **What gain should it create over what happens today?**
 
-The answers become the three description sections below. A bug uses the page, command, or error
-already visible to the agent where available. An improvement's second answer supplies both the
-gain and the current situation when the person gives them together. Do not add a severity
-question: use `minor` for a bug unless the wording clearly supplies another supported severity.
+The answers become context in the raw text sent to the server formatter. A bug uses the page,
+command, or error already visible to the agent where available. An improvement's second answer
+supplies both the gain and the current situation when the person gives them together. Do not add a
+severity question: the server proposes severity from the report.
 
 ## Duplicates first
 
-As soon as there is enough information for a useful title, make a concise title without losing
-the original wording and run `pm_search` on the title's meaningful words before creating anything.
-Use the matching `pm_search` tool exposed by the connected server. Look for an open,
-close ticket, not merely a similarly worded brief. If an obvious brief is the subject of the
-request, retain its id for `feature_brief_id`.
+As soon as there is enough information for useful search terms, derive concise terms without
+losing the original wording and run `pm_search` on them before creating anything. Use the matching
+`pm_search` tool exposed by the connected server. Look for an open or recently closed ticket, not
+merely a similarly worded brief. The search terms are only for duplicate detection: do not turn
+them into a local title or pass a locally chosen severity or `feature_brief_id` to the formatted
+create path; the server proposes those values.
 
 If an open ticket is a genuine match, show its title and ask **“Is it this one?”**. This
 confirmation counts against the three-question budget. On **yes**, call `discussion_post` for
@@ -73,57 +74,37 @@ Use the existing ticket's id for the final ticket link.
 
 ## Create
 
-Create exactly one ticket when no duplicate was confirmed. Call `bug_create` once with:
+Create exactly one ticket when no duplicate was confirmed. Use the server's formatter so this
+skill and the intake API share one rule for title, severity, brief and description. Call
+`bug_create` once with:
 
 - `ticket_type = "bug"` for a defect, or `ticket_type = "feature"` for an improvement;
-- a human title of **255 characters or fewer**. The server refuses a longer title; never pass a
-  mechanically truncated title. Rewrite it semantically if it needs shortening;
-- `description_md` in exactly the relevant three sections, followed by the unchanged original
-  wording;
-- `source = "mcp"`;
-- `severity = "minor"` (or another supported severity already evident in the wording) **only for
-  a bug**. Never send `severity` for an improvement;
-- `feature_brief_id` only when `pm_search` found an obviously matching brief;
-- use `domain_suggest` only if that existing server verb is exposed, and only with its returned
-  suggestion. It is optional and does not justify changing `contract/pm-v1.json`.
+- `text` containing the person's original wording exactly, followed by only the context that was
+  collected or observed during this flow;
+- `format = true`;
+- `source = "mcp"`.
 
-For a bug, write:
+Do not send a locally invented `title`, `description_md`, `severity`, or `feature_brief_id` on this
+formatted path. Do not recreate the `Steps / Expected / Observed` or `Who / Gain / Today` template:
+the server writes the structured description and preserves the original wording. Do not invent
+missing facts in the text. `domain_suggest` remains optional and is used only when that existing
+server verb is exposed with a returned suggestion; it does not justify changing
+`contract/pm-v1.json`.
 
-```md
-## Steps
-<what was done, including where>
+The formatted response includes the created `bug` proposal and `is_formatted`. Acknowledge the
+returned proposal in one short line, using only fields the server returned (for example, its title,
+severity, and brief when present). If `is_formatted` is false, say that the server retained the
+raw report instead of claiming a local format. Then render the ticket link as the final line.
 
-## Expected
-<what should have happened>
-
-## Observed
-<what happened instead, including the visible error>
-
-_Original wording:_ <the exact words supplied by the person>
-```
-
-For an improvement, write:
-
-```md
-## Who
-<the people who would benefit>
-
-## Gain
-<the desired benefit>
-
-## Today
-<what happens today>
-
-_Original wording:_ <the exact words supplied by the person>
-```
-
-Do not invent reproduction steps, outcomes, users, or benefits. Use “not provided” in a section
-when the person did not provide it and the three-question budget is spent.
+Do not invent reproduction steps, outcomes, users, or benefits. Say “not provided” for missing
+context when the person did not provide it and the three-question budget is spent; the server will
+place that truthful context in the appropriate structured section.
 
 ## The link
 
 After a successful creation or duplicate confirmation, render the ticket link as the final line
-and render nothing after it:
+and render nothing after it. On the formatted create path, the one-line server-proposal
+acknowledgement comes immediately before that final link:
 
 `👁️ https://<space>/tickets/<id>`
 
@@ -149,10 +130,13 @@ id from their link or ask for that id only in this follow-up path. Do not start 
    ask for the answer, then post that answer with `discussion_post`. If the person's
    current message already contains the answer, post it immediately instead of asking again. Do
    not create a second ticket. Use `entity_type="bug"`, `entity_id=<id>`, `body_md=<answer>`, and
-   `author_kind="agent"` for that post. When a post succeeds, read the ticket and discussion once
-   more if the server supports read-back; if the read-back is still unchanged, report what it
-   returned without speculating about indexing or delivery.
-4. Report exactly three plain-text lines, with no preamble, explanation, code fence, ticket link,
+   `author_kind="agent"` for that post.
+4. When a post succeeds, call `bug_get(id=<id>)` exactly once more. This read-back is required:
+   report its returned status, so the server's `new` reset is verified rather than assumed. Read
+   `discussion_read` once more when available if the latest event or message needs refreshing.
+   If a read-back is still unchanged, report exactly what it returned without speculating about
+   indexing or delivery.
+5. Report exactly three plain-text lines, with no preamble, explanation, code fence, ticket link,
    or fourth line on this follow-up path:
 
    ```text
@@ -164,7 +148,8 @@ id from their link or ask for that id only in this follow-up path. Do not start 
 ## Discipline
 
 - Ask no more than three questions in one report flow, and skip questions already answered.
-- Call `bug_create` at most once, and never after a confirmed duplicate.
+- Call `bug_create` at most once, and never after a confirmed duplicate. When creating, use
+  `format=true` with raw `text`; let the server propose the structured fields.
 - Use only existing verbs: `whoami`, `pm_search`, `bug_create`, `discussion_post`, `bug_get`,
   `discussion_read`, and `domain_suggest` when it is already exposed. Never add a verb or edit
   `contract/pm-v1.json` for this skill.
