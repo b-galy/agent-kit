@@ -1,7 +1,7 @@
 {
   "tools": [
     {"name":"whoami","description":"Return the authenticated user and workspace.","inputSchema":{"type":"object","properties":{}}},
-    {"name":"bug_get","description":"Read one ticket with its status and history. After a feedback reply, the status is reset to new.","inputSchema":{"type":"object","properties":{"id":{"type":"integer"}},"required":["id"]}},
+    {"name":"bug_get","description":"Read one ticket with its status and history.","inputSchema":{"type":"object","properties":{"id":{"type":"integer"}},"required":["id"]}},
     {"name":"discussion_read","description":"Read the discussion for a ticket, oldest first.","inputSchema":{"type":"object","properties":{"entity_type":{"type":"string","enum":["bug"]},"entity_id":{"type":"integer"}},"required":["entity_type","entity_id"]}},
     {"name":"discussion_post","description":"Post a markdown message to a ticket discussion.","inputSchema":{"type":"object","properties":{"entity_type":{"type":"string","enum":["bug"]},"entity_id":{"type":"integer"},"body_md":{"type":"string"},"author_kind":{"type":"string"}},"required":["entity_type","entity_id","body_md"]}}
   ]
