@@ -14,7 +14,7 @@
 // Nothing here talks: `call` is handed in. That is what makes the whole file testable
 // against the two workspaces' real answers without a network.
 
-import { NAMES_TTL_MS } from "./names.mjs";
+import { NAMES_TTL_MS, READ_DEADLINE_MS, TOO_LARGE_TEXT as TOO_LARGE } from "./names.mjs";
 
 /**
  * The first of `names` the record carries with a value.
@@ -61,21 +61,40 @@ export function payloadOf(result) {
   const blocks = Array.isArray(result?.content) ? result.content : [];
   const text = blocks.find((block) => typeof block?.text === "string")?.text;
   let body;
+  let unreadable = null;
   if (typeof text === "string") {
     try {
       body = JSON.parse(text);
     } catch {
-      body = { message: text };
+      unreadable = text;
     }
   }
   if (body === undefined) body = result?.structuredContent;
+
   if (result?.isError === true) {
-    throw new Error(textOf(fieldOf(body, "message", "error")) ?? textOf(text) ?? "refusé");
+    throw new Error(textOf(fieldOf(body, "message", "error")) ?? textOf(unreadable ?? text) ?? "refusé");
   }
   if (body && typeof body === "object" && body.success === false) {
     throw new Error(textOf(fieldOf(body, "message", "error")) ?? "refusé");
   }
-  return body && typeof body === "object" ? body : {};
+
+  // An answer that is not JSON is an answer nobody can read. Reading it as an empty record
+  // draws a branch with a number and no name and says nothing about why, which is the one
+  // outcome worth less than an error: so it IS an error, and it carries what came back.
+  //
+  // One shape of it is worth naming on its own, because it is neither the workspace's fault
+  // nor the pane's: Claude Code caps what an MCP call may answer, and past the cap it
+  // replaces the whole result with a notice of its own. A spec whose body runs to sixty
+  // thousand characters comes back that way, and "exceeds maximum allowed tokens" in the
+  // middle of a strategy tree reads as a bug in the tree.
+  if (body === undefined || body === null) {
+    if (unreadable === null) throw new Error("réponse vide");
+    if (/exceeds maximum allowed/i.test(unreadable)) throw new Error(TOO_LARGE);
+    throw new Error(`réponse illisible : ${unreadable.slice(0, 120)}`);
+  }
+  if (typeof body !== "object") throw new Error(`réponse illisible : ${String(body).slice(0, 120)}`);
+
+  return body;
 }
 
 // ── What each answer means ────────────────────────────────────────────────
@@ -245,11 +264,14 @@ export const SPELLINGS = ["contract", "galy"];
  *   storeSet: (key: string, value: unknown) => Promise<void>,
  *   now: () => Promise<number>,
  *   has?: (server: string, tool: string) => boolean,
+ *   after?: (ms: number, fn: () => void) => { cancel: () => void },
  *   ttlMs?: number,
+ *   deadlineMs?: number,
  * }} host
  */
 export function readerOf(host) {
   const ttl = host.ttlMs ?? NAMES_TTL_MS;
+  const deadline = host.deadlineMs ?? READ_DEADLINE_MS;
   /** @type {Map<string, Promise<any>>} */
   const inFlight = new Map();
   /** @type {Map<string, string>} */
@@ -273,6 +295,24 @@ export function readerOf(host) {
     await host.storeSet(spellingKeyOf(server), spelling).catch(() => undefined);
   }
 
+  /**
+   * A read that does not come back is worse than one that fails: the pane sits on
+   * "reading the workspace" for the rest of the session, and nothing on screen says why.
+   * So every call carries a deadline, and a call that runs past it becomes a named gap
+   * the next refresh asks again.
+   */
+  function withDeadline(promise) {
+    if (host.after === undefined || !deadline) return promise;
+    return new Promise((resolve, reject) => {
+      const timer = host.after(deadline, () => reject(new Error("lecture trop longue")));
+      const settle = (act) => (value) => {
+        try { timer?.cancel?.(); } catch { /* already fired */ }
+        act(value);
+      };
+      promise.then(settle(resolve), settle(reject));
+    });
+  }
+
   /** Calls one verb, trying the remembered spelling first and the other once. */
   async function ask(server, kind, id) {
     const plan = READS[kind];
@@ -283,11 +323,15 @@ export function readerOf(host) {
       const build = plan.args[spelling];
       if (!build) continue;
       try {
-        const answer = await host.call(server, plan.tool, build(id));
+        const answer = await withDeadline(host.call(server, plan.tool, build(id)));
         await rememberSpelling(server, spelling);
         return answer;
       } catch (error) {
-        failure = error;
+        // The FIRST failure is the one worth reporting. The second spelling is only ever
+        // tried on the chance that the server wants the other one, and its complaint —
+        // "the arguments dictionary is missing specId" — describes the attempt, never the
+        // reason the right attempt failed.
+        failure ??= error;
       }
     }
     throw failure ?? new Error(`${plan.tool} n'a pas répondu`);

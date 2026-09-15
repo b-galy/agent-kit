@@ -20,6 +20,9 @@ export const STORE_OPEN_KEY = "where/open";
 /** How long a name read from the workspace stays good, in milliseconds. */
 export const NAMES_TTL_MS = 180_000;
 
+/** A read that runs past this is a gap, not a wait: the pane never sits on "reading". */
+export const READ_DEADLINE_MS = 8_000;
+
 /** Work untouched for longer than this is no longer in hand — the row's own horizon. */
 export const HORIZON_MS = 86_400_000;
 
@@ -50,6 +53,7 @@ export const LOADING_TEXT = "Lecture de l'espace de travail…";
 export const IN_HAND_TEXT = "← en main";
 export const OUTSIDE_STRATEGY_TEXT = "brief hors stratégie";
 export const REFRESH_TEXT = "rafraîchir";
+export const TOO_LARGE_TEXT = "trop volumineuse pour l'API des mods";
 export const RESIZE_TEXT =
   "The terminal is too narrow for the pane — widen it to at least 110 columns, then /where again.";
 export const SHOWN_TEXT = "Où j'en suis is beside the transcript. /where hides it.";

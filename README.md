@@ -158,6 +158,12 @@ alone on a workstation installed before this existed — and it takes effect at 
 start of Claude Code. Without the flag nothing of the module loads: the row under the
 prompt and the classic hooks go on exactly as they did, and `/where` is simply not there.
 
+One limit is worth knowing before you meet it: Claude Code caps what an MCP call may
+answer, and past the cap it replaces the result with a notice of its own. A spec whose
+body runs to sixty thousand characters comes back that way, and the pane says so on that
+branch — `trop volumineuse pour l'API des mods` — rather than drawing a nameless node. The
+rest of the tree is unaffected.
+
 The API that surface is written against may change between two releases of Claude Code
 without notice. The declarations it is typed against are versioned in the repository
 (`types/claude-code.d.ts`, whose first line names the Claude Code version that wrote them),

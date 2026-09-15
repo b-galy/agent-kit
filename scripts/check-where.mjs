@@ -29,7 +29,7 @@ import {
   galySpecList,
 } from "./where-fixtures.mjs";
 
-import { HORIZON_MS, MARKS } from "../galy/hooks/where/names.mjs";
+import { HORIZON_MS, MARKS, TOO_LARGE_TEXT } from "../galy/hooks/where/names.mjs";
 import { heldOf, holdsSomething, joinPath, parentOf, workingCopyRootOf } from "../galy/hooks/where/work-file.mjs";
 import { payloadOf, readerOf, serverOf, serversOf } from "../galy/hooks/where/reader.mjs";
 import { buildModel } from "../galy/hooks/where/tree.mjs";
@@ -169,6 +169,41 @@ const held1109 = { specs: [{ id: 1109, at: NOW - 60_000, server: "back-office" }
     broken = error.message;
   }
   check("and an errored call is an error too", broken === "boom", broken);
+
+  // The failure this one exists for: an answer that is not JSON — a message where an
+  // object was expected, or a large one the harness cut on the way. Read as an empty
+  // record it draws a branch with a number, no name and no reason; so it is an error.
+  let unreadable = null;
+  try {
+    payloadOf({ content: [{ type: "text", text: '{"success":true,"spec":{"Id":2055,"Title":"Poser l' }], isError: false });
+  } catch (error) {
+    unreadable = error.message;
+  }
+  check("an answer that does not parse is an error naming what came back",
+    unreadable !== null && unreadable.startsWith("réponse illisible : {\"success\":true"), unreadable);
+
+  let empty = null;
+  try {
+    payloadOf({ content: [], isError: false });
+  } catch (error) {
+    empty = error.message;
+  }
+  check("and an answer with nothing in it is one too", empty === "réponse vide", empty);
+
+  // Claude Code caps what an MCP call may answer and replaces a longer result with a
+  // notice of its own. Measured on the back office's spec 2055, whose body runs to some
+  // sixty thousand characters. It is neither the workspace's fault nor the pane's, and it
+  // is named as itself rather than pasted into the middle of a strategy tree.
+  let capped = null;
+  try {
+    payloadOf({
+      content: [{ type: "text", text: "Error: result (61 872 characters across 1 line) exceeds maximum allowed tokens. Output has been saved to …" }],
+      isError: false,
+    });
+  } catch (error) {
+    capped = error.message;
+  }
+  check("an answer the harness capped is named as what it is", capped === TOO_LARGE_TEXT, capped);
 }
 
 // ── 4. The same tree from both spellings (P2/T2) ──────────────────────────
@@ -387,7 +422,59 @@ let backOfficeRows;
   }
 }
 
-// ── 16. Which server a claim is asked of ──────────────────────────────────
+// ── 16. The first refusal is the one reported ─────────────────────────────
+{
+  // A server that wants the other spelling refuses the first attempt for a reason of its
+  // own; a server that wants THIS one refuses for the real reason, and the fallback then
+  // complains about a missing argument. Reporting the last one hides the first every time.
+  const store = new Map();
+  const reader = readerOf({
+    call: async (_server, _tool, args) => {
+      if ("specId" in args) throw new Error(TOO_LARGE_TEXT);
+      throw new Error("The arguments dictionary is missing a value for the required parameter 'specId'.");
+    },
+    storeGet: async (key) => store.get(key),
+    storeSet: async (key, value) => void store.set(key, value),
+    now: async () => NOW,
+  });
+  let reported = null;
+  try {
+    await reader.read("back-office", "spec", 2055);
+  } catch (error) {
+    reported = error.message;
+  }
+  check("the failure reported is the first one, not the fallback's complaint",
+    reported === TOO_LARGE_TEXT, reported);
+}
+
+// ── 17. A read that never comes back is a gap, not a wait ─────────────────
+{
+  const store = new Map();
+  const timers = [];
+  const slow = readerOf({
+    call: () => new Promise(() => {}),
+    storeGet: async (key) => store.get(key),
+    storeSet: async (key, value) => void store.set(key, value),
+    now: async () => NOW,
+    after: (ms, fn) => {
+      const handle = setTimeout(fn, ms);
+      timers.push(handle);
+      return { cancel: () => clearTimeout(handle) };
+    },
+    deadlineMs: 20,
+  });
+  let refused = null;
+  try {
+    await slow.read("ws", "spec", 2055);
+  } catch (error) {
+    refused = error.message;
+  }
+  for (const handle of timers) clearTimeout(handle);
+  check("a call that never answers becomes a named gap rather than a pane stuck on reading",
+    refused === "lecture trop longue", refused);
+}
+
+// ── 18. Which server a claim is asked of ──────────────────────────────────
 {
   const tools = [
     { name: "Read", mcp: false },

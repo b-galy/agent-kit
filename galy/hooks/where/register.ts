@@ -48,6 +48,7 @@ export function register(on: On) {
   let columns: number | null = null
   let fileStamp = 0
   let expanded: Record<string, boolean> = {}
+  let attempts = 0
 
   const timers = new Map<'refresh' | 'redraw' | 'poll', { cancel: () => void }>()
 
@@ -72,6 +73,7 @@ export function register(on: On) {
       storeGet: key => engine.storeGet(key),
       storeSet: (key, value) => engine.storeSet(key, value),
       now: () => engine.now(),
+      after: (ms, fn) => engine.after(ms, fn),
       has: (server, tool) => tools.some(listed => listed.name === `mcp__${server}__${tool}`),
     })
 
@@ -117,7 +119,11 @@ export function register(on: On) {
         return
       }
 
-      if (tools.length === 0) tools = await engine.toolList().catch((): ToolInfo[] => [])
+      // The tool list is asked again while no workspace is in it. An MCP server is dialed
+      // on first use, so at the very start of a session the engine serves none of its
+      // tools yet and every read fails with "no connected MCP tool" — which is not an
+      // absent workspace, only an early question.
+      if (serversOf(tools).length === 0) tools = await engine.toolList().catch((): ToolInfo[] => [])
       isLoading = model.trees.length === 0
       redraw(engine)
 
@@ -131,8 +137,10 @@ export function register(on: On) {
         serverFor: named => serverOf(named, tools) ?? servers[0] ?? null,
       })
       isLoading = false
+      hasGaps() ? (attempts += 1) : (attempts = 0)
     } catch (error) {
       isLoading = false
+      attempts += 1
       engine.uiLog(`où j'en suis : ${error instanceof Error ? error.message : String(error)}`)
     } finally {
       isRefreshing = false
@@ -141,9 +149,25 @@ export function register(on: On) {
       if (isRefreshQueued) {
         isRefreshQueued = false
         scheduleRefresh(engine)
+      } else if (hasGaps() && attempts <= RETRIES) {
+        // A gap is asked again, further apart each time: the commonest one is a workspace
+        // that had not finished connecting, and it answers on its own a second later. Six
+        // tries and it stops, because a gap that survives them is a real one and saying so
+        // is the pane's job, not asking forever.
+        scheduleRefresh(engine, attempts * RETRY_STEP_MS)
       }
     }
   }
+
+  /** Six tries, 2 s apart and growing, then the gap stands as what it is. */
+  const RETRIES = 6
+  const RETRY_STEP_MS = 2_000
+
+  /** The first read waits for the session's MCP servers to be dialed. */
+  const FIRST_READ_MS = 1_500
+
+  const hasGaps = () =>
+    model.gaps.length > 0 || model.trees.some(tree => tree.gaps.length > 0)
 
   function scheduleRefresh(engine: Host, delayMs = 0) {
     timers.get('refresh')?.cancel()
@@ -213,8 +237,10 @@ export function register(on: On) {
     root = await workingCopyRootOf(cwd, path => engine.exists(path).catch(() => false))
     tools = await engine.toolList().catch((): ToolInfo[] => [])
 
-    await refresh(engine)
+    // The pane opens on what the copy's own file says, which is on disk and answers now;
+    // the names come after, once the session's MCP servers have finished dialing.
     await openOnFirstHold(engine).catch(() => undefined)
+    scheduleRefresh(engine, FIRST_READ_MS)
 
     timers.get('poll')?.cancel()
     timers.set(
@@ -329,6 +355,7 @@ export function register(on: On) {
 
     await known.forget(keys)
     reader = null
+    attempts = 0
     await refresh(engine)
   }
 
@@ -381,6 +408,7 @@ export function register(on: On) {
       expanded = {}
       model = EMPTY_MODEL
       fileStamp = 0
+      attempts = 0
     }
 
     return result
