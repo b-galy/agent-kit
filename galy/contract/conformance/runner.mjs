@@ -173,6 +173,7 @@ async function runMcp(url, token, writeMode) {
 
   await scanLiveWorkflowCatalog(client, liveNames);
   await scanLiveOkrRitual(client, liveNames);
+  await scanLiveEntityAddresses(client, liveNames);
 
   if (writeMode) {
     console.log("  --write: write exercises are intentionally not run — they mutate the workspace.");
@@ -306,6 +307,36 @@ async function runRest(base, token) {
   }
 
   console.log(`  Documented routes (id-scoped ones not smoked): ${routes.map((r) => r.path).join(", ") || "none in contract"}`);
+}
+
+// The address an entity answers with is declared, and declared as optional.
+//
+// A client cannot ask a workspace for the address of a page it has no vocabulary for. The pane
+// beside the transcript turns a row into a link when the answer carries `url`, so the field has to
+// be written down somewhere both sides read — and written as OPTIONAL, or the first workspace that
+// does not compute one stops being conformant for a field nobody promised.
+//
+// This check holds the declaration, not the behaviour: whether an instance really serves it is
+// seen on the instance, by `scanLiveEntityAddresses`, and only there.
+function scanEntityAddresses() {
+  const CHECK = "addresses: the optional `url` is declared where entities are answered";
+  const convention = CONTRACT.conventions?.addresses;
+  if (typeof convention !== "string" || !convention.includes("url")) {
+    return record(CHECK, false, "conventions.addresses does not describe the field");
+  }
+  if (!/\bMAY\b|\boptional\b/i.test(convention)) {
+    return record(CHECK, false, "conventions.addresses does not say the field is optional");
+  }
+
+  const carriers = ["feature_spec_get", "feature_brief_get", "strategy_get_objective_breadcrumb", "strategy_navigate_children"];
+  const silent = carriers.filter((name) => {
+    const returns = CONTRACT.tools.find((tool) => tool.name === name)?.returns ?? {};
+    return !Object.values(returns).some((shape) => typeof shape === "string" && shape.includes("url"));
+  });
+
+  record(CHECK, silent.length === 0,
+    silent.length ? `declared nowhere in the answer of: ${silent.join(", ")}`
+                  : `${carriers.length} verbs, each naming it in what it returns`);
 }
 
 // Every maturity criterion is owned by exactly one agent of the kit.
@@ -533,6 +564,57 @@ async function scanLiveOkrRitual(client, liveNames) {
   }
 }
 
+// What an instance really answers as the address of a page.
+//
+// `url` is optional, and that is the whole difficulty of checking it. A workspace that computes
+// none is conformant, and a check failing on absence would turn an optional field into a required
+// one the day it was written. So absence is reported as absence, out loud — a pane drawing plain
+// rows against an instance everybody believes serves addresses is exactly the silence this suite
+// exists to break — and presence is checked for what a client can use: a string, absolute, https.
+async function scanLiveEntityAddresses(client, liveNames) {
+  const CHECK = "addresses: an entity that answers one answers an absolute https address";
+  const entities = [
+    { list: "feature_brief_list", field: "briefs", get: "feature_brief_get", arg: "briefId", holds: "brief" },
+    { list: "feature_spec_list", field: "specs", get: "feature_spec_get", arg: "specId", holds: "spec" },
+  ];
+
+  const seen = [];
+  const broken = [];
+  const without = [];
+  for (const entity of entities) {
+    if (!liveNames.has(entity.list) || !liveNames.has(entity.get)) continue;
+    try {
+      const listed = await client.callTool(entity.list, { take: 1 });
+      const first = (listed?.[entity.field] ?? [])[0];
+      const id = first?.id ?? first?.Id;
+      if (!id) continue;
+
+      const answer = await client.callTool(entity.get, { [entity.arg]: id });
+      const held = answer?.[entity.holds] ?? answer?.[entity.holds.replace(/^./, (c) => c.toUpperCase())];
+      const url = held?.url ?? held?.Url;
+      if (url === undefined || url === null) {
+        without.push(`${entity.holds} ${id}`);
+        continue;
+      }
+      seen.push(`${entity.holds} ${id}`);
+      if (typeof url !== "string") {
+        broken.push(`${entity.holds} ${id}: url is a ${typeof url}, not a string`);
+      } else if (!/^https:\/\/\S+$/.test(url)) {
+        broken.push(`${entity.holds} ${id}: '${url.slice(0, 80)}' is not an absolute https address`);
+      }
+    } catch (e) {
+      broken.push(`${entity.holds}: ${e.message}`);
+    }
+  }
+
+  if (seen.length === 0 && broken.length === 0) {
+    console.log("  [SKIP] addresses: this instance serves none yet — every row the pane draws for it");
+    console.log(`         stays plain text${without.length ? ` (read without one: ${without.join(", ")})` : ""}.`);
+    return;
+  }
+  record(CHECK, broken.length === 0, broken.length ? broken.join("; ") : `${seen.join(", ")} answered an address`);
+}
+
 function fail(name) {
   results.push({ name, ok: false });
   console.log(`  [FAIL] ${name}`);
@@ -549,6 +631,7 @@ async function main() {
 
   console.log("Static checks (contract file):");
   scanForbidden(CONTRACT.tools, "contract");
+  scanEntityAddresses();
   scanCriterionCoverage();
   scanWorkflowOptions();
   scanCitedVerbs();

@@ -5,6 +5,9 @@
 // — is a pure function of the model and the width. The views turn the rows below into
 // elements and nothing else, so what a person sees can be read back in a test instead of
 // on a screenshot.
+//
+// Whether a row opens its own page is decided here too: a segment carries the address its
+// workspace served once it is one the engine would take, and carries nothing otherwise.
 
 import {
   EMPTY_TEXT,
@@ -18,12 +21,51 @@ import {
 } from "./names.mjs";
 
 /**
- * @typedef {{ text: string, bold?: boolean, dim?: boolean }} Segment
+ * @typedef {{ text: string, bold?: boolean, dim?: boolean, url?: string }} Segment
  * @typedef {{ key: string, segments: Segment[], press?: { kind: string, id?: number } }} Row
  */
 
 /** The mark a status is drawn with. */
 export const markOf = (status) => MARKS[String(status ?? "")] ?? MARKS.other;
+
+/** An address longer than this is refused by the engine, and with it the whole tree. */
+const HREF_MAX = 2048;
+
+/**
+ * The address a row may be opened at, or null where there is none the engine would take.
+ *
+ * The bound is the engine's, not ours: a `Link` whose `href` is not an `https:` URL (or
+ * `http://localhost`) of at most 2048 printable ASCII characters, with no `user@host` part,
+ * no raw `@`, no space and no non-ASCII letter, refuses THE WHOLE TREE it sits in. One
+ * workspace answering one bad address would blank the pane, so an address is checked here
+ * and a row that fails the check is drawn as the text it has always been.
+ *
+ * @param {unknown} value
+ * @returns {string | null}
+ */
+export function hrefOf(value) {
+  const text = typeof value === "string" ? value.trim() : "";
+  if (text === "" || text.length > HREF_MAX) return null;
+
+  let parsed;
+  try {
+    parsed = new URL(text);
+  } catch {
+    return null;
+  }
+
+  const isLocal = parsed.protocol === "http:" && parsed.hostname === "localhost";
+  if (parsed.protocol !== "https:" && !isLocal) return null;
+  if (parsed.username !== "" || parsed.password !== "") return null;
+
+  // `new URL(href).href` is the spelling the engine wants, so it is the one measured:
+  // an accented path comes back percent-encoded, and is then within bounds.
+  const href = parsed.href;
+  if (href.length > HREF_MAX) return null;
+  if (!/^[\x21-\x7E]+$/.test(href) || href.includes("@")) return null;
+
+  return href;
+}
 
 /**
  * A title cut to the room left for it. A title is written for a page; here there is room
@@ -113,6 +155,12 @@ export function phaseLineText(phases, width) {
 
 const pad = (depth) => " ".repeat(Math.max(0, depth));
 
+/** What a segment carries of an address: nothing at all where there is none to take. */
+const linked = (url) => {
+  const href = hrefOf(url);
+  return href === null ? {} : { url: href };
+};
+
 /** A title never gets less than this before a suffix is dropped instead. */
 const TITLE_FLOOR = 8;
 
@@ -120,7 +168,7 @@ const TITLE_FLOOR = 8;
  * One row of prefix, title and optional tails. A narrow pane drops the tails rather than
  * the name — a row is read for what it names — and never runs past the width it was given.
  *
- * @param {{ key: string, indent: string, prefix: string, title: string | null, id: number | string, bold?: boolean, tails?: string[], press?: any }} row
+ * @param {{ key: string, indent: string, prefix: string, title: string | null, id: number | string, bold?: boolean, tails?: string[], url?: string | null, press?: any }} row
  * @param {number} columns
  * @returns {Row}
  */
@@ -131,7 +179,15 @@ function namedRow(row, columns) {
 
   const suffix = tails.join("");
   const title = titleText(row.title, Math.max(1, columns - fixed - suffix.length), row.id);
-  const segments = [{ text: `${row.indent}${row.prefix}` }, { text: title, bold: row.bold === true }];
+  // A row that can be pressed is a Button, and a Button is a leaf on every surface: it
+  // carries a label, never an element. So a sibling spec keeps the press that unfolds its
+  // phases, and takes no address; the choice is made here rather than in the view.
+  const href = row.press ? null : hrefOf(row.url);
+  /** @type {Segment[]} */
+  const segments = [
+    { text: `${row.indent}${row.prefix}` },
+    { text: title, bold: row.bold === true, ...(href === null ? {} : { url: href }) },
+  ];
   if (suffix !== "") segments.push({ text: suffix, dim: true });
 
   return { key: row.key, segments, ...(row.press ? { press: row.press } : {}) };
@@ -174,6 +230,7 @@ export function dockRows(model, view) {
             title: node.title,
             id: node.id,
             bold: level === tree.chain.length - 1,
+            url: node.url,
           },
           columns,
         ),
@@ -205,6 +262,7 @@ export function dockRows(model, view) {
             prefix: "▸ Brief : ",
             title: tree.brief.title,
             id: tree.brief.id,
+            url: tree.brief.url,
             tails: [tree.brief.status ? `  [${tree.brief.status}]` : ""],
           },
           columns,
@@ -264,6 +322,7 @@ function specRows(spec, depth, columns, isInHand, key, press) {
         title: spec.title,
         id: spec.id,
         bold: isInHand,
+        url: spec.url,
         // The status goes first when the pane is narrow: what a row is read for is the
         // name, and then whether it is the one in hand.
         tails: [spec.status ? `  [${spec.status}]` : "", isInHand ? `  ${IN_HAND_TEXT}` : ""],
@@ -304,7 +363,7 @@ export function inlineRows(model, view) {
     if (leaf) {
       rows.push({
         key: "inline-obj",
-        segments: [{ text: "◆ " }, { text: titleText(leaf.title, columns - 2, leaf.id), bold: true }],
+        segments: [{ text: "◆ " }, { text: titleText(leaf.title, columns - 2, leaf.id), bold: true, ...linked(leaf.url) }],
       });
     } else if (first.outsideStrategy) {
       rows.push({ key: "inline-outside", segments: [{ text: OUTSIDE_STRATEGY_TEXT, dim: true }] });
@@ -312,14 +371,20 @@ export function inlineRows(model, view) {
     if (first.brief) {
       rows.push({
         key: "inline-brief",
-        segments: [{ text: "  ▸ " }, { text: titleText(first.brief.title, columns - 4, first.brief.id) }],
+        segments: [
+          { text: "  ▸ " },
+          { text: titleText(first.brief.title, columns - 4, first.brief.id), ...linked(first.brief.url) },
+        ],
       });
     }
     if (first.spec) {
       const prefix = `    ${markOf(first.spec.status)} `;
       rows.push({
         key: "inline-spec",
-        segments: [{ text: prefix }, { text: titleText(first.spec.title, columns - prefix.length, first.spec.id), bold: true }],
+        segments: [
+          { text: prefix },
+          { text: titleText(first.spec.title, columns - prefix.length, first.spec.id), bold: true, ...linked(first.spec.url) },
+        ],
       });
       if (Array.isArray(first.spec.phases) && first.spec.phases.length > 0) {
         rows.push({
@@ -336,7 +401,10 @@ export function inlineRows(model, view) {
     const prefix = `${markOf(named.status)} `;
     rows.push({
       key: `inline-${tree.key}`,
-      segments: [{ text: prefix, dim: true }, { text: titleText(named.title, columns - prefix.length, named.id), dim: true }],
+      segments: [
+        { text: prefix, dim: true },
+        { text: titleText(named.title, columns - prefix.length, named.id), dim: true, ...linked(named.url) },
+      ],
     });
   }
 

@@ -11,6 +11,10 @@
 // `briefId` on `feature_spec_update` is the brief it MOVES to. And an argument spelling is
 // tried, then the other, and the one a server accepted is remembered for that server.
 //
+// One field is optional on both sides: `url`, the address of the entity's own page, which
+// the workspace computes because it alone knows its host. A workspace serving none answers
+// exactly as before, and the pane draws the row it always drew.
+//
 // Nothing here talks: `call` is handed in. That is what makes the whole file testable
 // against the two workspaces' real answers without a network.
 
@@ -100,18 +104,31 @@ export function payloadOf(result) {
 // ── What each answer means ────────────────────────────────────────────────
 
 /**
- * @typedef {{ id: number, title: string | null, status: string | null }} Named
+ * @typedef {{ id: number, title: string | null, status: string | null, url: string | null }} Named
  * @typedef {Named & { briefId: number | null, phases: Named[] }} SpecRecord
  * @typedef {Named & { objectiveId: number | null, objectiveTitle: string | null, specs: Named[] | null }} BriefRecord
- * @typedef {{ id: number, title: string | null, period: string | null }} ChainNode
+ * @typedef {{ id: number, title: string | null, period: string | null, url: string | null }} ChainNode
  * @typedef {{ title: string | null, current: number | null, target: number | null, unit: string | null, progress: number | null }} KeyResult
+ * @typedef {{ keyResults: KeyResult[], url: string | null }} ObjectiveRecord
  */
+
+/**
+ * The address of the entity's own page, where the workspace computed one.
+ *
+ * Optional in the contract, and it stays optional here: a workspace that serves no address
+ * answers as it always did, and the row drawn from it is the text it always was.
+ *
+ * @param {any} node
+ * @returns {string | null}
+ */
+const urlOf = (node) => textOf(fieldOf(node, "url", "Url"));
 
 /** @param {any} node @returns {Named} */
 const namedOf = (node) => ({
   id: idOf(fieldOf(node, "id", "Id")) ?? 0,
   title: textOf(fieldOf(node, "title", "Title")),
   status: textOf(fieldOf(node, "status", "Status")),
+  url: urlOf(node),
 });
 
 /**
@@ -171,6 +188,7 @@ export function chainOf(answer) {
     id: idOf(fieldOf(node, "id", "Id")) ?? 0,
     title: textOf(fieldOf(node, "title", "Title")),
     period: textOf(fieldOf(node, "period_name", "PeriodName", "period", "Period")),
+    url: urlOf(node),
   }));
 }
 
@@ -184,27 +202,52 @@ const keyResultOf = (node) => ({
 });
 
 /**
- * The key results of one objective, whichever verb answered: `strategy_get_objective`
- * (the objective itself), or `strategy_navigate_children` under its parent, where the
- * objective is one row among its siblings and the two workspaces nest it differently.
+ * One objective — its key results and the address of its page — whichever verb answered:
+ * `strategy_get_objective` (the objective itself), or `strategy_navigate_children` under
+ * its parent, where the objective is one row among its siblings and the two workspaces
+ * nest it differently.
  *
  * @param {any} answer
  * @param {number} objectiveId
- * @returns {KeyResult[]}
+ * @returns {ObjectiveRecord}
  */
-export function keyResultsOf(answer, objectiveId) {
-  const direct = fieldOf(fieldOf(answer, "objective", "Objective") ?? answer, "key_results", "KeyResults");
-  if (Array.isArray(direct) && direct.length > 0) return direct.map(keyResultOf);
+export function objectiveOf(answer, objectiveId) {
+  const own = fieldOf(answer, "objective", "Objective") ?? answer;
+  const direct = fieldOf(own, "key_results", "KeyResults");
+  if (Array.isArray(direct) && direct.length > 0) {
+    return { keyResults: direct.map(keyResultOf), url: urlOf(own) };
+  }
 
   const rows = fieldOf(answer, "items", "Items", "objectives", "Objectives") ?? [];
   for (const row of Array.isArray(rows) ? rows : []) {
     const node = fieldOf(row, "objective", "Objective") ?? row;
     if (idOf(fieldOf(node, "id", "Id")) !== objectiveId) continue;
     const listed = fieldOf(row, "key_results", "KeyResults") ?? fieldOf(node, "key_results", "KeyResults") ?? [];
-    return (Array.isArray(listed) ? listed : []).map(keyResultOf);
+    return { keyResults: (Array.isArray(listed) ? listed : []).map(keyResultOf), url: urlOf(node) };
   }
-  return [];
+  return { keyResults: [], url: urlOf(own) };
 }
+
+/**
+ * An objective as the tree reads it back, from a fresh answer or from a name cached by an
+ * older version of the pane — which stored the key results alone, as a bare array.
+ *
+ * @param {any} value
+ * @returns {ObjectiveRecord}
+ */
+export const objectiveViewOf = (value) =>
+  Array.isArray(value)
+    ? { keyResults: value, url: null }
+    : { keyResults: Array.isArray(value?.keyResults) ? value.keyResults : [], url: textOf(value?.url) };
+
+/**
+ * The key results of one objective.
+ *
+ * @param {any} answer
+ * @param {number} objectiveId
+ * @returns {KeyResult[]}
+ */
+export const keyResultsOf = (answer, objectiveId) => objectiveOf(answer, objectiveId).keyResults;
 
 // ── The two argument spellings ────────────────────────────────────────────
 
@@ -232,7 +275,7 @@ export const READS = {
   objective: {
     tool: "strategy_get_objective",
     args: { contract: (id) => ({ objectiveId: id }), galy: (id) => ({ id }) },
-    read: (answer, id) => keyResultsOf(answer, id),
+    read: (answer, id) => objectiveOf(answer, id),
   },
   children: {
     tool: "strategy_navigate_children",
@@ -240,7 +283,7 @@ export const READS = {
       contract: (id) => ({ objectiveId: id, includeKrs: true, depth: 1 }),
       galy: (id) => ({ parent_objective_id: id }),
     },
-    read: (answer, id, wanted) => keyResultsOf(answer, wanted ?? id),
+    read: (answer, id, wanted) => objectiveOf(answer, wanted ?? id),
   },
   briefSpecs: {
     tool: "feature_spec_list",
@@ -262,6 +305,7 @@ export const SPELLINGS = ["contract", "galy"];
  *   call: (server: string, tool: string, args: Record<string, unknown>) => Promise<any>,
  *   storeGet: (key: string) => Promise<unknown>,
  *   storeSet: (key: string, value: unknown) => Promise<void>,
+ *   storeDelete?: (key: string) => Promise<void>,
  *   now: () => Promise<number>,
  *   has?: (server: string, tool: string) => boolean,
  *   after?: (ms: number, fn: () => void) => { cancel: () => void },
@@ -369,9 +413,18 @@ export function readerOf(host) {
   /** Whether that server serves that verb, when the tool list is known. */
   const serves = (server, tool) => (host.has ? host.has(server, tool) : true);
 
-  /** Forgets every name read for this copy, so the next draw asks again. */
+  /**
+   * Forgets every name read for this copy, so the next draw asks again.
+   *
+   * Forgetting is its own verb, and it has to be: the store holds JSON, and setting a key
+   * to `undefined` is not a value it can write, so it leaves the key exactly where it was.
+   * The pane read a name it had just been told to forget, every time.
+   */
   async function forget(keys) {
-    for (const key of keys) await host.storeSet(key, undefined).catch(() => undefined);
+    for (const key of keys) {
+      const dropped = host.storeDelete ? host.storeDelete(key) : host.storeSet(key, undefined);
+      await Promise.resolve(dropped).catch(() => undefined);
+    }
     spellings.clear();
     inFlight.clear();
   }

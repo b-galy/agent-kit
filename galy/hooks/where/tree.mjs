@@ -9,11 +9,13 @@
 // Every read is handed in, so this file never talks to anything: a failed read becomes a
 // named gap in the tree, and the rest is still drawn.
 
+import { objectiveViewOf } from "./reader.mjs";
+
 /**
  * @typedef {import('./reader.mjs').Named} Named
  * @typedef {{
  *   key: string,
- *   chain: Array<{ id: number, title: string | null, period: string | null }>,
+ *   chain: Array<{ id: number, title: string | null, period: string | null, url: string | null }>,
  *   periods: string[],
  *   keyResults: Array<{ title: string | null, current: number | null, target: number | null, unit: string | null, progress: number | null }>,
  *   outsideStrategy: boolean,
@@ -69,7 +71,7 @@ export async function buildModel(input) {
       keyResults: [],
       outsideStrategy: false,
       brief: null,
-      spec: { id: entry.id, title: null, status: null, phases: [] },
+      spec: { id: entry.id, title: null, status: null, url: null, phases: [] },
       siblings: [],
       gaps: [],
     };
@@ -104,7 +106,7 @@ export async function buildModel(input) {
       periods: [],
       keyResults: [],
       outsideStrategy: false,
-      brief: { id: entry.id, title: null, status: null },
+      brief: { id: entry.id, title: null, status: null, url: null },
       spec: null,
       siblings: [],
       gaps: [],
@@ -125,9 +127,9 @@ export async function buildModel(input) {
     let brief = null;
     try {
       brief = await read(server, "brief", briefId);
-      tree.brief = { id: brief.id || briefId, title: brief.title, status: brief.status };
+      tree.brief = { id: brief.id || briefId, title: brief.title, status: brief.status, url: brief.url };
     } catch (error) {
-      tree.brief = { id: briefId, title: null, status: null };
+      tree.brief = { id: briefId, title: null, status: null, url: null };
       tree.gaps.push(`brief ${briefId} : ${messageOf(error)}`);
       return;
     }
@@ -153,7 +155,7 @@ export async function buildModel(input) {
       tree.gaps.push(`objectif ${brief.objectiveId} : ${messageOf(error)}`);
     }
     if (tree.chain.length === 0 && brief.objectiveTitle) {
-      tree.chain = [{ id: brief.objectiveId, title: brief.objectiveTitle, period: null }];
+      tree.chain = [{ id: brief.objectiveId, title: brief.objectiveTitle, period: null, url: null }];
     }
     tree.periods = periodsOf(tree.chain);
 
@@ -161,10 +163,18 @@ export async function buildModel(input) {
     const objectiveId = leaf?.id || brief.objectiveId;
     const parent = tree.chain[tree.chain.length - 2];
     try {
+      let objective = null;
       if (serves(server, "strategy_get_objective")) {
-        tree.keyResults = await read(server, "objective", objectiveId);
+        objective = objectiveViewOf(await read(server, "objective", objectiveId));
       } else if (parent && serves(server, "strategy_navigate_children")) {
-        tree.keyResults = await read(server, "children", parent.id, objectiveId);
+        objective = objectiveViewOf(await read(server, "children", parent.id, objectiveId));
+      }
+      if (objective !== null) {
+        tree.keyResults = objective.keyResults;
+        // An objective's address is read from the chain, where every node carries its own.
+        // The objective's own answer fills the leaf in for a workspace whose breadcrumb
+        // serves none — and for the leaf built from the brief's objective title alone.
+        if (leaf && leaf.url === null && objective.url !== null) leaf.url = objective.url;
       }
     } catch (error) {
       tree.gaps.push(`résultats clés ${objectiveId} : ${messageOf(error)}`);
@@ -172,6 +182,36 @@ export async function buildModel(input) {
   }
 
   return { status: trees.length === 0 ? "empty" : "ready", trees, gaps };
+}
+
+/**
+ * Every name the drawn trees were built from, as cache keys.
+ *
+ * A write to the workspace makes the names on screen the ones from before it: the brief
+ * attached to an objective goes on reading `brief hors stratégie` until the cache lets go.
+ * So the write forgets exactly what it may have moved — and the button that forgets
+ * everything forgets the same list, because it is the same list.
+ *
+ * @param {Tree[]} trees
+ * @param {(kind: string, id: number) => string} keyOf
+ * @returns {string[]}
+ */
+export function namesToForget(trees, keyOf) {
+  /** @type {string[]} */
+  const keys = [];
+  for (const tree of trees) {
+    if (tree.spec) keys.push(keyOf("spec", tree.spec.id));
+    if (tree.brief) {
+      keys.push(keyOf("brief", tree.brief.id));
+      keys.push(keyOf("briefSpecs", tree.brief.id));
+    }
+    for (const node of tree.chain) {
+      keys.push(keyOf("chain", node.id));
+      keys.push(keyOf("objective", node.id));
+      keys.push(keyOf("children", node.id));
+    }
+  }
+  return keys;
 }
 
 /** @param {unknown} error */

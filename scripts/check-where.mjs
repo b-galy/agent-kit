@@ -32,8 +32,8 @@ import {
 import { HORIZON_MS, MARKS, TOO_LARGE_TEXT } from "../galy/hooks/where/names.mjs";
 import { heldOf, holdsSomething, joinPath, parentOf, workingCopyRootOf } from "../galy/hooks/where/work-file.mjs";
 import { payloadOf, readerOf, serverOf, serversOf } from "../galy/hooks/where/reader.mjs";
-import { buildModel } from "../galy/hooks/where/tree.mjs";
-import { dockRows, inlineRows, phaseLineText, plainOf, titleText } from "../galy/hooks/where/render.mjs";
+import { buildModel, namesToForget } from "../galy/hooks/where/tree.mjs";
+import { dockRows, hrefOf, inlineRows, phaseLineText, plainOf, titleText } from "../galy/hooks/where/render.mjs";
 
 let failed = 0;
 function check(what, condition, detail) {
@@ -85,7 +85,9 @@ function workspace({ spelling, answers, fail = {} }) {
       return answer;
     },
     storeGet: async (key) => store.get(key),
-    storeSet: async (key, value) => void (value === undefined ? store.delete(key) : store.set(key, value)),
+    // A JSON store, as the engine's is: a value it cannot write is a key it leaves alone.
+    storeSet: async (key, value) => void (value === undefined ? undefined : store.set(key, value)),
+    storeDelete: async (key) => void store.delete(key),
     now: async () => NOW,
     has: (_server, tool) => answers[tool] !== undefined,
   };
@@ -486,6 +488,166 @@ let backOfficeRows;
     serverOf(null, tools) === "back-office");
   check("and where nothing serves it, on nothing at all", serverOf(null, [{ name: "Read", mcp: false }]) === null);
   check("every workspace of the session is known", serversOf(tools).join() === "back-office");
+}
+
+// ── 19. A write forgets what it touched (P1/T1) ───────────────────────────
+{
+  // Measured on 15 September 2026: `feature_brief_update(61, objective_id: 9)` during a
+  // session, and the pane went on drawing `brief hors stratégie` for the three minutes a
+  // name is kept — until somebody pressed « rafraîchir ». The write forgets the names the
+  // drawn trees were built from, and the refresh that follows reads them again; the button
+  // forgets the same list, because it is the same list.
+  const answers = {
+    feature_spec_get: galySpec,
+    feature_brief_get: galyBrief,
+    feature_spec_list: galySpecList,
+    strategy_get_objective_breadcrumb: galyChain,
+    strategy_navigate_children: galyChildren,
+  };
+  const bench = workspace({ spelling: "galy", answers });
+  const held = { specs: [{ id: 54, at: NOW, server: "bg" }], briefs: [] };
+
+  const before = plainOf(dockRows(await modelOf(bench, held), { columns: 96 }));
+  check("a brief attached to nothing reads as outside the strategy", before.includes("brief hors stratégie"));
+
+  // The write itself: the brief now serves objective 8.
+  answers.feature_brief_get = { ...galyBrief, brief: { ...galyBrief.brief, objective_id: 8 } };
+
+  const stale = plainOf(dockRows(await modelOf(bench, held), { columns: 96 }));
+  check("a drawing that forgets nothing keeps the answer from before the write",
+    stale.includes("brief hors stratégie"), stale.join("\n"));
+
+  const drawn = await modelOf(bench, held);
+  await bench.reader.forget(namesToForget(drawn.trees, (kind, id) => bench.reader.cacheKeyOf("bg", kind, id)));
+
+  const after = plainOf(dockRows(await modelOf(bench, held), { columns: 96 }));
+  check("once the write has forgotten its names, the objective is drawn with nothing pressed",
+    !after.includes("brief hors stratégie") && after.some((row) => row.includes("Recette du poste")), after.join("\n"));
+}
+
+// ── 20. An address the engine would refuse is drawn as text (P3/T1) ───────
+{
+  const GALY = "https://benoit.galy.cloud/specs/56";
+  check("an https address is kept as the engine spells it", hrefOf(GALY) === GALY, String(hrefOf(GALY)));
+  check("and so is the back office's",
+    hrefOf("https://back.green-acres.com/fr/Product/FeatureSpec/Detail/1109") ===
+      "https://back.green-acres.com/fr/Product/FeatureSpec/Detail/1109");
+  check("a workspace served from this machine is an address too",
+    hrefOf("http://localhost:5173/specs/56") === "http://localhost:5173/specs/56");
+  check("no address at all is no link", hrefOf(undefined) === null && hrefOf("") === null && hrefOf(12) === null);
+  check("plain http elsewhere is refused", hrefOf("http://back.green-acres.com/specs/56") === null);
+  check("and so is a scheme that is not the web", hrefOf("javascript:alert(1)") === null);
+  check("a host with a user in front of it is refused", hrefOf("https://user@galy.cloud/specs/56") === null);
+  check("a raw @ anywhere is refused", hrefOf("https://galy.cloud/specs/@56") === null);
+  check("something that is not an address at all is refused", hrefOf("back.green-acres.com/specs/56") === null);
+  check("past 2048 characters it is refused", hrefOf(`https://galy.cloud/${"a".repeat(2100)}`) === null);
+  // The engine's own declaration says to encode a space and a non-ASCII letter rather than
+  // refuse them, and `new URL(href).href` is the spelling it asks for: so they become an
+  // address a person can click, not a row that lost its link on the way.
+  check("an accent is encoded rather than dropped",
+    hrefOf("https://galy.cloud/specs/été") === "https://galy.cloud/specs/%C3%A9t%C3%A9", String(hrefOf("https://galy.cloud/specs/été")));
+  check("and so is a space", hrefOf("https://galy.cloud/specs/56 bis") === "https://galy.cloud/specs/56%20bis");
+}
+
+// ── 21. The rows of a workspace that serves its addresses (P3/T2) ─────────
+{
+  // No workspace serves `url` yet, so this is the answer one is about to serve: the back
+  // office's own, PascalCase on the feature verbs and snake_case on the strategy ones, with
+  // an address on the spec, on the brief, on the objectives — and a broken one on the root,
+  // which must cost that row its link and nothing else.
+  const BO = "https://back.green-acres.com";
+  const withUrl = {
+    feature_spec_get: { success: true, spec: { ...backOfficeSpec.spec, Url: `${BO}/fr/Product/FeatureSpec/Detail/1109` } },
+    feature_brief_get: {
+      success: true,
+      brief: {
+        ...backOfficeBrief.brief,
+        Url: `${BO}/fr/Product/FeatureBrief/Detail/135`,
+        Specs: backOfficeBrief.brief.Specs.map((spec) => ({ ...spec, Url: `${BO}/fr/Product/FeatureSpec/Detail/${spec.Id}` })),
+      },
+    },
+    strategy_get_objective_breadcrumb: {
+      success: true,
+      objective_id: 178,
+      // The root's address is one the engine would refuse; the leaf's is served by the
+      // objective itself rather than by the chain.
+      chain: backOfficeChain.chain.map((node, index) => ({
+        ...node,
+        url: index === 0 ? "http://back.green-acres.com/fr/Strategy/Objective/Detail/5" : `${BO}/fr/Strategy/Objective/Detail/${node.id}`,
+        ...(index === backOfficeChain.chain.length - 1 ? { url: undefined } : {}),
+      })),
+    },
+    strategy_get_objective: {
+      success: true,
+      objective: { ...backOfficeObjective.objective, url: `${BO}/fr/Strategy/Objective/Detail/178` },
+    },
+  };
+
+  const bench = workspace({ spelling: "contract", answers: withUrl });
+  const model = await modelOf(bench, held1109);
+  const rows = dockRows(model, { columns: 96 });
+  const linkOf = (key) => rows.find((row) => row.key.includes(key))?.segments.find((segment) => segment.url)?.url;
+
+  check("the spec in hand opens its own page",
+    linkOf("-spec") === `${BO}/fr/Product/FeatureSpec/Detail/1109`, String(linkOf("-spec")));
+  check("the brief opens its own", linkOf("-brief") === `${BO}/fr/Product/FeatureBrief/Detail/135`, String(linkOf("-brief")));
+  check("an objective of the chain opens its own", linkOf("-obj-9") === `${BO}/fr/Strategy/Objective/Detail/9`, String(linkOf("-obj-9")));
+  check("the leaf takes the address the objective itself served",
+    linkOf("-obj-178") === `${BO}/fr/Strategy/Objective/Detail/178`, String(linkOf("-obj-178")));
+  check("a row whose address the engine would refuse keeps its text and loses its link",
+    linkOf("-obj-5") === undefined && plainOf(rows).some((row) => row.includes("◆ Susciter le désir pour la marque")),
+    String(linkOf("-obj-5")));
+  check("a key result has no page of its own to open", linkOf("-kr-0") === undefined);
+
+  // A sibling is a Button, and a Button is a leaf on every surface: no element goes inside
+  // it. It keeps the press that unfolds its phases and takes no link.
+  const sibling = rows.find((row) => row.press?.kind === "sibling");
+  check("a sibling keeps its press and takes no link",
+    sibling !== undefined && sibling.segments.every((segment) => segment.url === undefined),
+    JSON.stringify(sibling?.segments));
+
+  const inline = inlineRows(model, { columns: 96 });
+  check("the summary above the prompt is linked the same way",
+    inline.find((row) => row.key === "inline-spec")?.segments.some((segment) => segment.url === `${BO}/fr/Product/FeatureSpec/Detail/1109`),
+    JSON.stringify(inline.find((row) => row.key === "inline-spec")?.segments));
+
+  // The same tree from a workspace serving no address: the rows are what they always were.
+  const plain = workspace({ spelling: "contract", answers: BACK_OFFICE });
+  const plainRows = dockRows(await modelOf(plain, held1109), { columns: 96 });
+  check("a workspace that serves none draws exactly the rows it drew before",
+    plainRows.every((row) => row.segments.every((segment) => segment.url === undefined)) &&
+      plainOf(plainRows).join("\n") === backOfficeRows.join("\n"), plainOf(plainRows).join("\n"));
+}
+
+// ── 22. Forgetting a name is its own verb ─────────────────────────────────
+{
+  // The store holds JSON, so `set(key, undefined)` writes nothing and leaves the key
+  // exactly where it was. Read back, the pane served the name it had just been told to
+  // forget — which is what made a write invisible for the three minutes a name is kept,
+  // and « rafraîchir » a button that redrew the same thing.
+  const jsonStore = new Map();
+  let answered = 0;
+  const reader = readerOf({
+    call: async () => {
+      answered += 1;
+      return { success: true, spec: { id: 54, title: `lecture ${answered}` } };
+    },
+    storeGet: async (key) => jsonStore.get(key),
+    storeSet: async (key, value) => void (value === undefined ? undefined : jsonStore.set(key, value)),
+    storeDelete: async (key) => void jsonStore.delete(key),
+    now: async () => NOW,
+  });
+
+  const first = await reader.read("ws", "spec", 54);
+  check("a name is kept after the first read", jsonStore.size === 1, String(jsonStore.size));
+
+  await reader.forget([reader.cacheKeyOf("ws", "spec", 54)]);
+  check("forgetting drops the key rather than writing over it", jsonStore.size === 0,
+    JSON.stringify([...jsonStore.keys()]));
+
+  const second = await reader.read("ws", "spec", 54);
+  check("so the next read asks the workspace again",
+    first.title === "lecture 1" && second.title === "lecture 2", `${first.title}, then ${second.title}`);
 }
 
 if (failed) {

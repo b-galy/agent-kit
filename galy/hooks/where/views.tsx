@@ -4,24 +4,28 @@
 // The pane's tree of elements — and nothing else.
 //
 // Every decision about what is drawn lives in `render.mjs`, which answers rows of plain
-// segments; this file turns a row into a `Text`, or into a `Button` when the row can be
-// pressed. That boundary is what lets the whole appearance be tested in node.
+// segments; this file turns a row into a `Text`, into a `Button` when the row can be
+// pressed, and wraps a segment in a `Link` when it carries an address. That boundary is
+// what lets the whole appearance be tested in node.
 
 import type { ElementConstructor, RenderElement } from 'claude-code'
 
-import type { ButtonProps, BoxProps, TextProps } from 'claude-code'
+import type { ButtonProps, BoxProps, LinkProps, TextProps } from 'claude-code'
 
 export type Kit = {
   Box: ElementConstructor<BoxProps>
   Text: ElementConstructor<TextProps>
   Button: ElementConstructor<ButtonProps>
+  Link: ElementConstructor<LinkProps>
 }
 
 export type Press = { kind: string; id?: number }
 
+export type Segment = { text: string; bold?: boolean; dim?: boolean; url?: string }
+
 export type Row = {
   key: string
-  segments: Array<{ text: string; bold?: boolean; dim?: boolean }>
+  segments: Segment[]
   press?: Press
 }
 
@@ -39,7 +43,28 @@ export function paneView(
   rows: readonly Row[],
   onPress: (press: Press) => void,
 ): RenderElement {
-  const { Box, Text, Button } = kit
+  const { Box, Text, Button, Link } = kit
+
+  /**
+   * One segment: its text, and around it the address the row carries, so the name opens
+   * the page it names. The style stays on the inner `Text` either way — a link is drawn
+   * in the bold or dim it already had, not in a style of its own.
+   */
+  const segmentOf = (row: Row, segment: Segment, index: number): RenderElement => {
+    const drawn = (
+      <Text key={`${row.key}-${index}`} bold={segment.bold} dimColor={segment.dim}>
+        {segment.text}
+      </Text>
+    )
+
+    if (segment.url === undefined) return drawn
+
+    return (
+      <Link key={`${row.key}-${index}-link`} href={segment.url}>
+        {drawn}
+      </Link>
+    )
+  }
 
   return (
     <Box flexDirection="column">
@@ -61,11 +86,7 @@ export function paneView(
 
         return (
           <Text key={row.key} wrap="truncate-end">
-            {row.segments.map((segment, index) => (
-              <Text key={`${row.key}-${index}`} bold={segment.bold} dimColor={segment.dim}>
-                {segment.text}
-              </Text>
-            ))}
+            {row.segments.map((segment, index) => segmentOf(row, segment, index))}
           </Text>
         )
       })}

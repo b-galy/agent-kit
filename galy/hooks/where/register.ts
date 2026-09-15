@@ -4,7 +4,7 @@ import type { Host } from './host'
 import * as Names from './names.mjs'
 import { dockRows, inlineRows } from './render.mjs'
 import { payloadOf, readerOf, serverOf, serversOf } from './reader.mjs'
-import { buildModel } from './tree.mjs'
+import { buildModel, namesToForget } from './tree.mjs'
 import { paneView, type Press, type Row } from './views.jsx'
 import { heldOf, holdsSomething, workFileOf, workingCopyRootOf } from './work-file.mjs'
 
@@ -72,6 +72,7 @@ export function register(on: On) {
       call: async (server, tool, args) => payloadOf(await engine.mcpCall(server, tool, args)),
       storeGet: key => engine.storeGet(key),
       storeSet: (key, value) => engine.storeSet(key, value),
+      storeDelete: key => engine.storeDelete(key),
       now: () => engine.now(),
       after: (ms, fn) => engine.after(ms, fn),
       has: (server, tool) => tools.some(listed => listed.name === `mcp__${server}__${tool}`),
@@ -267,6 +268,7 @@ export function register(on: On) {
         stat: path => $.fs.stat(path),
         storeGet: key => $.store.get(key),
         storeSet: (key, value) => $.store.set(key, value),
+        storeDelete: key => $.store.delete(key),
         mcpCall: (server, tool, args) => $.mcp.call(server, tool, args),
         toolList: () => $.tool.list(),
         cwd: () => $.session.cwd(),
@@ -285,7 +287,7 @@ export function register(on: On) {
   on('ui.render', { component: 'Pane' }, async ($, e, next) => {
     if (e.requestId !== Names.PANE_ID || host === null || !isOnPaneSurface(e)) return next(e)
 
-    const { Box, Text, Button } = await $.ui.resolve(e)
+    const { Box, Text, Button, Link } = await $.ui.resolve(e)
 
     columns = e.viewport?.columns ?? columns
     isPaneOpen = true
@@ -294,7 +296,7 @@ export function register(on: On) {
     const rows: Row[] =
       e.props.placement === 'dock' ? dockRows(model, view) : inlineRows(model, view)
 
-    return paneView({ Box, Text, Button }, rows, press => onPress(press))
+    return paneView({ Box, Text, Button, Link }, rows, press => onPress(press))
   })
 
   function onPress(press: Press) {
@@ -333,27 +335,19 @@ export function register(on: On) {
     redraw(engine)
   }
 
+  /** Forgets every name the drawn trees were built from. */
+  async function forgetHeldNames(engine: Host): Promise<void> {
+    const server = serverOf(null, tools) ?? serversOf(tools)[0]
+    if (server === undefined || server === null) return
+
+    const known = readerFor(engine)
+
+    await known.forget(namesToForget(model.trees, (kind, id) => known.cacheKeyOf(server, kind, id)))
+  }
+
   /** Forgets every name this copy reads, then reads them again. */
   async function forgetAndRefresh(engine: Host): Promise<void> {
-    const known = readerFor(engine)
-    const keys: string[] = []
-
-    for (const tree of model.trees) {
-      const server = serverOf(null, tools) ?? serversOf(tools)[0]
-      if (server === undefined || server === null) continue
-      if (tree.spec) keys.push(known.cacheKeyOf(server, 'spec', tree.spec.id))
-      if (tree.brief) {
-        keys.push(known.cacheKeyOf(server, 'brief', tree.brief.id))
-        keys.push(known.cacheKeyOf(server, 'briefSpecs', tree.brief.id))
-      }
-      for (const node of tree.chain) {
-        keys.push(known.cacheKeyOf(server, 'chain', node.id))
-        keys.push(known.cacheKeyOf(server, 'objective', node.id))
-        keys.push(known.cacheKeyOf(server, 'children', node.id))
-      }
-    }
-
-    await known.forget(keys)
+    await forgetHeldNames(engine)
     reader = null
     attempts = 0
     await refresh(engine)
@@ -419,8 +413,19 @@ export function register(on: On) {
       return await next(e)
     } finally {
       if (host !== null && isWorkspaceWrite(String(e.tool))) {
-        scheduleRefresh(host, Names.REFRESH_AFTER_WRITE_MS)
-        void openOnFirstHold(host).catch(() => undefined)
+        const engine = host
+
+        // A name is kept for three minutes, which is what makes the pane cheap — and what
+        // made it wrong right after a write: a brief attached to an objective during the
+        // session went on drawing `brief hors stratégie` until the cache let go, or until
+        // somebody pressed « rafraîchir ». So the write forgets what it may have moved
+        // first, and the refresh that follows reads it again.
+        void forgetHeldNames(engine)
+          .catch(() => undefined)
+          .finally(() => {
+            scheduleRefresh(engine, Names.REFRESH_AFTER_WRITE_MS)
+            void openOnFirstHold(engine).catch(() => undefined)
+          })
       }
     }
   })
