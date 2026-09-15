@@ -1,6 +1,6 @@
 ---
 name: maturity-actions
-description: Carry out the audit actions this workspace has ACCEPTED — one gesture per action, in the order that unblocks the most, ending at a single pull request. Fires on "mets en œuvre ce qu'on a validé", "applique les actions de l'audit", "vide la file", "carry out the accepted actions". It takes nothing on its own initiative: an action nobody accepted is never touched, and an action whose procedure is not written is skipped out loud rather than improvised. It never merges and never deploys.
+description: Carry out the audit actions this workspace has ACCEPTED — one gesture per action, in the order that unblocks the most, ending at a single pull request. Fires on "mets en œuvre ce qu'on a validé", "applique les actions de l'audit", "vide la file", "carry out the accepted actions". It takes nothing on its own initiative — an action nobody accepted is never touched, and an action whose procedure is not written is skipped out loud rather than improvised. It never merges and never deploys.
 ---
 
 # maturity-actions — carry out what was accepted, and nothing else
