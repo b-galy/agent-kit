@@ -4,12 +4,14 @@ import type { Host } from './host'
 import * as Names from './names.mjs'
 import { dockRows, inlineRows } from './render.mjs'
 import { payloadOf, readerOf, serverOf, serversOf } from './reader.mjs'
-import { buildModel, namesToForget } from './tree.mjs'
+import { buildModel, namesToForget, namesTouched } from './tree.mjs'
+import { burstOf } from './writes.mjs'
 import { paneView, type Press, type Row } from './views.jsx'
 import { heldOf, holdsSomething, workFileOf, workingCopyRootOf } from './work-file.mjs'
 
 type Model = Awaited<ReturnType<typeof buildModel>>
 type Reader = ReturnType<typeof readerOf>
+type Burst = ReturnType<typeof burstOf>
 
 const EMPTY_MODEL: Model = { status: 'empty', trees: [], gaps: [] }
 
@@ -17,10 +19,6 @@ const EMPTY_MODEL: Model = { status: 'empty', trees: [], gaps: [] }
 const isOnPaneSurface = <E extends Record<'surface', RenderSurface>>(
   e: E,
 ): e is Exclude<E, Record<'surface', 'mobile'>> => e.surface !== 'mobile'
-
-/** A workspace write: what makes the pane worth drawing again. */
-const isWorkspaceWrite = (tool: string): boolean =>
-  /^mcp__.+?__(feature_(spec|brief)|strategy)_/.test(tool)
 
 /**
  * Registers the pane that names, beside the transcript, the strategy tree of what this
@@ -36,6 +34,7 @@ const isWorkspaceWrite = (tool: string): boolean =>
 export function register(on: On) {
   let host: Host | null = null
   let reader: Reader | null = null
+  let burst: Burst | null = null
   let tools: ToolInfo[] = []
   let root: string | null = null
 
@@ -335,22 +334,56 @@ export function register(on: On) {
     redraw(engine)
   }
 
-  /** Forgets every name the drawn trees were built from. */
-  async function forgetHeldNames(engine: Host): Promise<void> {
-    const server = serverOf(null, tools) ?? serversOf(tools)[0]
-    if (server === undefined || server === null) return
+  /** The server a name is kept under: the one named, else the one this copy reads through. */
+  const serverForNames = (named: string | null): string | null =>
+    serverOf(named, tools) ?? serversOf(tools)[0] ?? null
+
+  /** Every name the drawn trees were built from, as the keys of the server they came from. */
+  function heldNames(engine: Host): string[] {
+    const server = serverForNames(null)
+    if (server === null) return []
 
     const known = readerFor(engine)
 
-    await known.forget(namesToForget(model.trees, (kind, id) => known.cacheKeyOf(server, kind, id)))
+    return namesToForget(model.trees, (kind, id) => known.cacheKeyOf(server, kind, id))
   }
 
-  /** Forgets every name this copy reads, then reads them again. */
+  /** Forgets every name this copy reads, then reads them again: what « rafraîchir » does. */
   async function forgetAndRefresh(engine: Host): Promise<void> {
-    await forgetHeldNames(engine)
+    const keys = heldNames(engine)
+    if (keys.length > 0) await readerFor(engine).forget(keys)
     reader = null
     attempts = 0
     await refresh(engine)
+  }
+
+  /**
+   * The writes of a burst: each forgets the entity its own arguments name, and that
+   * entity alone; one refresh follows the last of them.
+   *
+   * A name is kept for three minutes, which is what makes the pane cheap — and what made
+   * it wrong right after a write: a brief attached to an objective during the session went
+   * on drawing `brief hors stratégie` until the cache let go, or until somebody pressed
+   * « rafraîchir ». Forgetting everything on every write was the first answer, and it cost
+   * every objective, every brief and every spec on each of twenty writes in a row.
+   */
+  function burstFor(engine: Host): Burst {
+    burst ??= burstOf({
+      after: (ms, fn) => engine.after(ms, fn),
+      delayMs: Names.REFRESH_AFTER_WRITE_MS,
+      keysOf: touched => {
+        const server = serverForNames(touched.server)
+        if (server === null) return []
+
+        const known = readerFor(engine)
+
+        return namesTouched(model.trees, touched, (kind, id) => known.cacheKeyOf(server, kind, id))
+      },
+      forget: keys => readerFor(engine).forget(keys),
+      refresh: () => scheduleRefresh(engine),
+    })
+
+    return burst
   }
 
   on('ui.close', { id: Names.PANE_ID }, async ($, e, next) => {
@@ -412,20 +445,11 @@ export function register(on: On) {
     try {
       return await next(e)
     } finally {
-      if (host !== null && isWorkspaceWrite(String(e.tool))) {
-        const engine = host
-
-        // A name is kept for three minutes, which is what makes the pane cheap — and what
-        // made it wrong right after a write: a brief attached to an objective during the
-        // session went on drawing `brief hors stratégie` until the cache let go, or until
-        // somebody pressed « rafraîchir ». So the write forgets what it may have moved
-        // first, and the refresh that follows reads it again.
-        void forgetHeldNames(engine)
-          .catch(() => undefined)
-          .finally(() => {
-            scheduleRefresh(engine, Names.REFRESH_AFTER_WRITE_MS)
-            void openOnFirstHold(engine).catch(() => undefined)
-          })
+      // The tool's own arguments are spread beside `tool` on the event, and the verb's rule
+      // reads them by name. A read arms nothing: the copy's own file is re-read at the end
+      // of the turn as it always was.
+      if (host !== null && burstFor(host).wrote(String(e.tool), e as unknown as Record<string, unknown>)) {
+        void openOnFirstHold(host).catch(() => undefined)
       }
     }
   })

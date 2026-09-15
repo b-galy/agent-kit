@@ -14,7 +14,9 @@ import {
   IN_HAND_TEXT,
   INLINE_MAX_ROWS,
   LOADING_TEXT,
+  MARK_COLUMNS,
   MARKS,
+  OBJECTIVE_MARK,
   OUTSIDE_STRATEGY_TEXT,
   REFRESH_TEXT,
   SIBLINGS_SHOWN,
@@ -27,6 +29,100 @@ import {
 
 /** The mark a status is drawn with. */
 export const markOf = (status) => MARKS[String(status ?? "")] ?? MARKS.other;
+
+// ── How wide a line really is ─────────────────────────────────────────────
+//
+// A terminal counts columns, not characters, and the two stopped agreeing the day an
+// objective started being drawn with its own icon: an emoji is one character and two
+// columns. Measured with `String.length` a row overflows its pane and wraps, which breaks
+// the tree apart — the one thing this pane exists to avoid. So every cut and every
+// arithmetic below goes through these two.
+
+/** The ranges a terminal gives two columns: CJK, Hangul, and the emoji that need no selector. */
+const WIDE = [
+  [0x1100, 0x115f], [0x231a, 0x231b], [0x23e9, 0x23ec], [0x23f0, 0x23f0], [0x23f3, 0x23f3],
+  [0x25fd, 0x25fe], [0x2614, 0x2615], [0x2648, 0x2653], [0x267f, 0x267f], [0x2693, 0x2693],
+  [0x26a1, 0x26a1], [0x26aa, 0x26ab], [0x26bd, 0x26be], [0x26c4, 0x26c5], [0x26ce, 0x26ce],
+  [0x26d4, 0x26d4], [0x26ea, 0x26ea], [0x26f2, 0x26f3], [0x26f5, 0x26f5], [0x26fa, 0x26fa],
+  [0x26fd, 0x26fd], [0x2705, 0x2705], [0x270a, 0x270b], [0x2728, 0x2728], [0x274c, 0x274c],
+  [0x274e, 0x274e], [0x2753, 0x2755], [0x2757, 0x2757], [0x2795, 0x2797], [0x27b0, 0x27b0],
+  [0x27bf, 0x27bf], [0x2b1b, 0x2b1c], [0x2b50, 0x2b50], [0x2b55, 0x2b55], [0x2e80, 0x303e],
+  [0x3041, 0x33ff], [0x3400, 0x4dbf], [0x4e00, 0x9fff], [0xa000, 0xa4cf], [0xac00, 0xd7a3],
+  [0xf900, 0xfaff], [0xfe10, 0xfe19], [0xfe30, 0xfe6f], [0xff00, 0xff60], [0xffe0, 0xffe6],
+  [0x1f000, 0x1faff], [0x20000, 0x3fffd],
+];
+
+/** The ranges that take none: combining marks, zero-width joiners, variation selectors. */
+const BARE = [[0x0300, 0x036f], [0x200b, 0x200f], [0x2060, 0x206f], [0xfe00, 0xfe0f]];
+
+const inRanges = (code, ranges) => ranges.some(([from, to]) => code >= from && code <= to);
+
+/** The columns one code point takes. */
+const charWidth = (code) => (inRanges(code, BARE) ? 0 : inRanges(code, WIDE) ? 2 : 1);
+
+/** The variation selector that turns the character before it into a two-column emoji. */
+const EMOJI_SELECTOR = 0xfe0f;
+
+/**
+ * The columns a string takes on a terminal.
+ *
+ * @param {unknown} text
+ * @returns {number}
+ */
+export function displayWidth(text) {
+  let width = 0;
+  let previous = 0;
+  for (const character of String(text ?? "")) {
+    const code = character.codePointAt(0) ?? 0;
+    if (code === EMOJI_SELECTOR) {
+      width += previous === 1 ? 1 : 0;
+      previous = 0;
+      continue;
+    }
+    const own = charWidth(code);
+    width += own;
+    previous = own;
+  }
+  return width;
+}
+
+/** The longest beginning of `text` that fits in `columns`, cut between code points. */
+function cutTo(text, columns) {
+  let width = 0;
+  let previous = 0;
+  let kept = "";
+  for (const character of String(text ?? "")) {
+    const code = character.codePointAt(0) ?? 0;
+    const own = code === EMOJI_SELECTOR ? (previous === 1 ? 1 : 0) : charWidth(code);
+    if (width + own > columns) break;
+    width += own;
+    kept += character;
+    previous = code === EMOJI_SELECTOR ? 0 : own;
+  }
+  return kept;
+}
+
+/**
+ * The mark an objective is drawn with, and the space between it and the title: its own icon
+ * where the workspace gave it one, else the pane's.
+ *
+ * The mark sits in a cell of a fixed width, so an icon on one node never shifts the node
+ * under it; the separator is outside that cell, so an emoji never touches the title it
+ * marks, and a terminal drawing that emoji narrow still leaves them apart.
+ *
+ * @param {string | null | undefined} icon
+ * @returns {string}
+ */
+export function objectiveMark(icon) {
+  const own = typeof icon === "string" ? icon.trim() : "";
+  const kept = own === "" ? OBJECTIVE_MARK : cutTo(own, MARK_COLUMNS);
+  const width = displayWidth(kept);
+  const cell = width === 0 || width > MARK_COLUMNS
+    ? `${OBJECTIVE_MARK} `
+    : `${kept}${" ".repeat(MARK_COLUMNS - width)}`;
+
+  return `${cell} `;
+}
 
 /** An address longer than this is refused by the engine, and with it the whole tree. */
 const HREF_MAX = 2048;
@@ -80,8 +176,8 @@ export function titleText(title, width, fallbackId) {
   const whole = String(title ?? "").trim();
   const text = whole === "" ? (fallbackId === undefined ? "" : `#${fallbackId}`) : whole;
   if (width <= 0) return "";
-  if (text.length <= width) return text;
-  return `${text.slice(0, Math.max(1, width - 1)).trimEnd()}…`;
+  if (displayWidth(text) <= width) return text;
+  return `${cutTo(text, Math.max(1, width - 1)).trimEnd()}…`;
 }
 
 /** A number as a row shows it: whole when it is whole, two decimals at most otherwise. */
@@ -114,19 +210,20 @@ export function keyResultText(kr, width) {
   // Narrow, the progress goes before the unit, and the unit before the figures: what a
   // key result is read for is its name and how far along it is.
   let tail = figures.length > 0 ? ` · ${figures.join(" ")}` : "";
-  while (figures.length > 1 && width - tail.length < 12) {
+  while (figures.length > 1 && width - displayWidth(tail) < 12) {
     figures.splice(figures.length - 1, 1);
     tail = ` · ${figures.join(" ")}`;
   }
-  if (width - tail.length < 6) tail = "";
+  if (width - displayWidth(tail) < 6) tail = "";
 
-  return { text: fitText(`${titleText(kr.title, Math.max(4, width - tail.length), "?")}${tail}`, width), dim: !measured };
+  const room = Math.max(4, width - displayWidth(tail));
+  return { text: fitText(`${titleText(kr.title, room, "?")}${tail}`, width), dim: !measured };
 }
 
 /** A line cut to the room it has, with an ellipsis where something was dropped. */
 export function fitText(text, width) {
   if (width <= 0) return "";
-  return text.length <= width ? text : `${text.slice(0, Math.max(1, width - 1)).trimEnd()}…`;
+  return displayWidth(text) <= width ? text : `${cutTo(text, Math.max(1, width - 1)).trimEnd()}…`;
 }
 
 /** The progress a key result reports, or the one its two figures imply. */
@@ -149,7 +246,7 @@ export function phaseLineText(phases, width) {
   const counter = `  ${done}/${phases.length}`;
   const marks = phases.map((phase) => markOf(phase.status));
   const named = phases.map((phase, index) => `${marks[index]} ${String(phase.title ?? "").trim()}`).join(" · ");
-  if (named.length + counter.length <= width) return `${named}${counter}`;
+  if (displayWidth(named) + displayWidth(counter) <= width) return `${named}${counter}`;
   return fitText(`${marks.join(" ")}${counter}`, width);
 }
 
@@ -174,11 +271,11 @@ const TITLE_FLOOR = 8;
  */
 function namedRow(row, columns) {
   const tails = [...(row.tails ?? [])].filter((tail) => tail !== "");
-  const fixed = row.indent.length + row.prefix.length;
-  while (tails.length > 0 && columns - fixed - tails.join("").length < TITLE_FLOOR) tails.shift();
+  const fixed = displayWidth(row.indent) + displayWidth(row.prefix);
+  while (tails.length > 0 && columns - fixed - displayWidth(tails.join("")) < TITLE_FLOOR) tails.shift();
 
   const suffix = tails.join("");
-  const title = titleText(row.title, Math.max(1, columns - fixed - suffix.length), row.id);
+  const title = titleText(row.title, Math.max(1, columns - fixed - displayWidth(suffix)), row.id);
   // A row that can be pressed is a Button, and a Button is a leaf on every surface: it
   // carries a label, never an element. So a sibling spec keeps the press that unfolds its
   // phases, and takes no address; the choice is made here rather than in the view.
@@ -226,7 +323,7 @@ export function dockRows(model, view) {
           {
             key: `${tree.key}-obj-${node.id}`,
             indent: pad(level * 2),
-            prefix: level === 0 ? "◆ " : "└ ◆ ",
+            prefix: level === 0 ? objectiveMark(node.icon) : `└ ${objectiveMark(node.icon)}`,
             title: node.title,
             id: node.id,
             bold: level === tree.chain.length - 1,
@@ -270,9 +367,10 @@ export function dockRows(model, view) {
       );
     }
 
+    // Every spec of this brief the copy has in hand, newest first, each with its phases.
     const specDepth = briefDepth + 4;
-    if (tree.spec) {
-      rows.push(...specRows(tree.spec, specDepth, columns, true, `${tree.key}-spec`));
+    for (const spec of tree.specs) {
+      rows.push(...specRows(spec, specDepth, columns, true, `${tree.key}-spec-${spec.id}`));
     }
 
     const shown = tree.siblings.slice(0, SIBLINGS_SHOWN);
@@ -361,9 +459,13 @@ export function inlineRows(model, view) {
   if (first) {
     const leaf = first.chain[first.chain.length - 1];
     if (leaf) {
+      const mark = objectiveMark(leaf.icon);
       rows.push({
         key: "inline-obj",
-        segments: [{ text: "◆ " }, { text: titleText(leaf.title, columns - 2, leaf.id), bold: true, ...linked(leaf.url) }],
+        segments: [
+          { text: mark },
+          { text: titleText(leaf.title, columns - displayWidth(mark), leaf.id), bold: true, ...linked(leaf.url) },
+        ],
       });
     } else if (first.outsideStrategy) {
       rows.push({ key: "inline-outside", segments: [{ text: OUTSIDE_STRATEGY_TEXT, dim: true }] });
@@ -377,33 +479,33 @@ export function inlineRows(model, view) {
         ],
       });
     }
-    if (first.spec) {
-      const prefix = `    ${markOf(first.spec.status)} `;
+    for (const spec of first.specs) {
+      const prefix = `    ${markOf(spec.status)} `;
       rows.push({
-        key: "inline-spec",
+        key: `inline-spec-${spec.id}`,
         segments: [
           { text: prefix },
-          { text: titleText(first.spec.title, columns - prefix.length, first.spec.id), bold: true, ...linked(first.spec.url) },
+          { text: titleText(spec.title, columns - displayWidth(prefix), spec.id), bold: true, ...linked(spec.url) },
         ],
       });
-      if (Array.isArray(first.spec.phases) && first.spec.phases.length > 0) {
+      if (Array.isArray(spec.phases) && spec.phases.length > 0) {
         rows.push({
-          key: "inline-phases",
-          segments: [{ text: "      " }, { text: phaseLineText(first.spec.phases, columns - 6), dim: true }],
+          key: `inline-phases-${spec.id}`,
+          segments: [{ text: "      " }, { text: phaseLineText(spec.phases, columns - 6), dim: true }],
         });
       }
     }
   }
 
   for (const tree of model.trees.slice(1)) {
-    const named = tree.spec ?? tree.brief;
+    const named = tree.specs[0] ?? tree.brief;
     if (!named) continue;
     const prefix = `${markOf(named.status)} `;
     rows.push({
       key: `inline-${tree.key}`,
       segments: [
         { text: prefix, dim: true },
-        { text: titleText(named.title, columns - prefix.length, named.id), dim: true, ...linked(named.url) },
+        { text: titleText(named.title, columns - displayWidth(prefix), named.id), dim: true, ...linked(named.url) },
       ],
     });
   }
