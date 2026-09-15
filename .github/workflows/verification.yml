@@ -38,7 +38,23 @@ jobs:
           node --check scripts/validate.mjs
           # Les hooks par le motif, jamais par la liste : un hook ajoute sans etre ajoute ici
           # serait le seul script publie que rien ne lit avant un poste de client.
-          for hook in galy/hooks/*.mjs; do node --check "$hook"; done
+          for hook in galy/hooks/*.mjs galy/hooks/*/*.mjs; do node --check "$hook"; done
+          for script in scripts/*.mjs; do node --check "$script"; done
+
+      # Le mod qui dessine le panneau a cote de la conversation est du TypeScript execute
+      # dans le processus de Claude Code, type contre les declarations que /plugin-types
+      # ecrit (types/claude-code.d.ts, dont la premiere ligne nomme sa version). L'API est
+      # en acces anticipe : elle peut bouger d'une version a l'autre, et la seule facon de
+      # l'apprendre avant un poste de client est de recompiler a chaque poussee.
+      - name: Le panneau compile contre les declarations versionnees
+        run: npx -y -p typescript@5 tsc -p tsconfig.json
+
+      # Ce que le panneau decide — l'arbre, les deux orthographes, le cache, la mise en
+      # forme — vit dans des fonctions pures, parce que `claude plugin test` n'existe pas
+      # dans la version installee et que le kit `claude-code/testing` est donc hors de
+      # portee. Ces fonctions sont rejouees ici sur les reponses reelles des deux espaces.
+      - name: Le panneau rejoue ses contrats sur les deux espaces de travail
+        run: node scripts/check-where.mjs
 
       # La ligne sous le prompt et le hook qui l'alimente, rejoués ensemble sur un banc
       # d'essai en dossier temporaire : aucun réseau, aucune ligne de développeur touchée.
