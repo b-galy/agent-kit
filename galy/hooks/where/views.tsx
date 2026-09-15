@@ -34,8 +34,13 @@ export type Row = {
   kind?: 'blank'
   /** Framed the whole width of the body: the brief. */
   boxed?: boolean
+  /** Drawn in the objectives' colour: the chain, and nothing under it. */
+  tone?: 'objective'
   press?: Press
 }
+
+/** The colour each tone is drawn in. */
+const COLOURS: Record<NonNullable<Row['tone']>, string> = { objective: 'blue' }
 
 /**
  * The pane's body, one row per line.
@@ -63,7 +68,8 @@ export function paneView(
   /**
    * One segment: its text, and around it the address the row carries, so the name opens
    * the page it names. The style stays on the inner `Text` either way — a link is drawn
-   * in the bold or dim it already had, not in a style of its own.
+   * in the bold, dim or colour it already had, not in a style of its own — and the
+   * engine's underline on a link is untouched by the colour.
    */
   const segmentOf = (row: Row, segment: Segment, index: number): RenderElement => {
     const drawn = (
@@ -72,6 +78,7 @@ export function paneView(
         bold={segment.bold}
         dimColor={segment.dim}
         strikethrough={segment.strikethrough}
+        color={row.tone === undefined ? undefined : COLOURS[row.tone]}
       >
         {segment.text}
       </Text>
@@ -122,7 +129,9 @@ export function paneView(
           return (
             <Box key={row.key} flexDirection="row" marginLeft={row.lead.indent}>
               <Box flexShrink={0}>
-                <Text bold={row.lead.bold}>{row.lead.prefix}</Text>
+                <Text bold={row.lead.bold} color={row.tone === undefined ? undefined : COLOURS[row.tone]}>
+                  {row.lead.prefix}
+                </Text>
               </Box>
               <Box flexGrow={1} flexShrink={1}>
                 <Text wrap="wrap">

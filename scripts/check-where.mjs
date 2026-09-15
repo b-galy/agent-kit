@@ -65,6 +65,7 @@ const WANTS = {
     strategy_get_objective_breadcrumb: "objectiveId",
     strategy_get_objective: "objectiveId",
     strategy_navigate_children: "objectiveId",
+    followup_check_list: "featureSpecId",
   },
   galy: {
     feature_spec_get: "id",
@@ -73,6 +74,7 @@ const WANTS = {
     strategy_get_objective_breadcrumb: "objective_id",
     strategy_get_objective: "id",
     strategy_navigate_children: "parent_objective_id",
+    followup_check_list: "feature_spec_id",
   },
 };
 
@@ -305,7 +307,7 @@ let backOfficeRows;
   check("the spec in hand is named whole, its count, its status and its mark on the same row",
     text.includes("  ● Spec : Split canal × pays dans le fit Meridian — priors par pays, hérités du canal sinon  1/2  [InProgress]  ← en main"), text);
   check("its phases are counted on its own row, and drawn one per row under it",
-    text.includes("  1/2  ") && text.includes("      ✓ Split + calibrateur par cellule\n      ▶ Bascule Worker1 + fit officiel"), text);
+    text.includes("  1/2  ") && text.includes("      ● Split + calibrateur par cellule\n      ▶ Bascule Worker1 + fit officiel"), text);
   check("three sibling specs are drawn and the rest counted",
     text.includes("… et 2 de plus") && text.split("\n").filter((row) => row.includes("MCP gel/dégel")).length === 1, text);
   check("a refresh button closes the pane", backOfficeRows[backOfficeRows.length - 1] === "rafraîchir");
@@ -864,8 +866,8 @@ let backOfficeRows;
   const keyOf = (kind, id) => `${kind}/${id}`;
   const forgotten = (tool, args) => namesTouched(model.trees, touchedBy(tool, args), keyOf).join();
 
-  check("a write on the spec in hand forgets that spec alone",
-    forgotten("mcp__back-office__feature_spec_update", { specId: 1109, title: "x" }) === "spec/1109",
+  check("a write on the spec in hand forgets that spec and its checks, nothing else",
+    forgotten("mcp__back-office__feature_spec_update", { specId: 1109, title: "x" }) === "spec/1109,followups/1109",
     forgotten("mcp__back-office__feature_spec_update", { specId: 1109 }));
   check("a write on its brief forgets the brief and the list of its specs",
     forgotten("mcp__bg__feature_brief_update", { id: 135, objective_id: 9 }) === "brief/135,briefSpecs/135",
@@ -1023,10 +1025,10 @@ let backOfficeRows;
 {
   // The phases of the spec in hand were one counted row of marks, and a title longer than
   // the pane was cut with an ellipsis. Each phase now has a row of its own, one level under
-  // its spec: the one done struck through, the one in progress pointing at itself, the rest
-  // in plain text; and a title is drawn whole, wrapping under its own first character past
-  // a lead the view draws once. The inline summary keeps the compact form, within its
-  // eight rows.
+  // its spec: the one done a full circle, the one in progress pointing at itself, the rest
+  // behind an empty one — and none struck through, since a struck line is a line nobody
+  // reads; and a title is drawn whole, wrapping under its own first character past a lead
+  // the view draws once. The inline summary keeps the compact form, within its eight rows.
   const galyReal = workspace({
     spelling: "galy",
     answers: {
@@ -1044,11 +1046,10 @@ let backOfficeRows;
   const phaseRows = rows.filter((row) => row.key.includes("-spec-54-phase-"));
 
   check("three phases are three rows", phaseRows.length === 3, String(phaseRows.length));
-  check("each opens with its own mark",
-    phaseRows.map((row) => row.lead.prefix).join("|") === "✓ |▶ |○ ", phaseRows.map((row) => row.lead.prefix).join("|"));
-  check("the done one is struck through, the others are not",
-    phaseRows[0].segments[0].strikethrough === true &&
-      phaseRows[1].segments[0].strikethrough === undefined && phaseRows[2].segments[0].strikethrough === undefined);
+  check("each opens with its own mark: ● done, ▶ in progress, ○ to come",
+    phaseRows.map((row) => row.lead.prefix).join("|") === "● |▶ |○ ", phaseRows.map((row) => row.lead.prefix).join("|"));
+  check("none is struck through, the done one included",
+    phaseRows.every((row) => row.segments.every((segment) => segment.strikethrough === undefined)));
   check("each is named whole", phaseRows.map((row) => row.segments[0].text).join("|") ===
     galySpec.phases.map((phase) => phase.title).join("|"), phaseRows.map((row) => row.segments[0].text).join("|"));
   check("and drawn one level under its spec",
@@ -1083,8 +1084,8 @@ let backOfficeRows;
   const sibRow = unfolded.find((row) => row.key.endsWith(`-sib-${sibling.id}`));
   const sibPhases = unfolded.filter((row) => row.key.includes(`-sib-${sibling.id}-phase-`));
   check("an unfolded sibling's phases take a row each, one level under it, with their marks",
-    sibPhases.length === 2 && sibPhases.map((row) => row.lead.prefix).join("|") === "✓ |▶ " &&
-      sibPhases.every((row) => row.lead.indent === 6) && sibPhases[0].segments[0].strikethrough === true,
+    sibPhases.length === 2 && sibPhases.map((row) => row.lead.prefix).join("|") === "● |▶ " &&
+      sibPhases.every((row) => row.lead.indent === 6) && sibPhases[0].segments[0].strikethrough === undefined,
     JSON.stringify(sibPhases.map((row) => [row.lead, plainOf([row])[0]])));
   check("and its count sits on its own row, which stays a button",
     plainOf([sibRow])[0].includes("  1/2  ") && sibRow.press?.kind === "sibling", plainOf([sibRow])[0]);
@@ -1178,6 +1179,156 @@ let backOfficeRows;
   // Inline, above the prompt, nothing of this: the brief keeps its mark and its line.
   const inline = plainOf(inlineRows(model, { columns: 80 }));
   check("the inline summary keeps the compact brief line", inline.some((row) => row.startsWith("  ▸ MMM — moteur")), inline.join("\n"));
+}
+
+// ── 28. The chain of objectives is drawn in its own tone (P8/T1) ──────────
+{
+  // The chain reads apart from the brief and the specs under it: every row of it — mark,
+  // title, link — carries the objectives' tone, which the view turns into a colour. The
+  // period above it, the key results below, the brief, the specs, the phases and the
+  // checks keep the pane's own. The renderer names the tone and never the colour, so the
+  // rows can be read back here.
+  const bench = workspace({ spelling: "contract", answers: BACK_OFFICE });
+  const model = await modelOf(bench, held1109);
+  const rows = dockRows(model, { columns: 96 });
+  const chain = rows.filter((row) => row.key.includes("-obj-"));
+  check("every row of the chain carries the objectives' tone",
+    chain.length === model.trees[0].chain.length && chain.every((row) => row.tone === "objective"),
+    JSON.stringify(chain.map((row) => [row.key, row.tone])));
+  const linkedChain = workspace({
+    spelling: "contract",
+    answers: {
+      ...BACK_OFFICE,
+      strategy_get_objective_breadcrumb: {
+        ...backOfficeChain,
+        chain: backOfficeChain.chain.map((node) => ({ ...node, url: `https://back.green-acres.com/fr/Strategy/Objective/Detail/${node.id}` })),
+      },
+    },
+  });
+  const linkedRows = dockRows(await modelOf(linkedChain, held1109), { columns: 96 }).filter((row) => row.key.includes("-obj-"));
+  check("a linked row of the chain keeps its address beside the tone",
+    linkedRows.length === 4 && linkedRows.every((row) => row.segments[0].url !== undefined && row.tone === "objective"),
+    JSON.stringify(linkedRows.map((row) => [row.tone, row.segments[0].url])));
+  check("nothing else carries it: not the period, the key results, the brief, the specs nor the phases",
+    rows.filter((row) => !row.key.includes("-obj-")).every((row) => row.tone === undefined),
+    JSON.stringify(rows.filter((row) => row.tone !== undefined && !row.key.includes("-obj-")).map((row) => row.key)));
+  const inline = inlineRows(model, { columns: 80 });
+  check("inline, the leaf objective carries the tone and the brief and the spec do not",
+    inline.find((row) => row.key === "inline-obj")?.tone === "objective" &&
+      inline.filter((row) => row.key !== "inline-obj").every((row) => row.tone === undefined));
+}
+
+// ── 29. A held spec's scheduled checks, under its phases (P9/T1) ──────────
+{
+  // The back office answers them inside the spec, PascalCase, with the verdict of the
+  // latest run; Galy answers them on their own verb, snake_case, and knows no run. Both
+  // draw the same block under the phases of the spec in hand: a heading, then one row per
+  // check — the mark of its latest run where one is known, its title, the day it is due.
+  const withInline = workspace({
+    spelling: "contract",
+    answers: {
+      ...BACK_OFFICE,
+      feature_spec_get: {
+        ...backOfficeSpec,
+        spec: {
+          ...backOfficeSpec.spec,
+          FollowupChecks: [
+            { Id: 823, FeatureSpecId: 1109, Title: "Smoke J+1 : chaîne officielle splittée complète", ScheduleOffsetDays: 1, ChainOffsetDays: null, LatestRunStatus: "passed", IsAttention: false },
+            { Id: 824, FeatureSpecId: 1109, Title: "Verdict d'acceptance fin août", ScheduleOffsetDays: 35, ChainOffsetDays: null, LatestRunStatus: null, IsAttention: false },
+            { Id: 825, FeatureSpecId: 1109, Title: "La fenêtre du lundi tient", ScheduleOffsetDays: 7, ChainOffsetDays: 30, LatestRunStatus: "failed", IsAttention: true },
+          ],
+        },
+      },
+      // Served, and never asked: the spec's own answer already carries them.
+      followup_check_list: { success: true, checks: [] },
+    },
+  });
+  const inlineModel = await modelOf(withInline, held1109);
+  check("checks carried by the spec's own answer are read from it, and the list verb is not called",
+    inlineModel.trees[0].specs[0].followups.length === 3 && !withInline.calls.some((call) => call.tool === "followup_check_list"),
+    JSON.stringify(withInline.calls.map((call) => call.tool)));
+  const rows = dockRows(inlineModel, { columns: 96 });
+  const specRow = rows.find((row) => row.key.endsWith("-spec-1109"));
+  const phases = rows.filter((row) => row.key.includes("-spec-1109-phase-"));
+  const heading = rows.find((row) => row.key.endsWith("-spec-1109-followups"));
+  const checks = rows.filter((row) => row.key.includes("-spec-1109-followup-"));
+  check("the block opens on its heading, right under the last phase, one level under the spec",
+    heading !== undefined && rows.indexOf(heading) === rows.indexOf(phases[phases.length - 1]) + 1 &&
+      plainOf([heading])[0] === "      Suivis" && heading.segments[0].dim === true, plainOf([heading])[0]);
+  check("one row per check, each a level under the spec like the phases",
+    checks.length === 3 && checks.every((row) => row.lead.indent === specRow.lead.indent + 4) &&
+      rows.indexOf(checks[0]) === rows.indexOf(heading) + 1, JSON.stringify(checks.map((row) => row.lead)));
+  check("a check reads as its mark, its verdict, its title and the day it is due",
+    plainOf(checks).join("\n") ===
+      "      ↻ ✓ Smoke J+1 : chaîne officielle splittée complète · J+1\n" +
+      "      ↻ Verdict d'acceptance fin août · J+35\n" +
+      "      ↻ ✗ La fenêtre du lundi tient · J+7", plainOf(checks).join("\n"));
+  check("the verdict and the mark sit in the lead, so a long title wraps under its own first character",
+    checks.map((row) => row.lead.prefix).join("|") === "↻ ✓ |↻ |↻ ✗ " && checks.every((row) => row.segments[0].text.startsWith(row.segments[0].text[0])),
+    checks.map((row) => row.lead.prefix).join("|"));
+  check("the day it is due is dim, the title is not",
+    checks.every((row) => row.segments[1].dim === true && row.segments[0].dim === undefined));
+
+  // Galy: the spec answers no such field, so the checks are read on their own verb, once
+  // per spec in hand, in Galy's spelling.
+  const galyChecks = workspace({
+    spelling: "galy",
+    answers: {
+      feature_spec_get: galySpec,
+      feature_brief_get: galyBrief,
+      feature_spec_list: galySpecList,
+      followup_check_list: (args) => ({
+        success: true,
+        followup_checks: args.feature_spec_id === 54
+          ? [{ id: 94, feature_spec_id: 54, check_type: "technical", title: "Le panneau survit à la mise à jour suivante de Claude Code", schedule_offset_days: 7, chain_offset_days: 30, on_fail_action: "bug_fix", display_order: 0 }]
+          : [],
+      }),
+    },
+  });
+  const galyModel = await modelOf(galyChecks, { specs: [{ id: 54, at: NOW, server: "bg" }], briefs: [] });
+  const listCalls = galyChecks.calls.filter((call) => call.tool === "followup_check_list");
+  check("a spec answering no checks has them read on their own verb, once, in the workspace's spelling",
+    listCalls.length === 1 && listCalls[0].args.feature_spec_id === 54, JSON.stringify(listCalls));
+  const galyRows = dockRows(galyModel, { columns: 96 });
+  const galyCheckRows = galyRows.filter((row) => row.key.includes("-spec-54-followup-"));
+  check("a check Galy answers is drawn without a mark, since no run is known",
+    plainOf(galyCheckRows).join("|") === "      ↻ Le panneau survit à la mise à jour suivante de Claude Code · J+7" &&
+      galyRows.some((row) => row.key.endsWith("-spec-54-followups")), plainOf(galyRows).join("\n"));
+  await modelOf(galyChecks, { specs: [{ id: 54, at: NOW, server: "bg" }], briefs: [] });
+  check("and the second draw reads them from the cache",
+    galyChecks.calls.filter((call) => call.tool === "followup_check_list").length === 1);
+
+  // A spec nobody scheduled a check for draws no heading; and where the workspace serves
+  // no list verb and the spec carries none, nothing is asked and nothing is drawn.
+  const none = await modelOf(galyChecks, { specs: [{ id: 56, at: NOW, server: "bg" }], briefs: [] });
+  const noneRows = dockRows(none, { columns: 96 });
+  check("no check, no heading and no row",
+    !noneRows.some((row) => row.key.includes("-followup")), plainOf(noneRows).join("\n"));
+  const unserved = workspace({ spelling: "contract", answers: BACK_OFFICE });
+  const unservedModel = await modelOf(unserved, held1109);
+  check("a workspace serving no list verb is not asked, and draws no block",
+    !unserved.calls.some((call) => call.tool === "followup_check_list") &&
+      !dockRows(unservedModel, { columns: 96 }).some((row) => row.key.includes("-followup")));
+
+  // Inline, above the prompt, the budget is eight rows: no check is drawn there.
+  check("the inline summary draws no check",
+    !inlineRows(inlineModel, { columns: 80 }).some((row) => row.key.includes("followup")) &&
+      !plainOf(inlineRows(inlineModel, { columns: 80 })).some((row) => row.includes("↻")));
+
+  // A write on a check forgets the spec it was drawn under, with its checks; one nobody
+  // drew costs every spec in hand; a check scheduled on a spec names that spec.
+  const keyOf = (kind, id) => `${kind}/${id}`;
+  const forgotten = (tool, args) => namesTouched(inlineModel.trees, touchedBy(tool, args), keyOf).join();
+  check("an edited check forgets the spec it is drawn under, and that spec's checks",
+    forgotten("mcp__back-office__followup_check_update", { checkId: 824, title: "x" }) === "spec/1109,followups/1109",
+    forgotten("mcp__back-office__followup_check_update", { checkId: 824, title: "x" }));
+  check("a check nobody drew costs every spec in hand, never a spec of its number",
+    forgotten("mcp__bg__followup_check_update", { check_id: 4242, title: "x" }) === "spec/1109,followups/1109");
+  check("a check scheduled on the spec in hand names that spec",
+    forgotten("mcp__back-office__followup_check_add", { featureSpecId: 1109, checkType: "technical", title: "x" }) === "spec/1109,followups/1109" &&
+      forgotten("mcp__bg__followup_check_add", { feature_brief_id: 135, check_type: "business", title: "x" }) === "");
+  check("the button forgets the checks with the spec",
+    namesToForget(inlineModel.trees, keyOf).includes("followups/1109"));
 }
 
 if (failed) {

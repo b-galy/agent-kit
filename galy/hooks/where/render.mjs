@@ -18,6 +18,10 @@
 
 import {
   EMPTY_TEXT,
+  FOLLOWUP_DUE_TEXT,
+  FOLLOWUP_MARK,
+  FOLLOWUP_RUN_MARKS,
+  FOLLOWUPS_TEXT,
   IN_HAND_TEXT,
   INLINE_MAX_ROWS,
   LOADING_TEXT,
@@ -39,8 +43,10 @@ import {
  *   lead?: Lead,
  *   kind?: "blank",
  *   boxed?: boolean,
+ *   tone?: "objective",
  *   press?: { kind: string, id?: number },
- * }} Row a line of the pane: empty when `kind` is blank, framed the whole width when `boxed`
+ * }} Row a line of the pane: empty when `kind` is blank, framed the whole width when `boxed`,
+ *   coloured as the chain when its `tone` is the objectives'
  */
 
 /** The mark a status is drawn with. */
@@ -48,6 +54,9 @@ export const markOf = (status) => MARKS[String(status ?? "")] ?? MARKS.other;
 
 /** The mark a phase opens its own row with. */
 export const phaseRowMarkOf = (status) => PHASE_ROW_MARKS[String(status ?? "")] ?? PHASE_ROW_MARKS.other;
+
+/** The mark of a check's latest run, or null where none has run and none is due. */
+export const followupRunMarkOf = (status) => FOLLOWUP_RUN_MARKS[String(status ?? "").toLowerCase()] ?? null;
 
 // ── How wide a line really is ─────────────────────────────────────────────
 //
@@ -351,9 +360,11 @@ export function dockRows(model, view) {
       rows.push({ key: `${tree.key}-period`, segments: [{ text: tree.periods.join(" · "), dim: true }] });
     }
 
+    // The chain is drawn in the objectives' own tone, so it reads apart from the brief and
+    // the specs under it; the period above it and the key results below keep the pane's.
     tree.chain.forEach((node, level) => {
-      rows.push(
-        namedRow(
+      rows.push({
+        ...namedRow(
           {
             key: `${tree.key}-obj-${node.id}`,
             indent: level * 2,
@@ -365,7 +376,8 @@ export function dockRows(model, view) {
           },
           columns,
         ),
-      );
+        tone: "objective",
+      });
     });
 
     const leafDepth = Math.max(0, tree.chain.length - 1) * 2;
@@ -446,8 +458,11 @@ const blankRow = (key) => ({ key, kind: "blank", segments: [] });
 
 /**
  * A spec's own row and, when its phases are known and shown, a row per phase under it:
- * the one done is struck through, the one in progress points at itself in bold, the rest
- * wait in plain text. The count of phases done stays on the spec's row, beside its name.
+ * the one done is a full circle, the one in progress points at itself in bold, the rest
+ * wait behind an empty one. The count of phases done stays on the spec's row, beside its
+ * name. Under the phases of a spec in hand, its scheduled checks: a heading, then one row
+ * per check with the mark of its latest run where one is known, its title, and the day it
+ * is due after delivery. A spec with no check draws no heading.
  *
  * @param {any} spec
  * @param {number} depth
@@ -484,18 +499,28 @@ function specRows(spec, depth, columns, how) {
     ),
   ];
   shown.forEach((phase, index) => {
-    const isDone = phase.status === "Done";
     const isCurrent = phase.status === "InProgress";
     rows.push({
       key: `${key}-phase-${index}`,
       lead: { indent: depth + PHASE_STEP, prefix: `${phaseRowMarkOf(phase.status)} `, ...(isCurrent ? { bold: true } : {}) },
-      segments: [
-        {
-          text: nameOf(phase.title, phase.id || undefined),
-          ...(isDone ? { strikethrough: true } : {}),
-          ...(isCurrent ? { bold: true } : {}),
-        },
-      ],
+      segments: [{ text: nameOf(phase.title, phase.id || undefined), ...(isCurrent ? { bold: true } : {}) }],
+    });
+  });
+
+  const followups = isInHand && Array.isArray(spec.followups) ? spec.followups : [];
+  if (followups.length > 0) {
+    rows.push({ key: `${key}-followups`, segments: [{ text: `${pad(depth + PHASE_STEP)}${FOLLOWUPS_TEXT}`, dim: true }] });
+  }
+  followups.forEach((followup, index) => {
+    const mark = followupRunMarkOf(followup.latestRun);
+    const due = followup.offsetDays === null ? "" : ` · ${FOLLOWUP_DUE_TEXT(numberText(followup.offsetDays))}`;
+    /** @type {Segment[]} */
+    const segments = [{ text: nameOf(followup.title, followup.id || undefined) }];
+    if (due !== "") segments.push({ text: due, dim: true });
+    rows.push({
+      key: `${key}-followup-${index}`,
+      lead: { indent: depth + PHASE_STEP, prefix: `${FOLLOWUP_MARK} ${mark === null ? "" : `${mark} `}` },
+      segments,
     });
   });
   return rows;
@@ -524,6 +549,7 @@ export function inlineRows(model, view) {
       const mark = objectiveMark(leaf.icon);
       rows.push({
         key: "inline-obj",
+        tone: "objective",
         segments: [
           { text: mark },
           { text: titleText(leaf.title, columns - displayWidth(mark), leaf.id), bold: true, ...linked(leaf.url) },

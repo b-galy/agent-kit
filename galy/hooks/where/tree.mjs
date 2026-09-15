@@ -90,9 +90,21 @@ export async function buildModel(input) {
       failure = messageOf(error);
     }
     const inHand = spec === null
-      ? { id: entry.id, title: null, status: null, url: null, phases: [] }
-      : { ...spec, id: spec.id || entry.id };
+      ? { id: entry.id, title: null, status: null, url: null, phases: [], followups: [] }
+      : { ...spec, id: spec.id || entry.id, followups: Array.isArray(spec.followups) ? spec.followups : [] };
     const briefId = spec?.briefId ?? null;
+
+    // The spec's scheduled checks, drawn under its phases. The back office answers them
+    // inside the spec; Galy answers them on their own verb, once per spec in hand, and a
+    // spec nobody has scheduled a check for costs that one read and draws no block.
+    const followupGaps = [];
+    if (spec !== null && !Array.isArray(spec.followups) && serves(server, "followup_check_list")) {
+      try {
+        inHand.followups = await read(server, "followups", entry.id);
+      } catch (error) {
+        followupGaps.push(`suivis de la spec ${entry.id} : ${messageOf(error)}`);
+      }
+    }
 
     // A second spec of a brief already drawn joins that brief's subtree: one chain, one
     // brief, both specs marked as in hand.
@@ -100,12 +112,14 @@ export async function buildModel(input) {
     if (drawn !== undefined) {
       drawn.specs.push(inHand);
       if (failure !== null) drawn.gaps.push(`spec ${entry.id} : ${failure}`);
+      drawn.gaps.push(...followupGaps);
       continue;
     }
 
     const tree = emptyTree(briefId === null ? `spec-${entry.id}` : `brief-${briefId}`);
     tree.specs.push(inHand);
     if (failure !== null) tree.gaps.push(`spec ${entry.id} : ${failure}`);
+    tree.gaps.push(...followupGaps);
     trees.push(tree);
 
     if (briefId !== null) {
@@ -221,7 +235,7 @@ export function namesToForget(trees, keyOf) {
   /** @type {string[]} */
   const keys = [];
   for (const tree of trees) {
-    for (const spec of tree.specs) keys.push(keyOf("spec", spec.id));
+    for (const spec of tree.specs) keys.push(keyOf("spec", spec.id), keyOf("followups", spec.id));
     if (tree.brief) {
       keys.push(keyOf("brief", tree.brief.id));
       keys.push(keyOf("briefSpecs", tree.brief.id));
@@ -262,17 +276,33 @@ export function namesTouched(trees, touched, keyOf) {
   /** The keys of every spec this copy holds: what an unresolved child of a spec costs. */
   const heldSpecs = () => trees.flatMap((tree) => tree.specs.map((spec) => keyOf("spec", spec.id)));
 
+  /** The keys a spec's scheduled checks are read under: with the spec, and on their own verb. */
+  const withFollowups = (specId) => [keyOf("spec", specId), keyOf("followups", specId)];
+
   /** The keys of the leaf an objective's key results are read under. */
   const leafOf = (tree) => {
     const leaf = tree.chain[tree.chain.length - 1];
     return leaf ? [keyOf("objective", leaf.id), keyOf("children", leaf.id)] : [];
   };
 
+  // A spec in hand is drawn with its checks, and a write on it may have scheduled one: both
+  // are forgotten. A sibling is drawn without them, and costs its own name alone.
   if (kind === "spec") {
-    const drawn = trees.some(
-      (tree) => tree.specs.some((spec) => spec.id === id) || tree.siblings.some((sibling) => sibling.id === id),
-    );
+    if (trees.some((tree) => tree.specs.some((spec) => spec.id === id))) return withFollowups(id);
+    const drawn = trees.some((tree) => tree.siblings.some((sibling) => sibling.id === id));
     return drawn ? [keyOf("spec", id)] : [];
+  }
+
+  // The id names the check, never the spec that holds it: the one to forget is the spec
+  // the check was drawn under, and where none drew it, every spec in hand with its checks.
+  if (kind === "followup") {
+    for (const tree of trees) {
+      for (const spec of tree.specs) {
+        const followups = Array.isArray(spec.followups) ? spec.followups : [];
+        if (followups.some((followup) => followup.id === id)) return withFollowups(spec.id);
+      }
+    }
+    return trees.flatMap((tree) => tree.specs.flatMap((spec) => withFollowups(spec.id)));
   }
 
   // The id names the phase, never the spec that holds it: the one to forget is the spec the

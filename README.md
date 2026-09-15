@@ -143,11 +143,18 @@ T2 2026 · 2026
 ╰────────────────────────────────────────────────────────────────────────╯
   ● Spec : Split canal × pays dans le fit Meridian — priors par pays,
            hérités du canal sinon  1/2  [InProgress]  ← en main
-      ✓ Split + calibrateur par cellule
+      ● Split + calibrateur par cellule
       ▶ Bascule Worker1 + fit officiel
+      Suivis
+      ↻ ✓ Smoke J+1 : chaîne officielle splittée complète et dans la fenêtre · J+1
+      ↻ Verdict d'acceptance fin août : splitté vs canon contre l'A/B Criteo · J+35
   ✓ MCP gel/dégel manuel d'un canal MMM (sans SQL)  [Done]
   … et 2 de plus
 ```
+
+The chain of objectives is drawn in blue, so it reads apart from the brief and the specs
+under it; the period above it, the key results, the brief, the specs, their phases and
+their checks keep the terminal's own colour. A linked row of the chain keeps its underline.
 
 It opens by itself the first time a copy takes something up, closes on `/where`, and
 remembers that choice for the next session. Below 110 columns, and outside fullscreen, it
@@ -173,12 +180,20 @@ brief's other specs once below. Two specs of two briefs are two subtrees, as bef
 A name is never cut. An objective, the brief, a spec, a phase: a title longer than the pane
 wraps under its own first character, past a mark the pane draws once, and the row keeps its
 status and its `← en main` at the end. The phases of a spec in hand are rows of their own,
-one level under it — the one done struck through, the one in progress in bold behind `▶`,
-the rest behind `○` — and the spec's row keeps the count of those done; a sibling unfolded
-by a press gets the same rows. A sibling's own row is a button, and a button is a label: it
-stays cut to the width, its status dropped before its name. A tree taller than the pane
-scrolls under the engine's own window. Inline, above the prompt, the eight-row summary
-keeps the compact form, marks and a count on one line.
+one level under it — the one done behind `●`, the one in progress in bold behind `▶`, the
+rest behind `○`, none struck through — and the spec's row keeps the count of those done; a
+sibling unfolded by a press gets the same rows. A sibling's own row is a button, and a
+button is a label: it stays cut to the width, its status dropped before its name. A tree
+taller than the pane scrolls under the engine's own window. Inline, above the prompt, the
+eight-row summary keeps the compact form, marks and a count on one line.
+
+Under the phases of a spec in hand, its scheduled post-delivery checks: a `Suivis` heading,
+then one row per check — `↻`, the verdict of its latest run where the workspace knows one
+(`✓` passed, `✗` failed, `…` still due, `?` run without a verdict), its title, and the day
+it is due after delivery, `J+n`. The back office answers them inside the spec; Galy answers
+them on `followup_check_list`, read once per spec in hand and kept with the other names,
+forgotten with the spec on a write. A spec with no check draws no heading, and the inline
+summary draws none of this.
 
 The brief is not one more node of the chain: it is the work, where the chain is the strategy
 it serves. So an empty row closes the chain under the leaf's key results, and the brief
