@@ -52,6 +52,9 @@ export const INLINE_MAX_ROWS = 8;
 /** What each status is drawn as. */
 export const MARKS = { Done: "✓", InProgress: "●", other: "○" };
 
+/** What a phase drawn on a row of its own opens with: the one in progress points at itself. */
+export const PHASE_ROW_MARKS = { Done: "✓", InProgress: "▶", other: "○" };
+
 /** An objective that carries no icon of its own is drawn with this. */
 export const OBJECTIVE_MARK = "◆";
 

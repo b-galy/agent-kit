@@ -21,17 +21,26 @@ export type Kit = {
 
 export type Press = { kind: string; id?: number }
 
-export type Segment = { text: string; bold?: boolean; dim?: boolean; url?: string }
+export type Segment = { text: string; bold?: boolean; dim?: boolean; strikethrough?: boolean; url?: string }
+
+/** The columns before a row's text, drawn once and never wrapped. */
+export type Lead = { indent: number; prefix: string }
 
 export type Row = {
   key: string
   segments: Segment[]
+  lead?: Lead
   press?: Press
 }
 
 /**
- * The pane's body: one row a line, truncated at the body's width rather than wrapped —
- * a title that wraps breaks the tree apart, which is the one thing this pane is for.
+ * The pane's body, one row per line.
+ *
+ * A row that names something carries its lead apart from its text: the lead is drawn
+ * once, and the text wraps in the room left beside it, so a title longer than the pane
+ * continues under its own first character rather than under the mark. A row without a
+ * lead — a key result, a gap, the inline summary — is truncated at the body's width, and
+ * a row that can be pressed is a button, which carries a label and is truncated too.
  *
  * @param kit the elements `$.ui.resolve(e)` handed out
  * @param rows what `dockRows` or `inlineRows` answered
@@ -52,7 +61,12 @@ export function paneView(
    */
   const segmentOf = (row: Row, segment: Segment, index: number): RenderElement => {
     const drawn = (
-      <Text key={`${row.key}-${index}`} bold={segment.bold} dimColor={segment.dim}>
+      <Text
+        key={`${row.key}-${index}`}
+        bold={segment.bold}
+        dimColor={segment.dim}
+        strikethrough={segment.strikethrough}
+      >
         {segment.text}
       </Text>
     )
@@ -81,6 +95,23 @@ export function paneView(
               label={label}
               onPress={() => onPress(press)}
             />
+          )
+        }
+
+        if (row.lead) {
+          // The lead keeps its columns whatever the width — it never shrinks into a wrap
+          // of its own — and the text takes the rest of the row, wrapping inside it.
+          return (
+            <Box key={row.key} flexDirection="row" marginLeft={row.lead.indent}>
+              <Box flexShrink={0}>
+                <Text>{row.lead.prefix}</Text>
+              </Box>
+              <Box flexGrow={1} flexShrink={1}>
+                <Text wrap="wrap">
+                  {row.segments.map((segment, index) => segmentOf(row, segment, index))}
+                </Text>
+              </Box>
+            </Box>
           )
         }
 

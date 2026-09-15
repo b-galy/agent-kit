@@ -39,6 +39,7 @@ import {
   dockRows,
   hrefOf,
   inlineRows,
+  leadText,
   objectiveMark,
   phaseLineText,
   plainOf,
@@ -283,9 +284,10 @@ let backOfficeRows;
   check("the chain runs from the root to the leaf",
     text.includes("◆  Susciter le désir pour la marque") && text.includes("└ ◆  Le MMM arbitre les enchères entre les canaux"), text);
   check("the brief is named under its objective", text.includes("▸ Brief : MMM — moteur d'allocation & application des recos  [InProgress]"));
-  check("the spec in hand is marked, its status and its mark on the same row",
-    text.includes("● Spec : Split canal × pays dans le fit Meridian — priors…  [InProgress]  ← en main"), text);
-  check("its phases are counted", text.includes("1/2"));
+  check("the spec in hand is named whole, its count, its status and its mark on the same row",
+    text.includes("● Spec : Split canal × pays dans le fit Meridian — priors par pays, hérités du canal sinon  1/2  [InProgress]  ← en main"), text);
+  check("its phases are counted on its own row, and drawn one per row under it",
+    text.includes("  1/2  ") && text.includes("                ✓ Split + calibrateur par cellule\n                ▶ Bascule Worker1 + fit officiel"), text);
   check("three sibling specs are drawn and the rest counted",
     text.includes("… et 2 de plus") && text.split("\n").filter((row) => row.includes("MCP gel/dégel")).length === 1, text);
   check("a refresh button closes the pane", backOfficeRows[backOfficeRows.length - 1] === "rafraîchir");
@@ -506,13 +508,31 @@ let backOfficeRows;
   check("a title that fits is left alone", titleText("Le socle", 20) === "Le socle");
   check("a spec with no name yet is its number", titleText(null, 20, 41) === "#41");
 
+  // A row that names something is drawn whole and wraps in the terminal, past the lead
+  // the view draws once; every other row — a key result, a gap, a button — is cut to the
+  // width it was given.
   const bench = workspace({ spelling: "contract", answers: BACK_OFFICE });
   const model = await modelOf(bench, held1109);
   for (const columns of [40, 60, 110, 200]) {
-    const rows = plainOf(dockRows(model, { columns }));
-    const widest = Math.max(...rows.map((row) => displayWidth(row)));
-    check(`no row runs past the ${columns} columns it was given`, widest <= columns, `${widest} > ${columns}`);
+    const rows = dockRows(model, { columns });
+    const cut = plainOf(rows.filter((row) => !row.lead));
+    const widest = Math.max(...cut.map((row) => displayWidth(row)));
+    check(`no cut row runs past the ${columns} columns it was given`, widest <= columns, `${widest} > ${columns}`);
+    const leads = rows.filter((row) => row.lead).map((row) => displayWidth(leadText(row)));
+    check(`every lead leaves room for a name at ${columns} columns`, Math.max(...leads) <= columns - 8,
+      `${Math.max(...leads)} of ${columns}`);
   }
+  const narrow = dockRows(model, { columns: 40 });
+  const spec = narrow.find((row) => row.key.endsWith("-spec-1109"));
+  check("a title longer than the column is no longer cut",
+    spec.segments[0].text === "Split canal × pays dans le fit Meridian — priors par pays, hérités du canal sinon" &&
+      !plainOf([spec])[0].includes("…"), plainOf([spec])[0]);
+  check("and its lead is drawn apart from it, so the wrap lands under the name",
+    spec.lead.indent === 12 && spec.lead.prefix === "● Spec : " && spec.segments[0].url === undefined,
+    JSON.stringify(spec.lead));
+  const sibling = narrow.find((row) => row.press?.kind === "sibling");
+  check("a sibling is a button, and a button is still cut to the width",
+    sibling.lead === undefined && displayWidth(plainOf([sibling])[0]) <= 40, plainOf([sibling])[0]);
 }
 
 // ── 16. The first refusal is the one reported ─────────────────────────────
@@ -799,14 +819,16 @@ let backOfficeRows;
   const plainModel = await modelOf(plainBench, held1109);
   const plainRows = dockRows(plainModel, { columns: 96 });
   const prefixWidths = (drawn) =>
-    drawn.filter((row) => row.key.includes("-obj-")).map((row) => displayWidth(row.segments[0].text)).join();
+    drawn.filter((row) => row.key.includes("-obj-")).map((row) => displayWidth(leadText(row))).join();
   check("and every title starts where it started without icons",
     prefixWidths(rows) === prefixWidths(plainRows), `${prefixWidths(rows)} vs ${prefixWidths(plainRows)}`);
 
   for (const columns of [40, 96, 200]) {
-    const widest = Math.max(...plainOf(dockRows(model, { columns })).map((row) => displayWidth(row)));
-    check(`a row carrying an emoji still fits the ${columns} columns it was given`, widest <= columns,
-      `${widest} > ${columns}`);
+    const drawn = dockRows(model, { columns });
+    const widest = Math.max(...plainOf(drawn.filter((row) => !row.lead)).map((row) => displayWidth(row)));
+    check(`a cut row still fits the ${columns} columns it was given`, widest <= columns, `${widest} > ${columns}`);
+    const marks = drawn.filter((row) => row.key.includes("-obj-")).map((row) => displayWidth(leadText(row)));
+    check(`a lead carrying an emoji is measured in columns at ${columns}`, marks.join() === "3,7,9,11", marks.join());
   }
 
   check("a title made of two-column characters is cut on its columns, not its characters",
@@ -973,6 +995,76 @@ let backOfficeRows;
   check("it reads the spec and the objective the writes touched, once each, and nothing else",
     reread.join() === "feature_spec_get,strategy_get_objective", reread.join());
   check("the tree is drawn again in full", plainOf(dockRows(session.model, { columns: 96 })).join("\n") === backOfficeRows.join("\n"));
+}
+
+// ── 26. A held spec's phases, one per row; a title, whole (P5/T1) ─────────
+{
+  // The phases of the spec in hand were one counted row of marks, and a title longer than
+  // the pane was cut with an ellipsis. Each phase now has a row of its own, one level under
+  // its spec: the one done struck through, the one in progress pointing at itself, the rest
+  // in plain text; and a title is drawn whole, wrapping under its own first character past
+  // a lead the view draws once. The inline summary keeps the compact form, within its
+  // eight rows.
+  const galyReal = workspace({
+    spelling: "galy",
+    answers: {
+      feature_spec_get: {
+        ...galySpec,
+        phases: galySpec.phases.map((phase, index) => ({ ...phase, status: ["Done", "InProgress", "NotStarted"][index] })),
+      },
+      feature_brief_get: galyBrief,
+      feature_spec_list: galySpecList,
+    },
+  });
+  const model = await modelOf(galyReal, { specs: [{ id: 54, at: NOW, server: "bg" }], briefs: [] });
+  const rows = dockRows(model, { columns: 96 });
+  const specRow = rows.find((row) => row.key.endsWith("-spec-54"));
+  const phaseRows = rows.filter((row) => row.key.includes("-spec-54-phase-"));
+
+  check("three phases are three rows", phaseRows.length === 3, String(phaseRows.length));
+  check("each opens with its own mark",
+    phaseRows.map((row) => row.lead.prefix).join("|") === "✓ |▶ |○ ", phaseRows.map((row) => row.lead.prefix).join("|"));
+  check("the done one is struck through, the others are not",
+    phaseRows[0].segments[0].strikethrough === true &&
+      phaseRows[1].segments[0].strikethrough === undefined && phaseRows[2].segments[0].strikethrough === undefined);
+  check("each is named whole", phaseRows.map((row) => row.segments[0].text).join("|") ===
+    galySpec.phases.map((phase) => phase.title).join("|"), phaseRows.map((row) => row.segments[0].text).join("|"));
+  check("and drawn one level under its spec",
+    phaseRows.every((row) => row.lead.indent === specRow.lead.indent + 4), JSON.stringify(phaseRows.map((row) => row.lead)));
+  check("the count of phases done stays on the spec's own row",
+    plainOf([specRow])[0].includes("  1/3  ") && !plainOf(phaseRows).some((row) => row.includes("1/3")), plainOf([specRow])[0]);
+  check("no counted row of marks is drawn any more", !rows.some((row) => row.key.endsWith("-phases")));
+  check("the brief and the spec are named whole, on rows that wrap",
+    rows.find((row) => row.key.endsWith("-brief")).lead !== undefined &&
+      rows.find((row) => row.key.endsWith("-brief")).segments[0].text === galyBrief.brief.title &&
+      specRow.segments[0].text === galySpec.spec.title);
+
+  // Inline, above the prompt, the budget is eight rows: the phases stay one compact line.
+  const inline = inlineRows(model, { columns: 80 });
+  check("the inline summary keeps the compact form of the phases",
+    inline.some((row) => row.key === "inline-phases-54" && plainOf([row])[0].includes("1/3")) &&
+      !inline.some((row) => row.lead) && inline.length <= 8, plainOf(inline).join("\n"));
+
+  // Two specs of four phases each: the dock stays within a normal terminal's height, and a
+  // taller tree scrolls under the engine's own window rather than a Box of the pane's.
+  const four = (id) => ({
+    success: true,
+    spec: { id, feature_brief_id: 61, title: `Le panneau, part ${id}`, status: "InProgress" },
+    phases: ["Done", "Done", "InProgress", "NotStarted"].map((status, index) => ({ id: id * 10 + index, title: `Étape ${index + 1}`, status })),
+  });
+  const twoSpecs = workspace({
+    spelling: "galy",
+    answers: { feature_spec_get: (args) => four(args.id), feature_brief_get: galyBrief, feature_spec_list: galySpecList },
+  });
+  const both = await modelOf(twoSpecs, {
+    specs: [{ id: 56, at: NOW - 1000, server: "bg" }, { id: 54, at: NOW - 2000, server: "bg" }],
+    briefs: [],
+  });
+  const dock = dockRows(both, { columns: 96 });
+  check("two held specs of four phases each draw eight phase rows", dock.filter((row) => row.key.includes("-phase-")).length === 8,
+    String(dock.filter((row) => row.key.includes("-phase-")).length));
+  check("and the whole dock still fits a terminal of twenty-four rows", dock.length <= 24, String(dock.length));
+  check("while the inline summary keeps to its eight", inlineRows(both, { columns: 80 }).length <= 8);
 }
 
 if (failed) {
