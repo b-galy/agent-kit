@@ -144,6 +144,20 @@ remembers that choice for the next session. Below 110 columns, and outside fulls
 sits inline above the prompt as an eight-row summary instead. With nothing in hand it does
 not open at all, and opened by hand it says what would fill it.
 
+**Each row opens the page it names.** An objective, a brief, the spec in hand: where the
+workspace answers the address of that entity's page, the name is a link, and a click lands
+on it in the browser. The address is `url`, optional in the `pm-v1` contract and computed
+by the workspace, which alone knows its own host — a workspace serving none draws the same
+rows it always drew. An address the terminal would refuse — anything but `https:`, a host
+with a user in front of it, past 2048 characters — costs that one row its link and nothing
+more: the pane never loses a tree over a bad address. A sibling spec stays a button, since
+a button carries a label and never an element; pressing it still unfolds its phases.
+
+**A write shows up at once.** Attach a brief to an objective mid-session and the pane redraws
+on the answer from after the write, not from before it: a workspace write forgets the names
+the tree was built from, then reads them again. Until this, `brief hors stratégie` stayed on
+screen for the three minutes a name is kept, or until « rafraîchir » was pressed.
+
 What it draws comes from two places and no third: `.bg/work.json`, the file the row already
 reads, for **what** this copy has in hand — never the workspace's queue, which is the same
 in every worktree — and the `pm-v1` verbs for the names, called over **the session's own MCP

@@ -40,6 +40,9 @@ export type Host = {
   /** `$.store.set`. */
   storeSet: (key: string, value: unknown) => Promise<void>
 
+  /** `$.store.delete`: the only way to forget a key — the store holds JSON, never `undefined`. */
+  storeDelete: (key: string) => Promise<void>
+
   /** `$.mcp.call`: the session's own connection and credentials, never the plugin's. */
   mcpCall: (server: string, tool: string, args: Record<string, unknown>) => Promise<McpToolResult>
 
