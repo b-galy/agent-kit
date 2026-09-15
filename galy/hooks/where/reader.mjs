@@ -107,9 +107,9 @@ export function payloadOf(result) {
  * @typedef {{ id: number, title: string | null, status: string | null, url: string | null }} Named
  * @typedef {Named & { briefId: number | null, phases: Named[] }} SpecRecord
  * @typedef {Named & { objectiveId: number | null, objectiveTitle: string | null, specs: Named[] | null }} BriefRecord
- * @typedef {{ id: number, title: string | null, period: string | null, url: string | null }} ChainNode
- * @typedef {{ title: string | null, current: number | null, target: number | null, unit: string | null, progress: number | null }} KeyResult
- * @typedef {{ keyResults: KeyResult[], url: string | null }} ObjectiveRecord
+ * @typedef {{ id: number, title: string | null, period: string | null, url: string | null, icon: string | null }} ChainNode
+ * @typedef {{ id: number | null, title: string | null, current: number | null, target: number | null, unit: string | null, progress: number | null }} KeyResult
+ * @typedef {{ keyResults: KeyResult[], url: string | null, icon: string | null }} ObjectiveRecord
  */
 
 /**
@@ -122,6 +122,16 @@ export function payloadOf(result) {
  * @returns {string | null}
  */
 const urlOf = (node) => textOf(fieldOf(node, "url", "Url"));
+
+/**
+ * The mark an objective is drawn with, where the workspace gave it one. The contract has
+ * carried `icon` on objectives from the start; the back office fills it with an emoji and
+ * Galy answers null, so the pane falls back on its own mark rather than on a blank.
+ *
+ * @param {any} node
+ * @returns {string | null}
+ */
+const iconOf = (node) => textOf(fieldOf(node, "icon", "Icon"));
 
 /** @param {any} node @returns {Named} */
 const namedOf = (node) => ({
@@ -189,11 +199,14 @@ export function chainOf(answer) {
     title: textOf(fieldOf(node, "title", "Title")),
     period: textOf(fieldOf(node, "period_name", "PeriodName", "period", "Period")),
     url: urlOf(node),
+    icon: iconOf(node),
   }));
 }
 
 /** @param {any} node @returns {KeyResult} */
 const keyResultOf = (node) => ({
+  // Its number is what a write on it names: the objective it is drawn under is found by it.
+  id: idOf(fieldOf(node, "id", "Id", "key_result_id", "KeyResultId")),
   title: textOf(fieldOf(node, "title", "Title")),
   current: numberOf(fieldOf(node, "current_value", "CurrentValue")),
   target: numberOf(fieldOf(node, "target_value", "TargetValue")),
@@ -215,7 +228,7 @@ export function objectiveOf(answer, objectiveId) {
   const own = fieldOf(answer, "objective", "Objective") ?? answer;
   const direct = fieldOf(own, "key_results", "KeyResults");
   if (Array.isArray(direct) && direct.length > 0) {
-    return { keyResults: direct.map(keyResultOf), url: urlOf(own) };
+    return { keyResults: direct.map(keyResultOf), url: urlOf(own), icon: iconOf(own) };
   }
 
   const rows = fieldOf(answer, "items", "Items", "objectives", "Objectives") ?? [];
@@ -223,9 +236,13 @@ export function objectiveOf(answer, objectiveId) {
     const node = fieldOf(row, "objective", "Objective") ?? row;
     if (idOf(fieldOf(node, "id", "Id")) !== objectiveId) continue;
     const listed = fieldOf(row, "key_results", "KeyResults") ?? fieldOf(node, "key_results", "KeyResults") ?? [];
-    return { keyResults: (Array.isArray(listed) ? listed : []).map(keyResultOf), url: urlOf(node) };
+    return {
+      keyResults: (Array.isArray(listed) ? listed : []).map(keyResultOf),
+      url: urlOf(node),
+      icon: iconOf(node),
+    };
   }
-  return { keyResults: [], url: urlOf(own) };
+  return { keyResults: [], url: urlOf(own), icon: iconOf(own) };
 }
 
 /**
@@ -237,8 +254,12 @@ export function objectiveOf(answer, objectiveId) {
  */
 export const objectiveViewOf = (value) =>
   Array.isArray(value)
-    ? { keyResults: value, url: null }
-    : { keyResults: Array.isArray(value?.keyResults) ? value.keyResults : [], url: textOf(value?.url) };
+    ? { keyResults: value, url: null, icon: null }
+    : {
+        keyResults: Array.isArray(value?.keyResults) ? value.keyResults : [],
+        url: textOf(value?.url),
+        icon: textOf(value?.icon),
+      };
 
 /**
  * The key results of one objective.

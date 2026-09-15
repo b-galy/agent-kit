@@ -29,11 +29,21 @@ import {
   galySpecList,
 } from "./where-fixtures.mjs";
 
-import { HORIZON_MS, MARKS, TOO_LARGE_TEXT } from "../galy/hooks/where/names.mjs";
+import { HORIZON_MS, MARKS, REFRESH_AFTER_WRITE_MS, TOO_LARGE_TEXT } from "../galy/hooks/where/names.mjs";
 import { heldOf, holdsSomething, joinPath, parentOf, workingCopyRootOf } from "../galy/hooks/where/work-file.mjs";
 import { payloadOf, readerOf, serverOf, serversOf } from "../galy/hooks/where/reader.mjs";
-import { buildModel, namesToForget } from "../galy/hooks/where/tree.mjs";
-import { dockRows, hrefOf, inlineRows, phaseLineText, plainOf, titleText } from "../galy/hooks/where/render.mjs";
+import { buildModel, namesToForget, namesTouched } from "../galy/hooks/where/tree.mjs";
+import { burstOf, touchedBy, writeVerbOf } from "../galy/hooks/where/writes.mjs";
+import {
+  displayWidth,
+  dockRows,
+  hrefOf,
+  inlineRows,
+  objectiveMark,
+  phaseLineText,
+  plainOf,
+  titleText,
+} from "../galy/hooks/where/render.mjs";
 
 let failed = 0;
 function check(what, condition, detail) {
@@ -82,7 +92,8 @@ function workspace({ spelling, answers, fail = {} }) {
       }
       const answer = answers[tool];
       if (answer === undefined) throw new Error(`${tool} : outil inconnu`);
-      return answer;
+      // An answer may depend on what was asked, for the benches that read two entities.
+      return typeof answer === "function" ? answer(args) : answer;
     },
     storeGet: async (key) => store.get(key),
     // A JSON store, as the engine's is: a value it cannot write is a key it leaves alone.
@@ -101,6 +112,51 @@ const modelOf = async (bench, held, server = "ws") =>
     serves: (name, tool) => bench.reader.serves(name, tool),
     serverFor: (named) => named ?? server,
   });
+
+/** A clock on the bench: a timer fires when the clock is moved past it, never on its own. */
+function clockOf() {
+  let now = 0;
+  let next = 0;
+  const timers = new Map();
+  return {
+    after: (ms, fn) => {
+      const id = (next += 1);
+      timers.set(id, { at: now + ms, fn });
+      return { cancel: () => timers.delete(id) };
+    },
+    tick: (ms) => {
+      now += ms;
+      for (const [id, timer] of [...timers].sort((a, b) => a[1].at - b[1].at)) {
+        if (timer.at > now) continue;
+        timers.delete(id);
+        timer.fn();
+      }
+    },
+    armed: () => timers.size,
+  };
+}
+
+/** Lets every promise already settled run its continuation. */
+const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+/**
+ * The writes of a session on the bench: what one write forgets is what `namesTouched`
+ * names for the tree drawn, on the server the write went through, and the refresh that
+ * follows rebuilds the model — exactly what `register.ts` wires, with the engine's clock
+ * replaced by the bench's.
+ */
+function sessionOf(bench, held, clock) {
+  const session = { model: null, refreshes: [] };
+  session.burst = burstOf({
+    after: clock.after,
+    delayMs: REFRESH_AFTER_WRITE_MS,
+    keysOf: (touched) =>
+      namesTouched(session.model.trees, touched, (kind, id) => bench.reader.cacheKeyOf(touched.server, kind, id)),
+    forget: (keys) => bench.reader.forget(keys),
+    refresh: () => session.refreshes.push(modelOf(bench, held).then((built) => (session.model = built))),
+  });
+  return session;
+}
 
 const BACK_OFFICE = {
   feature_spec_get: backOfficeSpec,
@@ -224,7 +280,8 @@ let backOfficeRows;
 
   const text = backOfficeRows.join("\n");
   check("the period opens the tree", backOfficeRows[0] === "T2 2026 · 2026", backOfficeRows[0]);
-  check("the chain runs from the root to the leaf", text.includes("◆ Susciter le désir pour la marque") && text.includes("└ ◆ Le MMM arbitre les enchères entre les canaux"));
+  check("the chain runs from the root to the leaf",
+    text.includes("◆  Susciter le désir pour la marque") && text.includes("└ ◆  Le MMM arbitre les enchères entre les canaux"), text);
   check("the brief is named under its objective", text.includes("▸ Brief : MMM — moteur d'allocation & application des recos  [InProgress]"));
   check("the spec in hand is marked, its status and its mark on the same row",
     text.includes("● Spec : Split canal × pays dans le fit Meridian — priors…  [InProgress]  ← en main"), text);
@@ -348,27 +405,61 @@ let backOfficeRows;
     dockRows(model, { columns: 96 }).some((row) => row.press?.kind === "sibling" && row.press.id === sibling.id));
 }
 
-// ── 12. Several specs in hand, the newest first (P3/T4) ───────────────────
+// ── 12. Several specs in hand: one subtree per BRIEF (P3/T4) ──────────────
 {
-  const bench = workspace({
-    spelling: "galy",
-    answers: {
-      feature_spec_get: galySpec,
-      feature_brief_get: galyBrief,
-      feature_spec_list: galySpecList,
-    },
+  // Two specs of one brief are one piece of work. Drawn as two subtrees they repeated the
+  // chain and the brief, and each copy named the other spec as a sibling — nothing on
+  // screen said the two halves belonged together.
+  const specOf = (args) => ({
+    success: true,
+    spec: { id: args.id, feature_brief_id: 61, title: `Le panneau, part ${args.id}`, status: "InProgress" },
+    phases: [{ id: 1, title: "Le socle", status: "Done" }],
   });
-  const model = await modelOf(bench, {
+  const together = workspace({
+    spelling: "galy",
+    answers: { feature_spec_get: specOf, feature_brief_get: galyBrief, feature_spec_list: galySpecList },
+  });
+  const held = {
     specs: [
-      { id: 54, at: NOW - 1000, server: "bg" },
-      { id: 53, at: NOW - 900_000, server: "bg" },
+      { id: 56, at: NOW - 1000, server: "bg" },
+      { id: 54, at: NOW - 900_000, server: "bg" },
     ],
     briefs: [],
+  };
+
+  const one = await modelOf(together, held);
+  check("two specs of one brief draw one subtree", one.trees.length === 1, String(one.trees.length));
+  const rows = plainOf(dockRows(one, { columns: 96 }));
+  const inHand = rows.filter((row) => row.includes("← en main"));
+  check("both are marked as in hand, the newest first",
+    inHand.length === 2 && inHand[0].includes("part 56") && inHand[1].includes("part 54"), inHand.join("\n"));
+  check("the brief and its chain are drawn once",
+    rows.filter((row) => row.includes("▸ Brief :")).length === 1, rows.join("\n"));
+  check("each one shows its own phases", rows.filter((row) => row.includes("1/1")).length === 2, rows.join("\n"));
+  check("a spec in hand is never also listed as a sibling",
+    one.trees[0].siblings.every((sibling) => sibling.id !== 54 && sibling.id !== 56),
+    JSON.stringify(one.trees[0].siblings.map((sibling) => sibling.id)));
+
+  // Two briefs remain two subtrees, newest first.
+  const apart = workspace({
+    spelling: "galy",
+    answers: {
+      feature_spec_get: (args) => ({
+        success: true,
+        spec: { id: args.id, feature_brief_id: args.id === 54 ? 61 : 62, title: `Spec ${args.id}`, status: "InProgress" },
+      }),
+      feature_brief_get: (args) => ({
+        success: true,
+        brief: { id: args.id, title: `Brief ${args.id}`, status: "Ready", objective_id: null },
+      }),
+      feature_spec_list: { success: true, specs: [] },
+    },
   });
-  check("one subtree per spec in hand", model.trees.length === 2, String(model.trees.length));
-  check("the newest is drawn first", model.trees[0].key === "spec-54", model.trees[0].key);
-  const rows = plainOf(dockRows(model, { columns: 96 }));
-  check("a blank row separates them", rows.some((row) => row === ""), rows.join("\n"));
+  const two = await modelOf(apart, held);
+  check("two specs of two briefs still draw two subtrees", two.trees.length === 2, String(two.trees.length));
+  check("the brief of the newest spec comes first", two.trees[0].key === "brief-62", two.trees[0].key);
+  const apartRows = plainOf(dockRows(two, { columns: 96 }));
+  check("a blank row separates them", apartRows.some((row) => row === ""), apartRows.join("\n"));
 }
 
 // ── 13. Nothing in hand (P2/T5) ───────────────────────────────────────────
@@ -401,7 +492,7 @@ let backOfficeRows;
   const rows = inlineRows(model, { columns: 80 });
   check("the inline summary never runs past eight rows", rows.length <= 8, String(rows.length));
   const text = plainOf(rows).join("\n");
-  check("it opens on the leaf objective", text.startsWith("◆ Le MMM arbitre les enchères entre les canaux"), text);
+  check("it opens on the leaf objective", text.startsWith("◆  Le MMM arbitre les enchères entre les canaux"), text);
   check("then the brief, the spec and its phases",
     text.includes("▸ MMM — moteur") && text.includes("Split canal") && text.includes("1/2"), text);
   check("nothing in hand says so inline too",
@@ -419,7 +510,7 @@ let backOfficeRows;
   const model = await modelOf(bench, held1109);
   for (const columns of [40, 60, 110, 200]) {
     const rows = plainOf(dockRows(model, { columns }));
-    const widest = Math.max(...rows.map((row) => [...row].length));
+    const widest = Math.max(...rows.map((row) => displayWidth(row)));
     check(`no row runs past the ${columns} columns it was given`, widest <= columns, `${widest} > ${columns}`);
   }
 }
@@ -490,13 +581,13 @@ let backOfficeRows;
   check("every workspace of the session is known", serversOf(tools).join() === "back-office");
 }
 
-// ── 19. A write forgets what it touched (P1/T1) ───────────────────────────
+// ── 19. A write forgets what it touched, and the objective shows with nothing pressed (P1/T1)
 {
   // Measured on 15 September 2026: `feature_brief_update(61, objective_id: 9)` during a
   // session, and the pane went on drawing `brief hors stratégie` for the three minutes a
-  // name is kept — until somebody pressed « rafraîchir ». The write forgets the names the
-  // drawn trees were built from, and the refresh that follows reads them again; the button
-  // forgets the same list, because it is the same list.
+  // name is kept — until somebody pressed « rafraîchir ». The write forgets the brief its
+  // own arguments name, with the list of its specs, and the refresh that follows reads
+  // them again; the spec in hand, which the write never touched, is not read again.
   const answers = {
     feature_spec_get: galySpec,
     feature_brief_get: galyBrief,
@@ -506,8 +597,11 @@ let backOfficeRows;
   };
   const bench = workspace({ spelling: "galy", answers });
   const held = { specs: [{ id: 54, at: NOW, server: "bg" }], briefs: [] };
+  const clock = clockOf();
+  const session = sessionOf(bench, held, clock);
+  session.model = await modelOf(bench, held);
 
-  const before = plainOf(dockRows(await modelOf(bench, held), { columns: 96 }));
+  const before = plainOf(dockRows(session.model, { columns: 96 }));
   check("a brief attached to nothing reads as outside the strategy", before.includes("brief hors stratégie"));
 
   // The write itself: the brief now serves objective 8.
@@ -517,12 +611,27 @@ let backOfficeRows;
   check("a drawing that forgets nothing keeps the answer from before the write",
     stale.includes("brief hors stratégie"), stale.join("\n"));
 
-  const drawn = await modelOf(bench, held);
-  await bench.reader.forget(namesToForget(drawn.trees, (kind, id) => bench.reader.cacheKeyOf("bg", kind, id)));
+  const readsBefore = bench.calls.length;
+  check("the write is one the pane follows",
+    session.burst.wrote("mcp__bg__feature_brief_update", { id: 61, objective_id: 8 }) === true);
+  await session.burst.settled();
+  clock.tick(REFRESH_AFTER_WRITE_MS - 1);
+  await settle();
+  check("nothing is read before the trailing refresh",
+    session.refreshes.length === 0 && bench.calls.length === readsBefore, String(bench.calls.length - readsBefore));
 
-  const after = plainOf(dockRows(await modelOf(bench, held), { columns: 96 }));
+  clock.tick(1);
+  await settle();
+  check("one refresh follows the write", session.refreshes.length === 1, String(session.refreshes.length));
+  await Promise.all(session.refreshes);
+
+  const after = plainOf(dockRows(session.model, { columns: 96 }));
   check("once the write has forgotten its names, the objective is drawn with nothing pressed",
     !after.includes("brief hors stratégie") && after.some((row) => row.includes("Recette du poste")), after.join("\n"));
+  const reread = bench.calls.slice(readsBefore).map((call) => call.tool);
+  check("the brief and its list of specs are read again, the spec in hand is not",
+    reread.includes("feature_brief_get") && reread.includes("feature_spec_list") && !reread.includes("feature_spec_get"),
+    reread.join());
 }
 
 // ── 20. An address the engine would refuse is drawn as text (P3/T1) ───────
@@ -595,7 +704,7 @@ let backOfficeRows;
   check("the leaf takes the address the objective itself served",
     linkOf("-obj-178") === `${BO}/fr/Strategy/Objective/Detail/178`, String(linkOf("-obj-178")));
   check("a row whose address the engine would refuse keeps its text and loses its link",
-    linkOf("-obj-5") === undefined && plainOf(rows).some((row) => row.includes("◆ Susciter le désir pour la marque")),
+    linkOf("-obj-5") === undefined && plainOf(rows).some((row) => row.includes("Susciter le désir pour la marque")),
     String(linkOf("-obj-5")));
   check("a key result has no page of its own to open", linkOf("-kr-0") === undefined);
 
@@ -608,8 +717,8 @@ let backOfficeRows;
 
   const inline = inlineRows(model, { columns: 96 });
   check("the summary above the prompt is linked the same way",
-    inline.find((row) => row.key === "inline-spec")?.segments.some((segment) => segment.url === `${BO}/fr/Product/FeatureSpec/Detail/1109`),
-    JSON.stringify(inline.find((row) => row.key === "inline-spec")?.segments));
+    inline.find((row) => row.key === "inline-spec-1109")?.segments.some((segment) => segment.url === `${BO}/fr/Product/FeatureSpec/Detail/1109`),
+    JSON.stringify(inline.find((row) => row.key.startsWith("inline-spec"))?.segments));
 
   // The same tree from a workspace serving no address: the rows are what they always were.
   const plain = workspace({ spelling: "contract", answers: BACK_OFFICE });
@@ -648,6 +757,222 @@ let backOfficeRows;
   const second = await reader.read("ws", "spec", 54);
   check("so the next read asks the workspace again",
     first.title === "lecture 1" && second.title === "lecture 2", `${first.title}, then ${second.title}`);
+}
+
+// ── 23. An objective is drawn with its own icon (P3/T5) ───────────────────
+{
+  const withIcons = workspace({
+    spelling: "contract",
+    answers: {
+      ...BACK_OFFICE,
+      strategy_get_objective_breadcrumb: {
+        success: true,
+        objective_id: 178,
+        // The root carries none, the second its own, the leaf none: the objective's own
+        // answer fills that one in.
+        chain: backOfficeChain.chain.map((node, index) => ({ ...node, icon: index === 1 ? "🎯" : null })),
+      },
+      strategy_get_objective: {
+        success: true,
+        objective: { ...backOfficeObjective.objective, icon: "🚀" },
+      },
+    },
+  });
+
+  const model = await modelOf(withIcons, held1109);
+  const rows = dockRows(model, { columns: 96 });
+  const rowOf = (key) => rows.find((row) => row.key.endsWith(key));
+  const textOf = (key) => plainOf([rowOf(key)])[0] ?? "";
+
+  check("an objective that carries an icon is drawn with it", textOf("-obj-9").includes("🎯"), textOf("-obj-9"));
+  check("one that carries none keeps the pane's own mark", textOf("-obj-5").startsWith("◆  "), textOf("-obj-5"));
+  check("the leaf takes the icon the objective itself served", textOf("-obj-178").includes("🚀"), textOf("-obj-178"));
+  check("no icon, no shift: every mark takes the same room",
+    objectiveMark(null) === "◆  " && displayWidth(objectiveMark("🎯")) === 3 && displayWidth(objectiveMark("★")) === 3,
+    `[${objectiveMark("★")}] ${displayWidth(objectiveMark("🎯"))}`);
+  check("and the icon never touches the title it marks",
+    textOf("-obj-9").includes("🎯 Le bas de funnel"), textOf("-obj-9"));
+
+  // The title of every objective starts at the same column, icon or not: a tree whose
+  // branches do not line up is harder to read than one drawn with a single mark.
+  const plainBench = workspace({ spelling: "contract", answers: BACK_OFFICE });
+  const plainModel = await modelOf(plainBench, held1109);
+  const plainRows = dockRows(plainModel, { columns: 96 });
+  const prefixWidths = (drawn) =>
+    drawn.filter((row) => row.key.includes("-obj-")).map((row) => displayWidth(row.segments[0].text)).join();
+  check("and every title starts where it started without icons",
+    prefixWidths(rows) === prefixWidths(plainRows), `${prefixWidths(rows)} vs ${prefixWidths(plainRows)}`);
+
+  for (const columns of [40, 96, 200]) {
+    const widest = Math.max(...plainOf(dockRows(model, { columns })).map((row) => displayWidth(row)));
+    check(`a row carrying an emoji still fits the ${columns} columns it was given`, widest <= columns,
+      `${widest} > ${columns}`);
+  }
+
+  check("a title made of two-column characters is cut on its columns, not its characters",
+    displayWidth(titleText("🚀🚀🚀🚀🚀", 6)) <= 6, titleText("🚀🚀🚀🚀🚀", 6));
+}
+
+// ── 24. A write forgets what it named, and nothing else (P1/T2) ───────────
+{
+  const bench = workspace({ spelling: "contract", answers: BACK_OFFICE });
+  const model = await modelOf(bench, held1109);
+  const keyOf = (kind, id) => `${kind}/${id}`;
+  const forgotten = (tool, args) => namesTouched(model.trees, touchedBy(tool, args), keyOf).join();
+
+  check("a write on the spec in hand forgets that spec alone",
+    forgotten("mcp__back-office__feature_spec_update", { specId: 1109, title: "x" }) === "spec/1109",
+    forgotten("mcp__back-office__feature_spec_update", { specId: 1109 }));
+  check("a write on its brief forgets the brief and the list of its specs",
+    forgotten("mcp__bg__feature_brief_update", { id: 135, objective_id: 9 }) === "brief/135,briefSpecs/135",
+    forgotten("mcp__bg__feature_brief_update", { id: 135, objective_id: 9 }));
+  // The chain is read under its leaf, so a node halfway up forgets the leaf's chain.
+  check("a write on an objective of the chain forgets the chain it sits in, itself and its key results",
+    forgotten("mcp__back-office__strategy_update_objective", { objectiveId: 14 }) === "chain/178,objective/14,children/14",
+    forgotten("mcp__back-office__strategy_update_objective", { objectiveId: 14 }));
+  check("a phase names the spec that holds it, never a spec of its own number",
+    forgotten("mcp__back-office__feature_spec_set_phase_status", { phaseId: 2492, status: "Done" }) === "spec/1109",
+    forgotten("mcp__back-office__feature_spec_set_phase_status", { phaseId: 2492 }));
+  check("a sibling is drawn too, so a write on it is forgotten",
+    forgotten("mcp__bg__feature_spec_update", { id: 1105 }) === "spec/1105",
+    forgotten("mcp__bg__feature_spec_update", { id: 1105 }));
+
+  check("a write on something this copy is not drawing forgets nothing",
+    forgotten("mcp__back-office__feature_spec_update", { specId: 4242 }) === "" &&
+      forgotten("mcp__back-office__strategy_update_objective", { objectiveId: 4242 }) === "");
+
+  // A child nobody drew still has a parent, and the only ones worth a read are in hand.
+  check("a phase of a spec whose phases were never read costs the held specs, never a spec of its number",
+    forgotten("mcp__bg__feature_spec_set_phase_status", { id: 4242, status: "Done" }) === "spec/1109",
+    forgotten("mcp__bg__feature_spec_set_phase_status", { id: 4242 }));
+  check("a risk or an acceptance test names the held specs, and is never read as a spec",
+    forgotten("mcp__back-office__feature_spec_update_risk", { riskId: 12 }) === "spec/1109" &&
+      forgotten("mcp__bg__feature_spec_update_acceptance_test", { id: 12 }) === "spec/1109" &&
+      forgotten("mcp__back-office__feature_spec_set_acceptance_test_status", { acceptanceTestId: 12, status: "Pass" }) === "spec/1109",
+    forgotten("mcp__back-office__feature_spec_update_risk", { riskId: 12 }));
+  check("a user story names its brief",
+    touchedBy("mcp__bg__feature_brief_update_user_story", { id: 12 }) === null &&
+      forgotten("mcp__bg__feature_brief_add_user_story", { feature_brief_id: 135 }) === "brief/135,briefSpecs/135");
+  check("a read touches nothing, and is not a write",
+    touchedBy("mcp__bg__feature_spec_get", { id: 1109 }) === null && writeVerbOf("mcp__bg__feature_spec_get") === null);
+  check("a creation is a write that names nothing yet",
+    writeVerbOf("mcp__bg__feature_brief_create") === "feature_brief_create" &&
+      touchedBy("mcp__bg__feature_brief_create", { title: "x" }) === null);
+  check("a spec created under a brief moves that brief's list",
+    forgotten("mcp__back-office__feature_spec_create", { featureBriefId: 135, title: "x" }) === "brief/135,briefSpecs/135");
+  check("the server a write went through is the one whose names are forgotten",
+    touchedBy("mcp__bg__feature_spec_update", { id: 1 })?.server === "bg" &&
+      touchedBy("feature_spec_update", { id: 1 })?.server === null);
+
+  // A key result is drawn under its objective: the write names the key result, the tree
+  // finds the objective. Its `id` is never read as an objective's.
+  check("a check-in names the objective its key result is drawn under",
+    forgotten("mcp__back-office__strategy_create_check_in", { keyResultId: 11, newValue: 150 }) === "objective/178,children/178" &&
+      forgotten("mcp__bg__strategy_update_key_result", { key_result_id: 93, target_value: 8 }) === "objective/178,children/178",
+    forgotten("mcp__back-office__strategy_create_check_in", { keyResultId: 11, newValue: 150 }));
+  check("a key result nobody drew costs every leaf objective, never an objective of its number",
+    forgotten("mcp__bg__strategy_create_check_in", { key_result_id: 5, new_value: 1 }) === "objective/178,children/178" &&
+      !forgotten("mcp__bg__strategy_create_check_in", { key_result_id: 5, new_value: 1 }).includes("objective/5"));
+  check("a new key result names its objective",
+    forgotten("mcp__bg__strategy_create_key_result", { objective_id: 178, title: "x" }) === "chain/178,objective/178,children/178");
+
+  // Two trees, two leaves: a key result drawn under one of them costs that one alone.
+  const twoLeaves = workspace({
+    spelling: "galy",
+    answers: {
+      feature_spec_get: (args) => ({
+        success: true,
+        spec: { id: args.id, feature_brief_id: args.id === 54 ? 61 : 62, title: `Spec ${args.id}`, status: "InProgress" },
+      }),
+      feature_brief_get: (args) => ({
+        success: true,
+        brief: { id: args.id, title: `Brief ${args.id}`, status: "Ready", objective_id: args.id === 61 ? 8 : 7 },
+      }),
+      feature_spec_list: { success: true, specs: [] },
+      strategy_get_objective_breadcrumb: (args) => ({
+        success: true,
+        breadcrumb: [{ id: args.objective_id, title: `Objectif ${args.objective_id}`, period_name: "T3 2026" }],
+      }),
+      // Key result 7 under objective 7, key result 8 under objective 8, as Galy answers them.
+      strategy_get_objective: (args) => ({
+        success: true,
+        objective: {
+          ...galyChildren.objectives.find((row) => row.objective.id === args.id).objective,
+          key_results: galyChildren.objectives.find((row) => row.objective.id === args.id).key_results,
+        },
+      }),
+    },
+  });
+  const apart = await modelOf(twoLeaves, {
+    specs: [{ id: 56, at: NOW - 1000, server: "bg" }, { id: 54, at: NOW - 2000, server: "bg" }],
+    briefs: [],
+  });
+  const apartForgotten = (tool, args) => namesTouched(apart.trees, touchedBy(tool, args), keyOf).join();
+  check("two leaves, and a key result drawn under one of them costs that one alone",
+    apartForgotten("mcp__bg__strategy_create_check_in", { key_result_id: 8, new_value: 6 }) === "objective/8,children/8" &&
+      apartForgotten("mcp__bg__strategy_create_check_in", { key_result_id: 7, new_value: 1 }) === "objective/7,children/7",
+    apartForgotten("mcp__bg__strategy_create_check_in", { key_result_id: 8, new_value: 6 }));
+  check("and one drawn under neither costs both",
+    apartForgotten("mcp__bg__strategy_create_check_in", { key_result_id: 999, new_value: 1 }) === "objective/7,children/7,objective/8,children/8",
+    apartForgotten("mcp__bg__strategy_create_check_in", { key_result_id: 999, new_value: 1 }));
+
+  // What the button does is unchanged: everything the trees were built from.
+  const whole = namesToForget(model.trees, keyOf);
+  check("the button still forgets the whole of it", whole.length > 5 && whole.includes("spec/1109") && whole.includes("brief/135"),
+    whole.join());
+}
+
+// ── 25. A burst of writes costs one refresh, and reads only what it touched (P1/T3)
+{
+  // The first answer to a stale pane forgot everything on every write, and an agent that
+  // writes ten times in a row — a phase done, a spec updated, a check-in — re-read every
+  // objective, every brief and every spec ten times over. Ten writes now cost one refresh,
+  // and that refresh reads the entities the writes touched and nothing else.
+  const bench = workspace({ spelling: "contract", answers: BACK_OFFICE });
+  const clock = clockOf();
+  const session = sessionOf(bench, held1109, clock);
+  session.model = await modelOf(bench, held1109);
+  const readsBefore = bench.calls.length;
+  check("the tree took one read per entity", readsBefore === 4, String(readsBefore));
+
+  const writes = [
+    ["mcp__back-office__feature_spec_update", { specId: 1109, title: "Split canal × pays" }],
+    ["mcp__back-office__feature_spec_set_phase_status", { phaseId: 2491, status: "Done" }],
+    ["mcp__back-office__feature_spec_get", { specId: 1109 }],
+    ["mcp__back-office__feature_spec_set_phase_status", { phaseId: 2492, status: "InProgress" }],
+    ["mcp__back-office__feature_spec_update_phase", { phaseId: 2492, title: "Bascule Worker1" }],
+    ["mcp__back-office__strategy_create_check_in", { keyResultId: 11, newValue: 150, authorUserId: 1 }],
+    ["mcp__back-office__feature_spec_update", { specId: 1109, status: "InProgress" }],
+    ["mcp__back-office__feature_spec_add_risk", { specId: 1109, label: "x" }],
+    ["mcp__back-office__strategy_get_objective", { objectiveId: 178 }],
+    ["mcp__back-office__feature_spec_update_risk", { riskId: 3, severity: "low" }],
+    ["mcp__back-office__feature_spec_update", { specId: 1109, priority: "1" }],
+    ["mcp__back-office__feature_spec_set_phase_status", { phaseId: 2492, status: "Done" }],
+  ];
+  let armed = 0;
+  for (const [tool, args] of writes) {
+    if (session.burst.wrote(tool, args)) armed += 1;
+    // Two hundred milliseconds apart: the burst outlasts the delay, and the timer is
+    // re-armed by every write rather than firing in the middle of it.
+    clock.tick(200);
+  }
+  check("ten writes armed the refresh, two reads did not", armed === 10, String(armed));
+  await session.burst.settled();
+  await settle();
+  check("no refresh fires in the middle of the burst", session.refreshes.length === 0 && clock.armed() === 1,
+    `${session.refreshes.length} refresh(es), ${clock.armed()} timer(s)`);
+  check("and nothing is read while it lasts", bench.calls.length === readsBefore, String(bench.calls.length - readsBefore));
+
+  clock.tick(REFRESH_AFTER_WRITE_MS - 200);
+  await settle();
+  check("one refresh follows the last write", session.refreshes.length === 1 && clock.armed() === 0,
+    `${session.refreshes.length} refresh(es), ${clock.armed()} timer(s)`);
+  await Promise.all(session.refreshes);
+
+  const reread = bench.calls.slice(readsBefore).map((call) => call.tool).sort();
+  check("it reads the spec and the objective the writes touched, once each, and nothing else",
+    reread.join() === "feature_spec_get,strategy_get_objective", reread.join());
+  check("the tree is drawn again in full", plainOf(dockRows(session.model, { columns: 96 })).join("\n") === backOfficeRows.join("\n"));
 }
 
 if (failed) {

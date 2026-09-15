@@ -29,8 +29,13 @@ export const HORIZON_MS = 86_400_000;
 /** Redraws are coalesced: at most one every this many milliseconds. */
 export const REDRAW_COALESCE_MS = 100;
 
-/** A workspace write is followed by a refresh this long after, once the hook has written the file. */
-export const REFRESH_AFTER_WRITE_MS = 500;
+/**
+ * A workspace write is followed by ONE refresh, this long after the LAST write of a burst.
+ *
+ * The timer is re-armed by every write, so twenty writes in a row cost one read of the
+ * entities they touched rather than twenty reads of everything.
+ */
+export const REFRESH_AFTER_WRITE_MS = 1_500;
 
 /** How often the work file's modification time is read again. */
 export const FILE_POLL_MS = 60_000;
@@ -46,6 +51,12 @@ export const INLINE_MAX_ROWS = 8;
 
 /** What each status is drawn as. */
 export const MARKS = { Done: "✓", InProgress: "●", other: "○" };
+
+/** An objective that carries no icon of its own is drawn with this. */
+export const OBJECTIVE_MARK = "◆";
+
+/** The columns an objective's mark occupies, icon or not, so the chain stays aligned. */
+export const MARK_COLUMNS = 2;
 
 export const EMPTY_TEXT =
   "Rien en main. Réclamer ou créer une spec la fera apparaître ici.";

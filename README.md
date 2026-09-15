@@ -127,10 +127,10 @@ and draws the rest of the answer for this copy alone:
 
 ```
 T2 2026 · 2026
-◆ Susciter le désir pour la marque
-  └ ◆ Le bas de funnel est automatisé
-    └ ◆ SEA : Le Marketing Mix Modeling fonctionne selon l'état de l'art
-      └ ◆ Le MMM arbitre les enchères entre les canaux
+💎 Susciter le désir pour la marque
+  └ 🎯 Le bas de funnel est automatisé
+    └ ◆  SEA : Le Marketing Mix Modeling fonctionne selon l'état de l'art
+      └ 🚀 Le MMM arbitre les enchères entre les canaux
           RC  200 reprises presse · 141 / 200 par an (71 %)
         ▸ Brief : MMM — moteur d'allocation & application des recos  [InProgress]
             ● Spec : Split canal × pays dans le fit Meridian — priors…  [InProgress]  ← en main
@@ -144,6 +144,16 @@ remembers that choice for the next session. Below 110 columns, and outside fulls
 sits inline above the prompt as an eight-row summary instead. With nothing in hand it does
 not open at all, and opened by hand it says what would fill it.
 
+An objective is drawn with its own icon where the workspace gave it one — the contract has
+carried `icon` on objectives from the start, and the back office fills it with an emoji —
+and with `◆` otherwise. The mark sits in a cell of a fixed width, so an icon on one node
+never shifts the node under it; every width in the pane is measured in terminal columns,
+where an emoji takes two, rather than in characters.
+
+Two specs of one brief in hand are one piece of work: the pane draws the chain and the
+brief once, marks every held spec `← en main` with its phases, newest first, and lists the
+brief's other specs once below. Two specs of two briefs are two subtrees, as before.
+
 **Each row opens the page it names.** An objective, a brief, the spec in hand: where the
 workspace answers the address of that entity's page, the name is a link, and a click lands
 on it in the browser. The address is `url`, optional in the `pm-v1` contract and computed
@@ -153,10 +163,20 @@ with a user in front of it, past 2048 characters — costs that one row its link
 more: the pane never loses a tree over a bad address. A sibling spec stays a button, since
 a button carries a label and never an element; pressing it still unfolds its phases.
 
-**A write shows up at once.** Attach a brief to an objective mid-session and the pane redraws
-on the answer from after the write, not from before it: a workspace write forgets the names
-the tree was built from, then reads them again. Until this, `brief hors stratégie` stayed on
-screen for the three minutes a name is kept, or until « rafraîchir » was pressed.
+**A write shows up at once, and costs what it touched.** Attach a brief to an objective
+mid-session and the pane redraws on the answer from after the write: a workspace write
+forgets the entity its own arguments name — the spec on `feature_spec_update`, the brief on
+`feature_brief_update`, the objective on `strategy_update_objective` — and that entity
+alone, with what hangs off it (a brief's list of specs, an objective's chain and key
+results). A write on a child names its parent: a phase names the spec the pane drew it
+under, a check-in the objective its key result hangs from; a child the pane never drew — a
+risk, an acceptance test, a phase of a spec whose phases were not read — costs the held
+specs, or the leaf objectives, and nothing more. A write naming nothing on screen forgets
+nothing, and a read forgets nothing at all. The refresh that follows is a single trailing
+one, re-armed by each write of a burst, so twenty writes in a row cost one read of the
+entities they touched. « rafraîchir » still forgets everything. Until this, `brief hors
+stratégie` stayed on screen for the three minutes a name is kept — and the first answer to
+it, forgetting everything on every call, cost the whole tree on each of them.
 
 What it draws comes from two places and no third: `.bg/work.json`, the file the row already
 reads, for **what** this copy has in hand — never the workspace's queue, which is the same
