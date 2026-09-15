@@ -105,9 +105,9 @@ claude plugin marketplace update b-galy
 
 ## It says nothing until you ask
 
-**The kit takes no part in the opening of a session.** It installs no startup hook, injects no
-instruction, and spends none of a session's first seconds on itself. Open your agent in a connected
-repository and you get your agent, on the subject you came for.
+**The kit says nothing at the opening of a session.** It injects no instruction and puts no line
+in front of you. Open your agent in a connected repository and you get your agent, on the subject
+you came for.
 
 That was not always so. A `SessionStart` hook used to hand every session one instruction — read the
 practice baseline, then open on a line about it — and it was wrong on both counts. It cost a process
@@ -115,9 +115,14 @@ at every start, and the line landed in front of somebody who had come to do some
 that says its own name before the user has said theirs is a tool people turn off, and the practices
 are worth more than the reminder that they exist.
 
-The only thing the kit does at the other end is let go. When a session closes, the row under the
-prompt drops the work it was naming, so the next one opens on an empty row rather than on yesterday's
-spec — a row that names the wrong work is read as the right one, every time.
+The one thing it does at a start is sort the work in hand by who took it up. The row under the
+prompt and the pane beside the transcript read a file the kit keeps beside your code, and every
+entry in it carries the id of the session that wrote it. A session that starts keeps its own entries
+and drops the rest, silently: the same conversation resumed — `claude --resume`, `/resume`, a
+compaction — finds its work again, a new conversation on the same copy opens on an empty row rather
+than on yesterday's spec, and `/clear` empties everything. Closing a session drops nothing, so a
+relaunch on the same conversation cannot lose to the process it replaces — the old one used to empty
+the file while dying, thirty seconds after the new one had written to it.
 
 ## The pane beside the transcript
 
@@ -147,7 +152,13 @@ T2 2026 · 2026
 It opens by itself the first time a copy takes something up, closes on `/where`, and
 remembers that choice for the next session. Below 110 columns, and outside fullscreen, it
 sits inline above the prompt as an eight-row summary instead. With nothing in hand it does
-not open at all, and opened by hand it says what would fill it.
+not open at all, and opened by hand it says `Pas de travail en cours.`
+
+What is in hand belongs to the conversation that took it up, not to the copy. A conversation
+resumed on the same copy — `claude --resume`, `/resume`, after a compaction — gets its pane
+back with what it held; a new conversation on that copy starts with nothing, and `/clear`
+empties it. The pane reads the file again at the end of every turn, so a resumed session
+that held something sees the pane open again without having to write first.
 
 An objective is drawn with its own icon where the workspace gave it one — the contract has
 carried `icon` on objectives from the start, and the back office fills it with an emoji —
@@ -202,8 +213,9 @@ it, forgetting everything on every call, cost the whole tree on each of them.
 
 What it draws comes from two places and no third: `.bg/work.json`, the file the row already
 reads, for **what** this copy has in hand — never the workspace's queue, which is the same
-in every worktree — and the `pm-v1` verbs for the names, called over **the session's own MCP
-connection**. The plugin holds no token and no address, reads each name once every three
+in every worktree; the hook that writes it stamps each entry with its session and sorts the
+file at every start, so the pane reads what is there and never the stamp — and the `pm-v1`
+verbs for the names, called over **the session's own MCP connection**. The plugin holds no token and no address, reads each name once every three
 minutes for the whole machine, and speaks both spellings of the contract: `specId` and
 `id`, PascalCase answers and snake_case ones.
 
@@ -401,7 +413,7 @@ The output is gitignored. It is a build artifact, not a second copy to maintain.
 .claude-plugin/marketplace.json   # marketplace entry
 galy/
   .claude-plugin/plugin.json      # plugin manifest
-  hooks/hooks.json                # the guard on CLAUDE.md, the work in hand (taken on a write, let go when the session ends), two Stop hooks (work recorded, slot given back), and the pane's module
+  hooks/hooks.json                # the guard on CLAUDE.md, the work in hand (taken on a write, stamped with its session, sorted by owner at every start), two Stop hooks (work recorded, slot given back), and the pane's module
   hooks/where/                    # the pane beside the transcript: its rows are pure functions, its bind is register.ts
   statusline/bg-statusline.mjs    # the row under the prompt: objective > brief > spec, for this copy's own work
   agents/<name>.md                # the 6 subject agents the first pass dispatches

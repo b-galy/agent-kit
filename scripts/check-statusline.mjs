@@ -8,8 +8,9 @@
 // is one sentence of that: nothing claimed shows nothing, two copies show two rows, one
 // spec is named with its brief and its objective, an `id` that belongs to a phase never
 // lands on a spec, a workspace that spells the field `specId` is heard as well as one that
-// spells it `id`, and a session that ends hands the next one an empty row rather than
-// yesterday's spec.
+// spells it `id`, and what a session took in hand is that session's: a new one on the same
+// copy starts on an empty row rather than yesterday's spec, the same one resumed finds its
+// work again, and a process dying late never wipes what a live session has just claimed.
 //
 //   node scripts/check-statusline.mjs
 //
@@ -70,14 +71,16 @@ const bare = (s) => s.replace(/\x1b\]8;;[^\x1b]*\x1b\\/g, "").replace(/\x1b\[[0-
 const row = (cwd) => execFileSync(process.execPath, [STATUSLINE], {
   cwd, env: ENV, encoding: "utf8", input: JSON.stringify({ cwd, session_id: "check" }),
 });
-const wrote = (cwd, tool_name, tool_input, answer = { success: true }) => execFileSync(process.execPath, [HOOK], {
-  cwd, env: ENV, encoding: "utf8",
-  input: JSON.stringify({ cwd, tool_name, tool_input, tool_response: { content: [{ type: "text", text: JSON.stringify(answer) }] } }),
+// The events reach the hook as the harness sends them: every one carries the session's id.
+const SESSION_A = "0a1f6c2e-aaaa-4aaa-8aaa-000000000001";
+const SESSION_B = "0a1f6c2e-bbbb-4bbb-8bbb-000000000002";
+const hook = (cwd, event) => execFileSync(process.execPath, [HOOK], { cwd, env: ENV, encoding: "utf8", input: JSON.stringify({ cwd, ...event }) });
+const wrote = (cwd, tool_name, tool_input, answer = { success: true }, session_id = SESSION_A) => hook(cwd, {
+  session_id, hook_event_name: "PostToolUse", tool_name, tool_input,
+  tool_response: { content: [{ type: "text", text: JSON.stringify(answer) }] },
 });
-const ended = (cwd) => execFileSync(process.execPath, [HOOK], {
-  cwd, env: ENV, encoding: "utf8",
-  input: JSON.stringify({ cwd, hook_event_name: "SessionEnd", reason: "other" }),
-});
+const ended = (cwd, session_id = SESSION_A) => hook(cwd, { session_id, hook_event_name: "SessionEnd", reason: "other" });
+const started = (cwd, session_id = SESSION_A, source = "startup") => hook(cwd, { session_id, hook_event_name: "SessionStart", source });
 const held = (dir) => { try { return JSON.parse(readFileSync(join(dir, ".bg", "work.json"), "utf8")); } catch { return {}; } };
 const specs = (dir) => (held(dir).specs || []).map((e) => e.id).join();
 
@@ -163,22 +166,66 @@ wrote(repo, "mcp__bg__feature_spec_pick", { id: 11 });
 const untracked = execFileSync("git", ["-C", repo, "status", "--porcelain", "--untracked-files=all"], { encoding: "utf8" });
 check("the held work is not listed by git", specs(repo) === "11" && !untracked.includes("work.json"));
 
-// 11. The session ends and the copy lets go. Reopened tomorrow on another subject, it must
-//     start on an empty row — and the file must still be there, because a row cached
-//     elsewhere is redrawn when this file becomes newer than it, never when it disappears.
+// 11. What a session took in hand is that session's. The claim carries the session's id;
+//     the end of the session drops nothing, so the same conversation resumed — same id,
+//     whatever reason the harness gives for the start — finds its work again; a new
+//     conversation on the same copy starts on an empty row, because none of the entries is
+//     its own; `/clear` empties everything, same id or not. The file stays through all of
+//     it, because a row cached elsewhere is redrawn when this file becomes newer than it,
+//     never when it disappears.
 const d = copy("wt-d");
 wrote(d, "mcp__bg__feature_spec_pick", { id: 11 });
 holdStamp();
 check("a copy that has just picked a spec has a row", bare(row(d)) !== "");
+check("and the claim carries the session that took it up", (held(d).specs[0] || {}).session === SESSION_A);
 ended(d);
 holdStamp();
-check("the session that ends leaves the next one an empty row", bare(row(d)) === "");
+check("the session that ends leaves its work where it is", specs(d) === "11" && bare(row(d)) !== "");
+started(d, SESSION_A, "resume");
+check("the same conversation resumed finds its work again", specs(d) === "11");
+started(d, SESSION_A, "startup");
+check("whatever reason the harness gives for the start", specs(d) === "11");
+started(d, SESSION_A, "compact");
+check("and a compaction changes nothing either", specs(d) === "11");
+holdStamp();
+check("so the resumed session has its row back", bare(row(d)) === "Croissance > La porte d'un locataire s'o… > Profil");
+started(d, SESSION_B);
+holdStamp();
+check("a new conversation on the same copy starts on an empty row", specs(d) === "" && bare(row(d)) === "");
 check("and the file stays, so a row cached elsewhere is redrawn", existsSync(join(d, ".bg", "work.json")));
 check("the copy beside it keeps what it holds", specs(b) === "41");
 
+wrote(d, "mcp__bg__feature_spec_pick", { id: 9 }, { success: true }, SESSION_B);
+started(d, SESSION_B, "clear");
+check("`/clear` empties everything, the session's own work included", specs(d) === "");
+
 const e = copy("wt-e");
 ended(e);
-check("a copy that claimed nothing is left untouched by the end of a session", !existsSync(join(e, ".bg")));
+started(e, SESSION_B);
+check("a copy that claimed nothing is left untouched by the end and the start of a session", !existsSync(join(e, ".bg")));
+
+// 11b. The race the rule was written for: the resumed conversation has already claimed when
+//      the old process, still shutting down, says goodbye. Its goodbye must change nothing.
+//      And an entry with no session at all, written before the field existed, is dropped at
+//      the first start: nobody can say whose it is.
+const h = copy("wt-h");
+wrote(h, "mcp__bg__feature_spec_pick", { id: 11 }, { success: true }, SESSION_A);
+started(h, SESSION_A, "resume");
+wrote(h, "mcp__bg__feature_spec_pick", { id: 9 }, { success: true }, SESSION_A);
+ended(h, SESSION_A);                                  // the old process of the same conversation, dying late
+check("the live session's claim survives the dying process's goodbye", specs(h) === "9,11");
+ended(h, SESSION_B);                                  // and a stranger's goodbye changes nothing either
+check("and a stranger's goodbye too", specs(h) === "9,11");
+
+const i = copy("wt-i");
+mkdirSync(join(i, ".bg"), { recursive: true });
+writeFileSync(join(i, ".bg", "work.json"), JSON.stringify({
+  specs: [{ id: 11, at: new Date().toISOString(), server: "bg" }, { id: 9, at: new Date().toISOString(), server: "bg", session: SESSION_A }],
+  briefs: [{ id: 32, at: new Date().toISOString() }],
+}));
+started(i, SESSION_A);
+check("an entry that names no session is dropped at the first start, the session's own kept",
+  specs(i) === "9" && (held(i).briefs || []).length === 0);
 
 // 12. And the claim remembers WHICH workspace it went through. An id means nothing without
 //     the server that issued it — a workstation may hold copies of two repositories

@@ -12,11 +12,19 @@
 // marks nothing: a session that opens spec 9 to answer a question is not working on it,
 // and a row that said otherwise would be back to naming things nobody asked about.
 //
-// And a copy lets go of everything when the session ends. What it has in hand is what the
-// session working in it took up; the same copy reopened tomorrow, on another subject, has
-// nothing in hand, and a row still naming yesterday's spec is read as today's — the one
-// mistake this file exists to prevent. The horizon the row applies is the backstop for a
-// session that never got to say goodbye, not the rule.
+// And what a copy has in hand belongs to the SESSION that took it up. Every entry carries the
+// `session_id` of the write that made it, and a session that starts keeps the entries that
+// carry its own id and drops the rest. So the same conversation reopened — `claude --resume`,
+// `/resume`, a compaction — finds its work again, because the id has not changed; a new
+// conversation on the same copy starts empty, because none of the entries is its own; and a
+// row still naming yesterday's spec is never read as today's, which is the one mistake this
+// file exists to prevent. `/clear` empties everything: same id, new subject.
+//
+// The end of a session drops nothing. It used to empty the file, blind to who had filled it,
+// and a relaunch on the same conversation lost its work twice over: the old process, dying,
+// wiped what the resumed one had just written (claim at 15:27:23, wiped at 15:27:58), and a
+// resumed conversation that outlived its process found nothing. The horizon the row applies
+// stays the backstop for work put down and never picked up again.
 //
 // It runs after every call to the workspace and must never make one fail: it writes a
 // small file, says nothing, and exits 0 whatever happens.
@@ -104,23 +112,50 @@ function keepOutOfGit(root, file) {
   } catch { /* outside a repository, or no git on the path: the file stays, unlisted */ }
 }
 
-// A session ends and takes its work with it: the file is emptied, and the next claim fills
-// it again. Emptied, never removed — a row drawn elsewhere is redrawn because this file has
-// become newer than the cache holding it, and a file that is gone never becomes newer than
-// anything. The row would then outlive the session for good, which is exactly what ends here.
-function letGoOfEverything(cwd) {
-  const root = workingCopyRoot(cwd || process.cwd());
+// The session an event belongs to, as the harness names it. The same id is carried by every
+// event of one conversation — its tool calls, its subagents' tool calls, its start after a
+// `--resume` or a compaction — and by nothing else.
+function sessionOf(event) {
+  return String(event.session_id || "");
+}
+
+// A session starts, and the file is sorted by who wrote it: the entries carrying this
+// session's id stay, the others go. Sorted, never removed — a row drawn elsewhere is redrawn
+// because this file has become newer than the cache holding it, and a file that is gone never
+// becomes newer than anything.
+//
+// The id decides, never the reason for the start. A `--resume` reports `resume` on one
+// version and `startup` on another, and both carry the resumed id; a compaction carries the
+// same id as before; a new conversation carries a fresh one, and a fork of an old one a fresh
+// one too, so both open on nothing. `/clear` is the one reason read: same id, new subject,
+// nothing kept. An entry with no session at all was written before the field existed and is
+// dropped: nobody can say whose it is.
+function keepThisSessionsOnly(event) {
+  const root = workingCopyRoot(event.cwd || process.cwd());
   if (!root) return;
   const file = join(root, ".bg", "work.json");
-  if (!existsSync(file)) return;                    // a copy that claimed nothing has nothing to let go of
-  writeFileSync(file, JSON.stringify({ specs: [], briefs: [] }, null, 2) + "\n", "utf8");
+  if (!existsSync(file)) return;                    // a copy that claimed nothing has nothing to sort
+  const before = readFileSync(file, "utf8");
+  let held = {};
+  try { held = JSON.parse(before); } catch { held = {}; }
+  if (!held || typeof held !== "object") held = {};
+
+  const session = sessionOf(event);
+  const own = (entries) => (event.source === "clear" || !session ? [] : (Array.isArray(entries) ? entries : []))
+    .filter((entry) => entry && typeof entry === "object" && entry.session === session);
+  const next = { ...held, specs: own(held.specs), briefs: own(held.briefs) };
+
+  const text = JSON.stringify(next, null, 2) + "\n";
+  if (text === before) return;                      // nothing to drop: the file stays as old as it was
+  writeFileSync(file, text, "utf8");
   keepOutOfGit(root, file);
 }
 
 function main(event) {
-  // Every way a session ends is one: the window closed, `/clear` typed, the account logged
-  // out. Each leaves a working copy that the next prompt may open on something else.
-  if (event.hook_event_name === "SessionEnd") return letGoOfEverything(event.cwd);
+  if (event.hook_event_name === "SessionStart") return keepThisSessionsOnly(event);
+  // A session that ends leaves the file as it is: what it wrote is its own, and its own
+  // resumed conversation is the one reader entitled to find it there.
+  if (event.hook_event_name === "SessionEnd") return;
 
   const called = String(event.tool_name || "");
   const names = { ...CLAIMS, ...RELEASES };
@@ -150,7 +185,18 @@ function main(event) {
   // means nothing without the server that issued it. Entries written before this field
   // existed have no `server` and stay exactly as readable: the reader falls back on the
   // only server that serves the contract.
-  const next = RELEASES[verb] ? kept : [{ id, at: new Date().toISOString(), ...(serverOf(called) ? { server: serverOf(called) } : {}) }, ...kept];
+  //
+  // And which session took it up, so the next start can tell its own work from a
+  // stranger's. The readers ignore the field: the file is sorted at start, and what is in
+  // it when they read is this session's.
+  const session = sessionOf(event);
+  const claim = {
+    id,
+    at: new Date().toISOString(),
+    ...(serverOf(called) ? { server: serverOf(called) } : {}),
+    ...(session ? { session } : {}),
+  };
+  const next = RELEASES[verb] ? kept : [claim, ...kept];
 
   held = { ...(held && typeof held === "object" ? held : {}), [rule.of]: next.slice(0, HELD_AT_MOST) };
   mkdirSync(dirname(file), { recursive: true });
