@@ -33,6 +33,12 @@ const RISK = ["riskId", "risk_id", "id"];
 /** An acceptance test of a spec, drawn nowhere either. */
 const TEST = ["acceptanceTestId", "acceptance_test_id", "testId", "test_id", "id"];
 
+/** The spec a write names WITHOUT naming it `id`: the one a check is scheduled on. */
+const SPEC_NAMED = ["specId", "spec_id", "feature_spec_id", "featureSpecId"];
+
+/** A scheduled check of a spec: drawn under the spec in hand, which is the one to forget. */
+const FOLLOWUP = ["checkId", "check_id", "followup_check_id", "followupCheckId", "id"];
+
 /** The objective itself. */
 const OBJECTIVE = ["objectiveId", "objective_id", "id"];
 
@@ -70,6 +76,12 @@ export const WRITES = {
   feature_spec_update_acceptance_test: { of: "test", read: TEST },
   feature_spec_set_acceptance_test_status: { of: "test", read: TEST },
   feature_spec_delete_acceptance_test: { of: "test", read: TEST },
+
+  // A check scheduled on a spec joins the block under that spec's phases; one scheduled on
+  // a brief is drawn nowhere and names nothing. An edited check names itself, and the tree
+  // finds the spec it was drawn under.
+  followup_check_add: { of: "spec", read: SPEC_NAMED },
+  followup_check_update: { of: "followup", read: FOLLOWUP },
 
   feature_brief_create: { of: null, read: [] },
   feature_brief_update: { of: "brief", read: BRIEF },

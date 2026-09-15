@@ -105,7 +105,8 @@ export function payloadOf(result) {
 
 /**
  * @typedef {{ id: number, title: string | null, status: string | null, url: string | null }} Named
- * @typedef {Named & { briefId: number | null, phases: Named[] }} SpecRecord
+ * @typedef {{ id: number | null, title: string | null, offsetDays: number | null, chainDays: number | null, latestRun: string | null, isAttention: boolean }} Followup
+ * @typedef {Named & { briefId: number | null, phases: Named[], followups: Followup[] | null }} SpecRecord
  * @typedef {Named & { objectiveId: number | null, objectiveTitle: string | null, specs: Named[] | null }} BriefRecord
  * @typedef {{ id: number, title: string | null, period: string | null, url: string | null, icon: string | null }} ChainNode
  * @typedef {{ id: number | null, title: string | null, current: number | null, target: number | null, unit: string | null, progress: number | null }} KeyResult
@@ -142,7 +143,27 @@ const namedOf = (node) => ({
 });
 
 /**
+ * One scheduled post-delivery check of a spec, from either shape: the back office lists
+ * them inside the spec, PascalCase, with the verdict of the latest run; Galy lists them on
+ * their own verb, snake_case, and knows no run yet.
+ *
+ * @param {any} node
+ * @returns {Followup}
+ */
+const followupOf = (node) => ({
+  id: idOf(fieldOf(node, "id", "Id")),
+  title: textOf(fieldOf(node, "title", "Title")),
+  offsetDays: numberOf(fieldOf(node, "schedule_offset_days", "ScheduleOffsetDays")),
+  chainDays: numberOf(fieldOf(node, "chain_offset_days", "ChainOffsetDays")),
+  latestRun: textOf(fieldOf(node, "latest_run_status", "LatestRunStatus")),
+  isAttention: fieldOf(node, "is_attention", "IsAttention") === true,
+});
+
+/**
  * A spec, from either workspace's `feature_spec_get`.
+ *
+ * `followups` is null where the answer carries no such field at all — Galy's does not, and
+ * they are read on their own verb — and the list, empty or not, where it does.
  *
  * @param {any} answer
  * @returns {SpecRecord}
@@ -150,11 +171,25 @@ const namedOf = (node) => ({
 export function specOf(answer) {
   const record = fieldOf(answer, "spec", "Spec") ?? answer;
   const phases = fieldOf(record, "phases", "Phases") ?? fieldOf(answer, "phases", "Phases") ?? [];
+  const followups = fieldOf(record, "followup_checks", "FollowupChecks") ?? fieldOf(answer, "followup_checks", "FollowupChecks");
   return {
     ...namedOf(record),
     briefId: idOf(fieldOf(record, "feature_brief_id", "FeatureBriefId")),
     phases: (Array.isArray(phases) ? phases : []).map(namedOf),
+    followups: Array.isArray(followups) ? followups.map(followupOf) : null,
   };
+}
+
+/**
+ * The checks of one spec, from `followup_check_list`: `checks` in the contract's spelling,
+ * `followup_checks` in Galy's.
+ *
+ * @param {any} answer
+ * @returns {Followup[]}
+ */
+export function followupsOf(answer) {
+  const listed = fieldOf(answer, "followup_checks", "FollowupChecks", "checks", "Checks", "items", "Items") ?? [];
+  return (Array.isArray(listed) ? listed : []).map(followupOf);
 }
 
 /**
@@ -310,6 +345,11 @@ export const READS = {
     tool: "feature_spec_list",
     args: { contract: (id) => ({ briefId: id }), galy: (id) => ({ feature_brief_id: id }) },
     read: specListOf,
+  },
+  followups: {
+    tool: "followup_check_list",
+    args: { contract: (id) => ({ featureSpecId: id }), galy: (id) => ({ feature_spec_id: id }) },
+    read: followupsOf,
   },
 };
 

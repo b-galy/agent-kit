@@ -52,8 +52,27 @@ export const INLINE_MAX_ROWS = 8;
 /** What each status is drawn as. */
 export const MARKS = { Done: "✓", InProgress: "●", other: "○" };
 
-/** What a phase drawn on a row of its own opens with: the one in progress points at itself. */
-export const PHASE_ROW_MARKS = { Done: "✓", InProgress: "▶", other: "○" };
+/**
+ * What a phase drawn on a row of its own opens with: a full circle once done, the one in
+ * progress pointing at itself, an empty circle while it waits. A done phase used to be
+ * struck through as well, and a struck line is a line nobody reads.
+ */
+export const PHASE_ROW_MARKS = { Done: "●", InProgress: "▶", other: "○" };
+
+/** What a scheduled post-delivery check opens its row with. */
+export const FOLLOWUP_MARK = "↻";
+
+/**
+ * The verdict of a check's latest run, where the workspace knows one: passed, failed,
+ * still due, or run without a verdict. A check nobody has run yet carries no mark.
+ */
+export const FOLLOWUP_RUN_MARKS = { passed: "✓", failed: "✗", pending: "…", inconclusive: "?" };
+
+/** The heading of the block of checks under a spec's phases. */
+export const FOLLOWUPS_TEXT = "Suivis";
+
+/** How the schedule of a check reads: this many days after delivery. */
+export const FOLLOWUP_DUE_TEXT = (days) => `J+${days}`;
 
 /** An objective that carries no icon of its own is drawn with this. */
 export const OBJECTIVE_MARK = "◆";
