@@ -119,6 +119,61 @@ The only thing the kit does at the other end is let go. When a session closes, t
 prompt drops the work it was naming, so the next one opens on an empty row rather than on yesterday's
 spec — a row that names the wrong work is read as the right one, every time.
 
+## The pane beside the transcript
+
+The row under the prompt names what this working copy has in hand. It does not say where
+that work sits. In fullscreen, `/where` opens a pane docked to the right of the conversation
+and draws the rest of the answer for this copy alone:
+
+```
+T2 2026 · 2026
+◆ Susciter le désir pour la marque
+  └ ◆ Le bas de funnel est automatisé
+    └ ◆ SEA : Le Marketing Mix Modeling fonctionne selon l'état de l'art
+      └ ◆ Le MMM arbitre les enchères entre les canaux
+          RC  200 reprises presse · 141 / 200 par an (71 %)
+        ▸ Brief : MMM — moteur d'allocation & application des recos  [InProgress]
+            ● Spec : Split canal × pays dans le fit Meridian — priors…  [InProgress]  ← en main
+                ✓ Split + calibrateur par cellule · ● Bascule Worker1  1/2
+            ✓ MCP gel/dégel manuel d'un canal MMM (sans SQL)  [Done]
+            … et 2 de plus
+```
+
+It opens by itself the first time a copy takes something up, closes on `/where`, and
+remembers that choice for the next session. Below 110 columns, and outside fullscreen, it
+sits inline above the prompt as an eight-row summary instead. With nothing in hand it does
+not open at all, and opened by hand it says what would fill it.
+
+What it draws comes from two places and no third: `.bg/work.json`, the file the row already
+reads, for **what** this copy has in hand — never the workspace's queue, which is the same
+in every worktree — and the `pm-v1` verbs for the names, called over **the session's own MCP
+connection**. The plugin holds no token and no address, reads each name once every three
+minutes for the whole machine, and speaks both spellings of the contract: `specId` and
+`id`, PascalCase answers and snake_case ones.
+
+**Early access.** It is drawn by a hooks module, which Claude Code loads only where
+`CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1`. The setup command writes that into your user
+settings — `--no-pane` skips it, `npx -y github:b-galy/agent-kit --enable-pane` does it
+alone on a workstation installed before this existed — and it takes effect at the next
+start of Claude Code. Without the flag nothing of the module loads: the row under the
+prompt and the classic hooks go on exactly as they did, and `/where` is simply not there.
+
+One limit is worth knowing before you meet it: Claude Code caps what an MCP call may
+answer, and past the cap it replaces the result with a notice of its own. A spec whose
+body runs to sixty thousand characters comes back that way, and the pane says so on that
+branch — `trop volumineuse pour l'API des mods` — rather than drawing a nameless node. The
+rest of the tree is unaffected.
+
+The API that surface is written against may change between two releases of Claude Code
+without notice. The declarations it is typed against are versioned in the repository
+(`types/claude-code.d.ts`, whose first line names the Claude Code version that wrote them),
+and CI recompiles the module on every push, so a change is found here rather than on a
+workstation. Regenerate them with `/plugin-types ./types` after an update. `claude plugin
+test` does not exist in 2.1.272, so the `claude-code/testing` kit is out of reach: every
+decision the pane makes therefore lives in plain functions, replayed by
+`node scripts/check-where.mjs` against both workspaces' real answers, and what is left in
+`register.ts` is the binding itself.
+
 Nothing has to be typed as a command. **A plain sentence starts the first pass** — "démarre
 l'onboarding Galy", "start the Galy onboarding", "où en sont nos pratiques ?", "fais le point" — and
 the `audit` skill takes it from there.
@@ -290,7 +345,8 @@ The output is gitignored. It is a build artifact, not a second copy to maintain.
 .claude-plugin/marketplace.json   # marketplace entry
 galy/
   .claude-plugin/plugin.json      # plugin manifest
-  hooks/hooks.json                # the guard on CLAUDE.md, the work in hand (taken on a write, let go when the session ends), and two Stop hooks: work recorded, slot given back
+  hooks/hooks.json                # the guard on CLAUDE.md, the work in hand (taken on a write, let go when the session ends), two Stop hooks (work recorded, slot given back), and the pane's module
+  hooks/where/                    # the pane beside the transcript: its rows are pure functions, its bind is register.ts
   statusline/bg-statusline.mjs    # the row under the prompt: objective > brief > spec, for this copy's own work
   agents/<name>.md                # the 6 subject agents the first pass dispatches
   skills/<name>/SKILL.md          # the 17 skills
@@ -298,9 +354,12 @@ galy/
   contract/pm-v1.json             # the project-management tool + REST contract
   contract/conformance/           # the outward-only conformance suite (MCP + REST)
   bin/bg.mjs                      # the bg CLI
+types/claude-code.d.ts            # the function-hooks API, as /plugin-types wrote it; the pane is typed against this
+tsconfig.json                     # what CI recompiles on every push
 package.json                      # makes the repo itself runnable: npx -y github:b-galy/agent-kit
 setup/setup.mjs                   # the one-command setup
 scripts/build-codex.mjs           # projection into the layouts Codex reads (gitignored output)
+scripts/check-where.mjs           # the pane's rows, replayed on both workspaces' real answers
 ```
 
 ## License

@@ -82,6 +82,12 @@ function first(record, names) {
   return names.map((name) => record?.[name]).find((value) => value !== undefined && value !== null);
 }
 
+// The server the harness routed the call through, read where the harness writes it: the
+// tool's own name, `mcp__<server>__<verb>`. A call made outside MCP names no server.
+function serverOf(toolName) {
+  return /^mcp__(.+?)__[a-z][a-z0-9_]*$/.exec(String(toolName || ""))?.[1] || null;
+}
+
 // The file is this copy's and nobody else's: it must never show up as something to commit.
 // The kit does not edit the repository's `.gitignore` — that file is the team's — so the
 // exclusion goes into the repository's own private list, which git reads and never ships.
@@ -139,7 +145,12 @@ function main(event) {
   try { held = JSON.parse(readFileSync(file, "utf8")); } catch { /* the first claim writes the first file */ }
   const kept = (Array.isArray(held?.[rule.of]) ? held[rule.of] : [])
     .filter((entry) => Number.isInteger(entry?.id) && entry.id !== id);
-  const next = RELEASES[verb] ? kept : [{ id, at: new Date().toISOString() }, ...kept];
+  // Which workspace this claim went through, so a reader can ask the right one back. A
+  // workstation may hold copies of two repositories answering on two servers, and an id
+  // means nothing without the server that issued it. Entries written before this field
+  // existed have no `server` and stay exactly as readable: the reader falls back on the
+  // only server that serves the contract.
+  const next = RELEASES[verb] ? kept : [{ id, at: new Date().toISOString(), ...(serverOf(called) ? { server: serverOf(called) } : {}) }, ...kept];
 
   held = { ...(held && typeof held === "object" ? held : {}), [rule.of]: next.slice(0, HELD_AT_MOST) };
   mkdirSync(dirname(file), { recursive: true });

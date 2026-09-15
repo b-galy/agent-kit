@@ -35,6 +35,11 @@ import { fileURLToPath } from "node:url";
 
 const MARKETPLACE = "b-galy/agent-kit";
 
+// What Claude Code reads before it loads a single hooks module — the pane beside the
+// transcript among them. Absent, nothing of the module loads, the classic hooks and the
+// row under the prompt go on exactly as before, and `/where` simply is not there.
+const FUNCTION_HOOKS_FLAG = "CLAUDE_CODE_ENABLE_FUNCTION_HOOKS";
+
 // One namespace on the agent side, `bg` — and `b-galy` for what carries it. The marketplace was
 // declared as `galy` until the brand became B.Galy, and its name is not cosmetic: an installed
 // workstation keys its plugin cache by that name, so the entry does not follow a rename of the
@@ -99,6 +104,8 @@ function parseArgs(argv) {
     if (a === "--endpoint") { out.endpoint = argv[++i]; }
     else if (a === "-h" || a === "--help") { out.help = true; }
     else if (a === "--no-statusline") { out.statusline = false; }
+    else if (a === "--no-pane") { out.pane = false; }
+    else if (a === "--enable-pane") { out.paneOnly = true; }
     else out._.push(a);
   }
   return out;
@@ -116,6 +123,8 @@ const HELP = `galy-setup — connect your agent to your Galy workspace
   <token>       your Galy API token
   --endpoint    the address of your workspace
   --no-statusline  do not touch the status line under your prompt
+  --no-pane        do not enable the pane beside the transcript (/where)
+  --enable-pane    enable that pane and do nothing else (no token needed)
 
 Both are on one page in Galy: Settings → Connect your assistant. It prints this exact
 command, address already filled in — copy it from there rather than typing it.
@@ -390,9 +399,60 @@ function installStatusLine(endpoint, token) {
   ok(`to remove it: node "${shim}" --uninstall`);
 }
 
+/**
+ * f) The pane beside the transcript: `/where`, the strategy tree of what this copy has in
+ * hand. It is drawn by a hooks module, and Claude Code loads none unless the environment
+ * says so — so the flag goes into the user's settings, where the harness sets the
+ * environment of every session it starts.
+ *
+ * Idempotent and never destructive: `env` keeps every key it had, and a second run writes
+ * nothing. `--no-pane` skips it, and `--enable-pane` runs it alone, for a workstation that
+ * installed the kit before the pane existed.
+ *
+ * @returns {"written" | "already" | "skipped"} what it did, for the closing message
+ */
+function installFunctionHooksFlag() {
+  step("Enabling the pane beside the transcript (/where)");
+  const configDir = process.env.CLAUDE_CONFIG_DIR || join(homedir(), ".claude");
+  const path = join(configDir, "settings.json");
+
+  let settings = {};
+  if (existsSync(path)) {
+    try {
+      const parsed = JSON.parse(readFileSync(path, "utf8"));
+      if (parsed && typeof parsed === "object") settings = parsed;
+    } catch {
+      // Settings nobody can parse are settings nobody should rewrite: the harness reads
+      // this file, and a well-meant repair would drop whatever it could not understand.
+      warn(`${path} is not valid JSON — leaving it alone. Add "env": { "${FUNCTION_HOOKS_FLAG}": "1" } yourself.`);
+      return "skipped";
+    }
+  }
+
+  const env = settings.env && typeof settings.env === "object" ? settings.env : {};
+  if (env[FUNCTION_HOOKS_FLAG] === "1") {
+    ok(`${FUNCTION_HOOKS_FLAG} was already set — nothing changed.`);
+    return "already";
+  }
+
+  mkdirSync(configDir, { recursive: true });
+  writeFileSync(path, JSON.stringify({ ...settings, env: { ...env, [FUNCTION_HOOKS_FLAG]: "1" } }, null, 2) + "\n", "utf8");
+  ok(`${FUNCTION_HOOKS_FLAG}=1 in ${path} (your other settings are untouched).`);
+  return "written";
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) { console.log(HELP); return; }
+
+  // The pane on its own: no token, no address, no network.
+  if (args.paneOnly) {
+    console.log("Galy Agent Kit — enabling the pane beside the transcript");
+    const outcome = installFunctionHooksFlag();
+    if (outcome === "written") console.log("\n✅ Restart Claude Code, then type /where.\n");
+    else if (outcome === "already") console.log("\n✅ Already enabled — type /where in a session.\n");
+    return;
+  }
 
   const token = args._[0];
   if (!token) fail("missing token.\n" + HELP);
@@ -410,6 +470,7 @@ async function main() {
   writeConfig(endpoint, token);
   await smoke(endpoint, token);
   if (args.statusline !== false) installStatusLine(endpoint, token);
+  const pane = args.pane === false ? "skipped" : installFunctionHooksFlag();
 
   // THE DIRECTORY IS NAMED IN THE CONCLUSION, not only in the steps above. `claude mcp add
   // --scope local` and `.bg/config.json` are both attached to the current directory: run
@@ -420,7 +481,11 @@ async function main() {
   // shows the mistake at the moment it is made.
   console.log(`\n✅ Assistant connected in ${process.cwd()} — Galy never sees your code.`);
   console.log("   Reopen Claude Code THERE: a server declared while it was running is only seen");
-  console.log("   at the next start. It will then tell you where your practices stand.\n");
+  console.log("   at the next start. It will then tell you where your practices stand.");
+  if (pane === "written") {
+    console.log(`   That restart also loads the pane beside the transcript: type /where to show or hide it.`);
+  }
+  console.log("");
 }
 
 main().catch((e) => fail(e.message));

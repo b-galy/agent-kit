@@ -180,6 +180,27 @@ const e = copy("wt-e");
 ended(e);
 check("a copy that claimed nothing is left untouched by the end of a session", !existsSync(join(e, ".bg")));
 
+// 12. And the claim remembers WHICH workspace it went through. An id means nothing without
+//     the server that issued it — a workstation may hold copies of two repositories
+//     answering on two addresses — and the pane beside the transcript asks that server back.
+//     What must not change is what came before: an entry written without the field stays
+//     exactly as readable, and the row that reads it says the same thing it always did.
+const f = copy("wt-f");
+wrote(f, "mcp__back-office__feature_spec_pick", { specId: 11 });
+check("a claim records the server it went through", (held(f).specs[0] || {}).server === "back-office");
+wrote(f, "mcp__bg__feature_brief_update", { id: 32 });
+check("so does a brief written on another server", (held(f).briefs[0] || {}).server === "bg");
+
+const g = copy("wt-g");
+mkdirSync(join(g, ".bg"), { recursive: true });
+writeFileSync(join(g, ".bg", "work.json"), JSON.stringify({ specs: [{ id: 11, at: new Date().toISOString() }], briefs: [] }));
+holdStamp();
+check("an entry written before the field existed is still named on the row",
+  bare(row(g)) === "Croissance > La porte d'un locataire s'o… > Profil");
+wrote(g, "mcp__bg__feature_spec_pick", { id: 9 });
+check("and a claim beside it neither rewrites nor drops it",
+  held(g).specs.map((entry) => `${entry.id}:${entry.server ?? "-"}`).join() === "9:bg,11:-");
+
 rmSync(BENCH, { recursive: true, force: true });
 
 if (failed) { console.error(`\n${failed} check(s) failed.`); process.exit(1); }
