@@ -12,7 +12,9 @@
 // A row that names something — an objective, the brief, a spec, a phase — is never cut:
 // it carries its lead apart from its text, and the view draws the text after the lead so
 // that a title longer than the pane wraps under its own first character rather than under
-// the mark. A row that is pressed is a button, and a button is a label: it stays cut.
+// the mark. A row that is pressed is a button, and a button is a label: it stays cut. The
+// brief's row is framed the whole width of the body, and an empty row parts it from the
+// chain above; the view draws the frame and the emptiness, and decides neither.
 
 import {
   EMPTY_TEXT,
@@ -30,8 +32,15 @@ import {
 
 /**
  * @typedef {{ text: string, bold?: boolean, dim?: boolean, strikethrough?: boolean, url?: string }} Segment
- * @typedef {{ indent: number, prefix: string }} Lead the columns before the text, drawn once, never wrapped
- * @typedef {{ key: string, segments: Segment[], lead?: Lead, press?: { kind: string, id?: number } }} Row
+ * @typedef {{ indent: number, prefix: string, bold?: boolean }} Lead the columns before the text, drawn once, never wrapped
+ * @typedef {{
+ *   key: string,
+ *   segments: Segment[],
+ *   lead?: Lead,
+ *   kind?: "blank",
+ *   boxed?: boolean,
+ *   press?: { kind: string, id?: number },
+ * }} Row a line of the pane: empty when `kind` is blank, framed the whole width when `boxed`
  */
 
 /** The mark a status is drawn with. */
@@ -335,7 +344,8 @@ export function dockRows(model, view) {
 
   model.trees.forEach((tree, treeIndex) => {
     const isFirst = treeIndex === 0;
-    if (!isFirst) rows.push({ key: `spacer-${tree.key}`, segments: [{ text: "" }] });
+    if (!isFirst) rows.push(blankRow(`spacer-${tree.key}`));
+    const firstRowOfTree = rows.length;
 
     if (tree.periods.length > 0) {
       rows.push({ key: `${tree.key}-period`, segments: [{ text: tree.periods.join(" · "), dim: true }] });
@@ -373,56 +383,49 @@ export function dockRows(model, view) {
       rows.push({ key: `${tree.key}-outside`, segments: [{ text: OUTSIDE_STRATEGY_TEXT, dim: true }] });
     }
 
-    const briefDepth = tree.chain.length === 0 ? 0 : leafDepth + 2;
+    // The brief detaches from the chain it serves: an empty row closes the chain, and the
+    // brief starts at the left margin, its name in a bordered box the whole width of the
+    // body. What hangs under the brief is indented from the brief, never from the chain.
     if (tree.brief) {
-      rows.push(
-        namedRow(
-          {
-            key: `${tree.key}-brief`,
-            indent: briefDepth,
-            prefix: "▸ Brief : ",
-            title: tree.brief.title,
-            id: tree.brief.id,
-            url: tree.brief.url,
-            tails: [tree.brief.status ? `  [${tree.brief.status}]` : ""],
-          },
-          columns,
-        ),
-      );
+      if (rows.length > firstRowOfTree) rows.push(blankRow(`${tree.key}-blank`));
+      const href = hrefOf(tree.brief.url);
+      /** @type {Segment[]} */
+      const segments = [{ text: nameOf(tree.brief.title, tree.brief.id), bold: true, ...(href === null ? {} : { url: href }) }];
+      if (tree.brief.status) segments.push({ text: `  [${tree.brief.status}]`, dim: true });
+      rows.push({ key: `${tree.key}-brief`, boxed: true, segments });
     }
 
     // Every spec of this brief the copy has in hand, newest first, each with its phases on
-    // rows of their own. A tree taller than the pane's body scrolls under the engine's own
-    // window, so nothing here bounds it.
-    const specDepth = briefDepth + 4;
+    // rows of their own; then the brief's other specs, folded, their phases on rows of
+    // their own once unfolded. A tree taller than the pane's body scrolls under the
+    // engine's own window, so nothing here bounds it.
     for (const spec of tree.specs) {
-      rows.push(...specRows(spec, specDepth, columns, true, `${tree.key}-spec-${spec.id}`));
+      rows.push(...specRows(spec, SPEC_DEPTH, columns, { isInHand: true, key: `${tree.key}-spec-${spec.id}` }));
     }
 
     const shown = tree.siblings.slice(0, SIBLINGS_SHOWN);
     for (const sibling of shown) {
-      const key = `${tree.key}-sib-${sibling.id}`;
-      rows.push(...specRows(sibling, specDepth, columns, false, key, { kind: "sibling", id: sibling.id }));
-      if (expanded[String(sibling.id)] && Array.isArray(sibling.phases) && sibling.phases.length > 0) {
-        const indent = pad(specDepth + 4);
-        rows.push({
-          key: `${key}-phases`,
-          segments: [{ text: indent }, { text: phaseLineText(sibling.phases, columns - indent.length), dim: true }],
-        });
-      }
+      rows.push(
+        ...specRows(sibling, SPEC_DEPTH, columns, {
+          isInHand: false,
+          key: `${tree.key}-sib-${sibling.id}`,
+          press: { kind: "sibling", id: sibling.id },
+          isUnfolded: expanded[String(sibling.id)] === true,
+        }),
+      );
     }
     const rest = tree.siblings.length - shown.length;
     if (rest > 0) {
       rows.push({
         key: `${tree.key}-more`,
-        segments: [{ text: `${pad(specDepth)}… et ${rest} de plus`, dim: true }],
+        segments: [{ text: `${pad(SPEC_DEPTH)}… et ${rest} de plus`, dim: true }],
       });
     }
 
     for (const gap of tree.gaps) {
       rows.push({
         key: `${tree.key}-gap-${gap}`,
-        segments: [{ text: fitText(`${pad(specDepth)}? ${gap}`, columns), dim: true }],
+        segments: [{ text: fitText(`${pad(SPEC_DEPTH)}? ${gap}`, columns), dim: true }],
       });
     }
   });
@@ -434,14 +437,29 @@ export function dockRows(model, view) {
   return rows;
 }
 
+/** Where a spec sits under its brief's box, and how much deeper its phases sit under it. */
+const SPEC_DEPTH = 2;
+const PHASE_STEP = 4;
+
+/** A row with nothing on it: what separates two trees, and the chain from its brief. */
+const blankRow = (key) => ({ key, kind: "blank", segments: [] });
+
 /**
- * A spec's own row and, when it is one in hand, a row per phase under it: the one done is
- * struck through, the one in progress points at itself, the rest wait in plain text. The
- * count of phases done stays on the spec's row, beside its name.
+ * A spec's own row and, when its phases are known and shown, a row per phase under it:
+ * the one done is struck through, the one in progress points at itself in bold, the rest
+ * wait in plain text. The count of phases done stays on the spec's row, beside its name.
+ *
+ * @param {any} spec
+ * @param {number} depth
+ * @param {number} columns
+ * @param {{ isInHand: boolean, key: string, press?: { kind: string, id?: number }, isUnfolded?: boolean }} how
+ * @returns {Row[]}
  */
-function specRows(spec, depth, columns, isInHand, key, press) {
-  const phases = isInHand && Array.isArray(spec.phases) ? spec.phases : [];
-  const done = phases.filter((phase) => phase.status === "Done").length;
+function specRows(spec, depth, columns, how) {
+  const { isInHand, key, press } = how;
+  const known = Array.isArray(spec.phases) ? spec.phases : [];
+  const done = known.filter((phase) => phase.status === "Done").length;
+  const shown = isInHand || how.isUnfolded === true ? known : [];
   /** @type {Row[]} */
   const rows = [
     namedRow(
@@ -456,7 +474,7 @@ function specRows(spec, depth, columns, isInHand, key, press) {
         // The status goes first when the pane is narrow: what a row is read for is the
         // name, and then whether it is the one in hand.
         tails: [
-          phases.length > 0 ? `  ${done}/${phases.length}` : "",
+          known.length > 0 ? `  ${done}/${known.length}` : "",
           spec.status ? `  [${spec.status}]` : "",
           isInHand ? `  ${IN_HAND_TEXT}` : "",
         ],
@@ -465,12 +483,19 @@ function specRows(spec, depth, columns, isInHand, key, press) {
       columns,
     ),
   ];
-  phases.forEach((phase, index) => {
+  shown.forEach((phase, index) => {
     const isDone = phase.status === "Done";
+    const isCurrent = phase.status === "InProgress";
     rows.push({
       key: `${key}-phase-${index}`,
-      lead: { indent: depth + 4, prefix: `${phaseRowMarkOf(phase.status)} ` },
-      segments: [{ text: nameOf(phase.title, phase.id || undefined), ...(isDone ? { strikethrough: true } : {}) }],
+      lead: { indent: depth + PHASE_STEP, prefix: `${phaseRowMarkOf(phase.status)} `, ...(isCurrent ? { bold: true } : {}) },
+      segments: [
+        {
+          text: nameOf(phase.title, phase.id || undefined),
+          ...(isDone ? { strikethrough: true } : {}),
+          ...(isCurrent ? { bold: true } : {}),
+        },
+      ],
     });
   });
   return rows;

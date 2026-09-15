@@ -114,6 +114,15 @@ const modelOf = async (bench, held, server = "ws") =>
     serverFor: (named) => named ?? server,
   });
 
+/** The rows the view cuts at the body's width: neither wrapped past a lead, nor framed, nor blank. */
+const cutRows = (rows) => rows.filter((row) => !row.lead && !row.boxed && row.kind !== "blank");
+
+/** The brief's rows: framed the whole width, at the margin. */
+const boxedRows = (rows) => rows.filter((row) => row.boxed === true);
+
+/** The lines a tree takes on a terminal: a framed row costs its two border lines on top of its own. */
+const linesOf = (rows) => rows.length + 2 * boxedRows(rows).length;
+
 /** A clock on the bench: a timer fires when the clock is moved past it, never on its own. */
 function clockOf() {
   let now = 0;
@@ -283,11 +292,16 @@ let backOfficeRows;
   check("the period opens the tree", backOfficeRows[0] === "T2 2026 · 2026", backOfficeRows[0]);
   check("the chain runs from the root to the leaf",
     text.includes("◆  Susciter le désir pour la marque") && text.includes("└ ◆  Le MMM arbitre les enchères entre les canaux"), text);
-  check("the brief is named under its objective", text.includes("▸ Brief : MMM — moteur d'allocation & application des recos  [InProgress]"));
+  const drawn = dockRows(one, { columns: 96 });
+  const brief = boxedRows(drawn)[0];
+  check("the brief is framed at the margin, an empty row parting it from the chain",
+    brief !== undefined && brief.lead === undefined && plainOf([brief])[0] === "MMM — moteur d'allocation & application des recos  [InProgress]" &&
+      drawn[drawn.indexOf(brief) - 1].kind === "blank" && drawn[drawn.indexOf(brief) - 2].key.includes("-kr-"),
+    JSON.stringify(brief));
   check("the spec in hand is named whole, its count, its status and its mark on the same row",
-    text.includes("● Spec : Split canal × pays dans le fit Meridian — priors par pays, hérités du canal sinon  1/2  [InProgress]  ← en main"), text);
+    text.includes("  ● Spec : Split canal × pays dans le fit Meridian — priors par pays, hérités du canal sinon  1/2  [InProgress]  ← en main"), text);
   check("its phases are counted on its own row, and drawn one per row under it",
-    text.includes("  1/2  ") && text.includes("                ✓ Split + calibrateur par cellule\n                ▶ Bascule Worker1 + fit officiel"), text);
+    text.includes("  1/2  ") && text.includes("      ✓ Split + calibrateur par cellule\n      ▶ Bascule Worker1 + fit officiel"), text);
   check("three sibling specs are drawn and the rest counted",
     text.includes("… et 2 de plus") && text.split("\n").filter((row) => row.includes("MCP gel/dégel")).length === 1, text);
   check("a refresh button closes the pane", backOfficeRows[backOfficeRows.length - 1] === "rafraîchir");
@@ -324,7 +338,7 @@ let backOfficeRows;
   check("a brief outside the strategy says so rather than drawing a chain",
     rows.includes("brief hors stratégie"), rows.join("\n"));
   check("the tree still names the brief and the spec in hand",
-    rows.some((row) => row.includes("▸ Brief : La ligne sous le prompt dit sur quoi cette copie travaille")) &&
+    rows.some((row) => row.startsWith("La ligne sous le prompt dit sur quoi cette copie travaille")) &&
       rows.some((row) => row.includes("Spec : Le panneau à droite")), rows.join("\n"));
   check("its three phases are counted", rows.some((row) => row.includes("0/3")), rows.join("\n"));
   check("nothing is reported as a gap", model.trees[0].gaps.length === 0, JSON.stringify(model.trees[0].gaps));
@@ -343,7 +357,7 @@ let backOfficeRows;
   check("the failed read is named where it failed",
     rows.some((row) => row.includes("? objectif 178 : objective_not_found")), rows.join("\n"));
   check("the brief and the spec are still drawn",
-    rows.some((row) => row.includes("▸ Brief :")) && rows.some((row) => row.includes("← en main")), rows.join("\n"));
+    rows.some((row) => row.startsWith("MMM — moteur")) && rows.some((row) => row.includes("← en main")), rows.join("\n"));
 }
 
 // ── 8. Ten drawings, one read per entity (P2/T7) ──────────────────────────
@@ -436,7 +450,7 @@ let backOfficeRows;
   check("both are marked as in hand, the newest first",
     inHand.length === 2 && inHand[0].includes("part 56") && inHand[1].includes("part 54"), inHand.join("\n"));
   check("the brief and its chain are drawn once",
-    rows.filter((row) => row.includes("▸ Brief :")).length === 1, rows.join("\n"));
+    boxedRows(dockRows(one, { columns: 96 })).length === 1, rows.join("\n"));
   check("each one shows its own phases", rows.filter((row) => row.includes("1/1")).length === 2, rows.join("\n"));
   check("a spec in hand is never also listed as a sibling",
     one.trees[0].siblings.every((sibling) => sibling.id !== 54 && sibling.id !== 56),
@@ -515,7 +529,7 @@ let backOfficeRows;
   const model = await modelOf(bench, held1109);
   for (const columns of [40, 60, 110, 200]) {
     const rows = dockRows(model, { columns });
-    const cut = plainOf(rows.filter((row) => !row.lead));
+    const cut = plainOf(cutRows(rows));
     const widest = Math.max(...cut.map((row) => displayWidth(row)));
     check(`no cut row runs past the ${columns} columns it was given`, widest <= columns, `${widest} > ${columns}`);
     const leads = rows.filter((row) => row.lead).map((row) => displayWidth(leadText(row)));
@@ -527,9 +541,13 @@ let backOfficeRows;
   check("a title longer than the column is no longer cut",
     spec.segments[0].text === "Split canal × pays dans le fit Meridian — priors par pays, hérités du canal sinon" &&
       !plainOf([spec])[0].includes("…"), plainOf([spec])[0]);
-  check("and its lead is drawn apart from it, so the wrap lands under the name",
-    spec.lead.indent === 12 && spec.lead.prefix === "● Spec : " && spec.segments[0].url === undefined,
+  check("and its lead is drawn apart from it, two spaces under the brief, so the wrap lands under the name",
+    spec.lead.indent === 2 && spec.lead.prefix === "● Spec : " && spec.segments[0].url === undefined,
     JSON.stringify(spec.lead));
+  const brief = boxedRows(narrow)[0];
+  check("the brief's name is framed whole too, at the margin",
+    brief.lead === undefined && brief.segments[0].text === "MMM — moteur d'allocation & application des recos" &&
+      !plainOf([brief])[0].includes("…"), plainOf([brief])[0]);
   const sibling = narrow.find((row) => row.press?.kind === "sibling");
   check("a sibling is a button, and a button is still cut to the width",
     sibling.lead === undefined && displayWidth(plainOf([sibling])[0]) <= 40, plainOf([sibling])[0]);
@@ -825,7 +843,7 @@ let backOfficeRows;
 
   for (const columns of [40, 96, 200]) {
     const drawn = dockRows(model, { columns });
-    const widest = Math.max(...plainOf(drawn.filter((row) => !row.lead)).map((row) => displayWidth(row)));
+    const widest = Math.max(...plainOf(cutRows(drawn)).map((row) => displayWidth(row)));
     check(`a cut row still fits the ${columns} columns it was given`, widest <= columns, `${widest} > ${columns}`);
     const marks = drawn.filter((row) => row.key.includes("-obj-")).map((row) => displayWidth(leadText(row)));
     check(`a lead carrying an emoji is measured in columns at ${columns}`, marks.join() === "3,7,9,11", marks.join());
@@ -1034,37 +1052,128 @@ let backOfficeRows;
   check("the count of phases done stays on the spec's own row",
     plainOf([specRow])[0].includes("  1/3  ") && !plainOf(phaseRows).some((row) => row.includes("1/3")), plainOf([specRow])[0]);
   check("no counted row of marks is drawn any more", !rows.some((row) => row.key.endsWith("-phases")));
-  check("the brief and the spec are named whole, on rows that wrap",
-    rows.find((row) => row.key.endsWith("-brief")).lead !== undefined &&
-      rows.find((row) => row.key.endsWith("-brief")).segments[0].text === galyBrief.brief.title &&
-      specRow.segments[0].text === galySpec.spec.title);
+  check("the one in progress is drawn in bold, mark and name alike",
+    phaseRows[1].lead.bold === true && phaseRows[1].segments[0].bold === true &&
+      phaseRows[0].lead.bold === undefined && phaseRows[2].segments[0].bold === undefined);
+  const briefRow = boxedRows(rows)[0];
+  check("the brief is framed whole at the margin, and the spec is named whole on a row that wraps",
+    briefRow.lead === undefined && briefRow.segments[0].text === galyBrief.brief.title &&
+      specRow.lead.indent === 2 && specRow.segments[0].text === galySpec.spec.title);
 
   // Inline, above the prompt, the budget is eight rows: the phases stay one compact line.
   const inline = inlineRows(model, { columns: 80 });
   check("the inline summary keeps the compact form of the phases",
     inline.some((row) => row.key === "inline-phases-54" && plainOf([row])[0].includes("1/3")) &&
-      !inline.some((row) => row.lead) && inline.length <= 8, plainOf(inline).join("\n"));
+      !inline.some((row) => row.lead || row.boxed || row.kind === "blank") && inline.length <= 8, plainOf(inline).join("\n"));
 
-  // Two specs of four phases each: the dock stays within a normal terminal's height, and a
-  // taller tree scrolls under the engine's own window rather than a Box of the pane's.
-  const four = (id) => ({
+  // An unfolded sibling gets the same treatment: its phases on rows of their own, one level
+  // under it, and its count beside its name once they are known.
+  const withSibling = workspace({ spelling: "contract", answers: BACK_OFFICE });
+  const sibModel = await modelOf(withSibling, held1109);
+  const sibling = sibModel.trees[0].siblings[0];
+  sibling.phases = [
+    { id: 1, title: "Le gel manuel", status: "Done" },
+    { id: 2, title: "Le dégel", status: "InProgress" },
+  ];
+  const unfolded = dockRows(sibModel, { columns: 96, expanded: { [sibling.id]: true } });
+  const sibRow = unfolded.find((row) => row.key.endsWith(`-sib-${sibling.id}`));
+  const sibPhases = unfolded.filter((row) => row.key.includes(`-sib-${sibling.id}-phase-`));
+  check("an unfolded sibling's phases take a row each, one level under it, with their marks",
+    sibPhases.length === 2 && sibPhases.map((row) => row.lead.prefix).join("|") === "✓ |▶ " &&
+      sibPhases.every((row) => row.lead.indent === 6) && sibPhases[0].segments[0].strikethrough === true,
+    JSON.stringify(sibPhases.map((row) => [row.lead, plainOf([row])[0]])));
+  check("and its count sits on its own row, which stays a button",
+    plainOf([sibRow])[0].includes("  1/2  ") && sibRow.press?.kind === "sibling", plainOf([sibRow])[0]);
+  check("folded, a sibling draws no phase row",
+    !dockRows(sibModel, { columns: 96 }).some((row) => row.key.includes(`-sib-${sibling.id}-phase-`)));
+
+  // Two specs of five phases each: the dock stays within an ordinary terminal — forty
+  // lines here, the framed brief costing its two borders — and a taller tree scrolls under
+  // the engine's own window (`Pane.scroll`, engine-owned) rather than a Box of the pane's.
+  const five = (id) => ({
     success: true,
     spec: { id, feature_brief_id: 61, title: `Le panneau, part ${id}`, status: "InProgress" },
-    phases: ["Done", "Done", "InProgress", "NotStarted"].map((status, index) => ({ id: id * 10 + index, title: `Étape ${index + 1}`, status })),
+    phases: ["Done", "Done", "InProgress", "NotStarted", "NotStarted"].map((status, index) => ({ id: id * 10 + index, title: `Étape ${index + 1}`, status })),
   });
   const twoSpecs = workspace({
     spelling: "galy",
-    answers: { feature_spec_get: (args) => four(args.id), feature_brief_get: galyBrief, feature_spec_list: galySpecList },
+    answers: { feature_spec_get: (args) => five(args.id), feature_brief_get: galyBrief, feature_spec_list: galySpecList },
   });
   const both = await modelOf(twoSpecs, {
     specs: [{ id: 56, at: NOW - 1000, server: "bg" }, { id: 54, at: NOW - 2000, server: "bg" }],
     briefs: [],
   });
   const dock = dockRows(both, { columns: 96 });
-  check("two held specs of four phases each draw eight phase rows", dock.filter((row) => row.key.includes("-phase-")).length === 8,
+  check("two held specs of five phases each draw ten phase rows", dock.filter((row) => row.key.includes("-phase-")).length === 10,
     String(dock.filter((row) => row.key.includes("-phase-")).length));
-  check("and the whole dock still fits a terminal of twenty-four rows", dock.length <= 24, String(dock.length));
+  check("and the whole dock still fits an ordinary terminal of forty lines", linesOf(dock) <= 40, String(linesOf(dock)));
   check("while the inline summary keeps to its eight", inlineRows(both, { columns: 80 }).length <= 8);
+}
+
+// ── 27. The brief parts from its chain, framed at the margin (P6/T1) ──────
+{
+  // Under the leaf the brief read as one more node of the chain, indented under it with a
+  // mark of its own. It is a different thing — the work, not the strategy it serves — so an
+  // empty row closes the chain, and the brief starts at the margin in a frame the whole
+  // width of the body; what hangs under it is indented from the brief, never from the chain.
+  const bench = workspace({ spelling: "contract", answers: BACK_OFFICE });
+  const model = await modelOf(bench, held1109);
+  const rows = dockRows(model, { columns: 96 });
+  const brief = boxedRows(rows)[0];
+  const at = rows.indexOf(brief);
+  check("the brief's row is framed, at the margin, with no lead and no mark",
+    brief !== undefined && brief.lead === undefined && !plainOf([brief])[0].includes("▸"), JSON.stringify(brief));
+  check("its name and its status share the frame",
+    brief.segments[0].text === "MMM — moteur d'allocation & application des recos" && brief.segments[1].text === "  [InProgress]" &&
+      brief.segments[1].dim === true, JSON.stringify(brief.segments));
+  check("an empty row parts it from the leaf's last row",
+    rows[at - 1].kind === "blank" && rows[at - 2].key.endsWith("-kr-1"), rows.slice(at - 2, at + 1).map((row) => row.key).join());
+  check("the spec in hand sits two spaces under the frame, its phases four further",
+    rows[at + 1].key.endsWith("-spec-1109") && rows[at + 1].lead.indent === 2 && rows[at + 2].lead.indent === 6,
+    JSON.stringify([rows[at + 1].lead, rows[at + 2].lead]));
+  check("the siblings and the rest sit two spaces under the frame too",
+    rows.filter((row) => row.press?.kind === "sibling").every((row) => plainOf([row])[0].startsWith("  ✓ ")) &&
+      plainOf(rows).some((row) => row === "  … et 2 de plus"), plainOf(rows).join("\n"));
+  check("a blank row reads as nothing", plainOf(rows.filter((row) => row.kind === "blank")).join("|") === "");
+
+  // Outside the strategy, the note stands where the chain would, and the brief still parts
+  // from it.
+  const outside = await modelOf(
+    workspace({ spelling: "galy", answers: { feature_spec_get: galySpec, feature_brief_get: galyBrief, feature_spec_list: galySpecList } }),
+    { specs: [{ id: 54, at: NOW, server: "bg" }], briefs: [] },
+  );
+  const outsideRows = dockRows(outside, { columns: 96 });
+  const outsideAt = outsideRows.indexOf(boxedRows(outsideRows)[0]);
+  check("outside the strategy, the note, an empty row, then the frame",
+    outsideRows[outsideAt - 2].key.endsWith("-outside") && outsideRows[outsideAt - 1].kind === "blank",
+    outsideRows.slice(0, outsideAt + 1).map((row) => row.key).join());
+
+  // Two held briefs: each parts from its own chain, each in its own frame.
+  const twoBriefs = workspace({
+    spelling: "galy",
+    answers: {
+      feature_brief_get: (args) => ({
+        success: true,
+        brief: { id: args.id, title: `Brief ${args.id}`, status: "Ready", objective_id: 8 },
+      }),
+      feature_spec_list: { success: true, specs: [] },
+      strategy_get_objective_breadcrumb: galyChain,
+      strategy_navigate_children: galyChildren,
+    },
+  });
+  const pair = await modelOf(twoBriefs, { specs: [], briefs: [{ id: 62, at: NOW - 1000, server: "bg" }, { id: 61, at: NOW - 2000, server: "bg" }] });
+  const pairRows = dockRows(pair, { columns: 96 });
+  const frames = boxedRows(pairRows);
+  check("two held briefs are two frames, each after its own empty row",
+    frames.length === 2 && frames.every((frame) => pairRows[pairRows.indexOf(frame) - 1].kind === "blank") &&
+      plainOf(frames).join("|") === "Brief 62  [Ready]|Brief 61  [Ready]", plainOf(pairRows).join("\n"));
+  check("and the second tree opens on its own empty row, then its chain",
+    pairRows[pairRows.indexOf(frames[1]) - 2].key.endsWith("-obj-8") &&
+      pairRows.filter((row) => row.kind === "blank").length === 3, pairRows.map((row) => row.key).join());
+
+  // Inline, above the prompt, nothing of this: the brief keeps its mark and its line.
+  const inline = plainOf(inlineRows(model, { columns: 80 }));
+  check("the inline summary keeps the compact brief line", inline.some((row) => row.startsWith("  ▸ MMM — moteur")), inline.join("\n"));
 }
 
 if (failed) {

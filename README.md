@@ -132,13 +132,16 @@ T2 2026 · 2026
     └ ◆  SEA : Le Marketing Mix Modeling fonctionne selon l'état de l'art
       └ 🚀 Le MMM arbitre les enchères entre les canaux
           RC  200 reprises presse · 141 / 200 par an (71 %)
-        ▸ Brief : MMM — moteur d'allocation & application des recos  [InProgress]
-            ● Spec : Split canal × pays dans le fit Meridian — priors par pays,
-                     hérités du canal sinon  1/2  [InProgress]  ← en main
-                ✓ Split + calibrateur par cellule
-                ▶ Bascule Worker1 + fit officiel
-            ✓ MCP gel/dégel manuel d'un canal MMM (sans SQL)  [Done]
-            … et 2 de plus
+
+╭────────────────────────────────────────────────────────────────────────╮
+│ MMM — moteur d'allocation & application des recos  [InProgress]        │
+╰────────────────────────────────────────────────────────────────────────╯
+  ● Spec : Split canal × pays dans le fit Meridian — priors par pays,
+           hérités du canal sinon  1/2  [InProgress]  ← en main
+      ✓ Split + calibrateur par cellule
+      ▶ Bascule Worker1 + fit officiel
+  ✓ MCP gel/dégel manuel d'un canal MMM (sans SQL)  [Done]
+  … et 2 de plus
 ```
 
 It opens by itself the first time a copy takes something up, closes on `/where`, and
@@ -159,11 +162,19 @@ brief's other specs once below. Two specs of two briefs are two subtrees, as bef
 A name is never cut. An objective, the brief, a spec, a phase: a title longer than the pane
 wraps under its own first character, past a mark the pane draws once, and the row keeps its
 status and its `← en main` at the end. The phases of a spec in hand are rows of their own,
-one level under it — the one done struck through, the one in progress marked `▶`, the rest
-`○` — and the spec's row keeps the count of those done. A sibling spec is a button, and a
-button is a label: it stays cut to the width, its status dropped before its name. A tree
-taller than the pane scrolls under the engine's own window. Inline, above the prompt, the
-eight-row summary keeps the compact form, marks and a count on one line.
+one level under it — the one done struck through, the one in progress in bold behind `▶`,
+the rest behind `○` — and the spec's row keeps the count of those done; a sibling unfolded
+by a press gets the same rows. A sibling's own row is a button, and a button is a label: it
+stays cut to the width, its status dropped before its name. A tree taller than the pane
+scrolls under the engine's own window. Inline, above the prompt, the eight-row summary
+keeps the compact form, marks and a count on one line.
+
+The brief is not one more node of the chain: it is the work, where the chain is the strategy
+it serves. So an empty row closes the chain under the leaf's key results, and the brief
+starts at the left margin, its name framed the whole width of the body with its status
+beside it. What hangs under the brief — the specs in hand, their phases, the brief's other
+specs — is indented from the brief, two columns under the frame, never from the chain. Two
+briefs in hand are two frames, each after its own empty row.
 
 **Each row opens the page it names.** An objective, a brief, the spec in hand: where the
 workspace answers the address of that entity's page, the name is a link, and a click lands

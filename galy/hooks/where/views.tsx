@@ -24,12 +24,16 @@ export type Press = { kind: string; id?: number }
 export type Segment = { text: string; bold?: boolean; dim?: boolean; strikethrough?: boolean; url?: string }
 
 /** The columns before a row's text, drawn once and never wrapped. */
-export type Lead = { indent: number; prefix: string }
+export type Lead = { indent: number; prefix: string; bold?: boolean }
 
 export type Row = {
   key: string
   segments: Segment[]
   lead?: Lead
+  /** An empty line: what parts two trees, and a chain from its brief. */
+  kind?: 'blank'
+  /** Framed the whole width of the body: the brief. */
+  boxed?: boolean
   press?: Press
 }
 
@@ -38,9 +42,11 @@ export type Row = {
  *
  * A row that names something carries its lead apart from its text: the lead is drawn
  * once, and the text wraps in the room left beside it, so a title longer than the pane
- * continues under its own first character rather than under the mark. A row without a
- * lead — a key result, a gap, the inline summary — is truncated at the body's width, and
- * a row that can be pressed is a button, which carries a label and is truncated too.
+ * continues under its own first character rather than under the mark. A boxed row is
+ * framed the whole width of the body, its text wrapping inside the frame; a blank row is
+ * one empty line. A row without a lead — a key result, a gap, the inline summary — is
+ * truncated at the body's width, and a row that can be pressed is a button, which
+ * carries a label and is truncated too.
  *
  * @param kit the elements `$.ui.resolve(e)` handed out
  * @param rows what `dockRows` or `inlineRows` answered
@@ -83,6 +89,18 @@ export function paneView(
   return (
     <Box flexDirection="column">
       {rows.map(row => {
+        if (row.kind === 'blank') return <Box key={row.key} height={1} />
+
+        if (row.boxed) {
+          return (
+            <Box key={row.key} borderStyle="round" borderDimColor paddingX={1}>
+              <Text wrap="wrap">
+                {row.segments.map((segment, index) => segmentOf(row, segment, index))}
+              </Text>
+            </Box>
+          )
+        }
+
         if (row.press) {
           const press = row.press
           const label = row.segments.map(segment => segment.text).join('')
@@ -104,7 +122,7 @@ export function paneView(
           return (
             <Box key={row.key} flexDirection="row" marginLeft={row.lead.indent}>
               <Box flexShrink={0}>
-                <Text>{row.lead.prefix}</Text>
+                <Text bold={row.lead.bold}>{row.lead.prefix}</Text>
               </Box>
               <Box flexGrow={1} flexShrink={1}>
                 <Text wrap="wrap">
