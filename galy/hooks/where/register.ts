@@ -49,7 +49,7 @@ export function register(on: On) {
   let expanded: Record<string, boolean> = {}
   let attempts = 0
 
-  const timers = new Map<'refresh' | 'redraw' | 'poll', { cancel: () => void }>()
+  const timers = new Map<'refresh' | 'redraw' | 'poll' | 'follow', { cancel: () => void }>()
 
   // ── Drawing ─────────────────────────────────────────────────────────────
 
@@ -188,6 +188,22 @@ export function register(on: On) {
     scheduleRefresh(engine)
   }
 
+  /**
+   * Follows the file wherever the pane stands: open, it is redrawn when the file moved;
+   * closed and never opened by itself, it opens if the file now holds something.
+   *
+   * The second half is what a resumed conversation needs. The hook that owns the file
+   * sorts it at every session start — `claude --resume`, `/resume`, `/clear` — keeping
+   * the entries of the session that starts and dropping the rest, and it does so from
+   * its own process, at a moment this module is not told of. So the module reads the
+   * file again at the end of every turn rather than assuming it knows what is in it.
+   */
+  async function followTheFile(engine: Host): Promise<void> {
+    if (isPaneOpen) return refreshIfMoved(engine)
+
+    return openOnFirstHold(engine)
+  }
+
   // ── Opening and closing ─────────────────────────────────────────────────
 
   async function openPane(engine: Host): Promise<void> {
@@ -246,8 +262,8 @@ export function register(on: On) {
     timers.set(
       'poll',
       engine.every(Names.FILE_POLL_MS, () => {
-        if (!isPaneOpen || host === null) return
-        void refreshIfMoved(host).catch(() => undefined)
+        if (host === null) return
+        void followTheFile(host).catch(() => undefined)
       }),
     )
   }
@@ -436,6 +452,19 @@ export function register(on: On) {
       model = EMPTY_MODEL
       fileStamp = 0
       attempts = 0
+
+      // The file is the hook's to sort, and it has by the time the session speaks again:
+      // a resumed conversation that held something gets its pane back, a cleared one
+      // holds nothing and gets none. One look after the switch, then every turn's end.
+      const engine = host
+      timers.get('follow')?.cancel()
+      timers.set(
+        'follow',
+        engine.after(FIRST_READ_MS, () => {
+          timers.delete('follow')
+          void followTheFile(engine).catch(() => undefined)
+        }),
+      )
     }
 
     return result
@@ -455,7 +484,7 @@ export function register(on: On) {
   })
 
   on('turn.complete', ($, e, next) => {
-    if (host !== null && isPaneOpen) void refreshIfMoved(host).catch(() => undefined)
+    if (host !== null) void followTheFile(host).catch(() => undefined)
 
     return next(e)
   })

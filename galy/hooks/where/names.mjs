@@ -61,8 +61,7 @@ export const OBJECTIVE_MARK = "◆";
 /** The columns an objective's mark occupies, icon or not, so the chain stays aligned. */
 export const MARK_COLUMNS = 2;
 
-export const EMPTY_TEXT =
-  "Rien en main. Réclamer ou créer une spec la fera apparaître ici.";
+export const EMPTY_TEXT = "Pas de travail en cours.";
 export const LOADING_TEXT = "Lecture de l'espace de travail…";
 export const IN_HAND_TEXT = "← en main";
 export const OUTSIDE_STRATEGY_TEXT = "brief hors stratégie";

@@ -188,7 +188,7 @@ const held1109 = { specs: [{ id: 1109, at: NOW - 60_000, server: "back-office" }
 {
   const file = JSON.stringify({
     specs: [
-      { id: 11, at: justNow(30), server: "back-office" },
+      { id: 11, at: justNow(30), server: "back-office", session: "a1b2c3" },
       { id: 9, at: justNow(5), server: "bg" },
       { id: 7, at: new Date(NOW - HORIZON_MS - 1000).toISOString() },
     ],
@@ -199,6 +199,10 @@ const held1109 = { specs: [{ id: 1109, at: NOW - 60_000, server: "back-office" }
   check("work older than the horizon is no longer in hand", !held.specs.some((entry) => entry.id === 7));
   check("the server a claim went through is read back", held.specs[0].server === "bg");
   check("an entry written without one reads as no server", held.briefs[0].server === null);
+  // The session that took a claim up is the hook's business, sorted at the start of a session:
+  // the pane reads what is in the file and never the field.
+  check("the session an entry carries is neither read nor an obstacle",
+    held.specs[1].id === 11 && !("session" in held.specs[1]));
   check("a malformed file is nothing in hand, never an error", !holdsSomething(heldOf("{ not json", NOW)));
   check("and so is an empty one", !holdsSomething(heldOf(JSON.stringify({ specs: [], briefs: [] }), NOW)));
 }
@@ -485,8 +489,8 @@ let backOfficeRows;
   check("nothing in hand reads as empty", model.status === "empty");
   check("nothing was asked of the workspace", bench.calls.length === 0);
   const rows = plainOf(dockRows(model, { columns: 96 }));
-  check("and the pane says what would fill it",
-    rows.length === 1 && rows[0] === "Rien en main. Réclamer ou créer une spec la fera apparaître ici.", rows.join("\n"));
+  check("and the pane says so, in one sentence",
+    rows.length === 1 && rows[0] === "Pas de travail en cours.", rows.join("\n"));
   const loading = plainOf(dockRows(model, { columns: 96, isLoading: true }));
   check("while it reads, it says that instead", loading[0] === "Lecture de l'espace de travail…", loading[0]);
 }
@@ -512,7 +516,7 @@ let backOfficeRows;
   check("then the brief, the spec and its phases",
     text.includes("▸ MMM — moteur") && text.includes("Split canal") && text.includes("1/2"), text);
   check("nothing in hand says so inline too",
-    plainOf(inlineRows({ status: "empty", trees: [], gaps: [] }, { columns: 80 }))[0].startsWith("Rien en main"));
+    plainOf(inlineRows({ status: "empty", trees: [], gaps: [] }, { columns: 80 }))[0] === "Pas de travail en cours.");
 }
 
 // ── 15. A title is cut, never wrapped ─────────────────────────────────────
