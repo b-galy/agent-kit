@@ -8,6 +8,11 @@
 //
 // Whether a row opens its own page is decided here too: a segment carries the address its
 // workspace served once it is one the engine would take, and carries nothing otherwise.
+//
+// A row that names something — an objective, the brief, a spec, a phase — is never cut:
+// it carries its lead apart from its text, and the view draws the text after the lead so
+// that a title longer than the pane wraps under its own first character rather than under
+// the mark. A row that is pressed is a button, and a button is a label: it stays cut.
 
 import {
   EMPTY_TEXT,
@@ -18,17 +23,22 @@ import {
   MARKS,
   OBJECTIVE_MARK,
   OUTSIDE_STRATEGY_TEXT,
+  PHASE_ROW_MARKS,
   REFRESH_TEXT,
   SIBLINGS_SHOWN,
 } from "./names.mjs";
 
 /**
- * @typedef {{ text: string, bold?: boolean, dim?: boolean, url?: string }} Segment
- * @typedef {{ key: string, segments: Segment[], press?: { kind: string, id?: number } }} Row
+ * @typedef {{ text: string, bold?: boolean, dim?: boolean, strikethrough?: boolean, url?: string }} Segment
+ * @typedef {{ indent: number, prefix: string }} Lead the columns before the text, drawn once, never wrapped
+ * @typedef {{ key: string, segments: Segment[], lead?: Lead, press?: { kind: string, id?: number } }} Row
  */
 
 /** The mark a status is drawn with. */
 export const markOf = (status) => MARKS[String(status ?? "")] ?? MARKS.other;
+
+/** The mark a phase opens its own row with. */
+export const phaseRowMarkOf = (status) => PHASE_ROW_MARKS[String(status ?? "")] ?? PHASE_ROW_MARKS.other;
 
 // ── How wide a line really is ─────────────────────────────────────────────
 //
@@ -261,33 +271,47 @@ const linked = (url) => {
 /** A title never gets less than this before a suffix is dropped instead. */
 const TITLE_FLOOR = 8;
 
+/** A name as its row reads it: the title whole, or the number where there is none yet. */
+const nameOf = (title, fallbackId) => {
+  const whole = String(title ?? "").trim();
+  return whole === "" ? (fallbackId === undefined ? "" : `#${fallbackId}`) : whole;
+};
+
 /**
- * One row of prefix, title and optional tails. A narrow pane drops the tails rather than
- * the name — a row is read for what it names — and never runs past the width it was given.
+ * One row of prefix, title and optional tails.
  *
- * @param {{ key: string, indent: string, prefix: string, title: string | null, id: number | string, bold?: boolean, tails?: string[], url?: string | null, press?: any }} row
+ * A row that names something is drawn whole: the name and its tails wrap under the name's
+ * first character, past the lead the view draws once. A row that can be pressed is a
+ * Button, and a Button is a leaf on every surface — it carries a label, never an element —
+ * so a sibling spec keeps the press that unfolds its phases, takes no address, and is cut
+ * to the width it was given, its tails dropped before its name.
+ *
+ * @param {{ key: string, indent: number, prefix: string, title: string | null, id: number | string, bold?: boolean, tails?: string[], url?: string | null, press?: any }} row
  * @param {number} columns
  * @returns {Row}
  */
 function namedRow(row, columns) {
   const tails = [...(row.tails ?? [])].filter((tail) => tail !== "");
-  const fixed = displayWidth(row.indent) + displayWidth(row.prefix);
+
+  if (!row.press) {
+    const href = hrefOf(row.url);
+    /** @type {Segment[]} */
+    const segments = [{ text: nameOf(row.title, row.id), bold: row.bold === true, ...(href === null ? {} : { url: href }) }];
+    if (tails.length > 0) segments.push({ text: tails.join(""), dim: true });
+
+    return { key: row.key, lead: { indent: row.indent, prefix: row.prefix }, segments };
+  }
+
+  const fixed = row.indent + displayWidth(row.prefix);
   while (tails.length > 0 && columns - fixed - displayWidth(tails.join("")) < TITLE_FLOOR) tails.shift();
 
   const suffix = tails.join("");
   const title = titleText(row.title, Math.max(1, columns - fixed - displayWidth(suffix)), row.id);
-  // A row that can be pressed is a Button, and a Button is a leaf on every surface: it
-  // carries a label, never an element. So a sibling spec keeps the press that unfolds its
-  // phases, and takes no address; the choice is made here rather than in the view.
-  const href = row.press ? null : hrefOf(row.url);
   /** @type {Segment[]} */
-  const segments = [
-    { text: `${row.indent}${row.prefix}` },
-    { text: title, bold: row.bold === true, ...(href === null ? {} : { url: href }) },
-  ];
+  const segments = [{ text: `${pad(row.indent)}${row.prefix}` }, { text: title, bold: row.bold === true }];
   if (suffix !== "") segments.push({ text: suffix, dim: true });
 
-  return { key: row.key, segments, ...(row.press ? { press: row.press } : {}) };
+  return { key: row.key, segments, press: row.press };
 }
 
 /**
@@ -322,7 +346,7 @@ export function dockRows(model, view) {
         namedRow(
           {
             key: `${tree.key}-obj-${node.id}`,
-            indent: pad(level * 2),
+            indent: level * 2,
             prefix: level === 0 ? objectiveMark(node.icon) : `└ ${objectiveMark(node.icon)}`,
             title: node.title,
             id: node.id,
@@ -355,7 +379,7 @@ export function dockRows(model, view) {
         namedRow(
           {
             key: `${tree.key}-brief`,
-            indent: pad(briefDepth),
+            indent: briefDepth,
             prefix: "▸ Brief : ",
             title: tree.brief.title,
             id: tree.brief.id,
@@ -367,7 +391,9 @@ export function dockRows(model, view) {
       );
     }
 
-    // Every spec of this brief the copy has in hand, newest first, each with its phases.
+    // Every spec of this brief the copy has in hand, newest first, each with its phases on
+    // rows of their own. A tree taller than the pane's body scrolls under the engine's own
+    // window, so nothing here bounds it.
     const specDepth = briefDepth + 4;
     for (const spec of tree.specs) {
       rows.push(...specRows(spec, specDepth, columns, true, `${tree.key}-spec-${spec.id}`));
@@ -408,14 +434,20 @@ export function dockRows(model, view) {
   return rows;
 }
 
-/** A spec's own row, and the phase row under it when it is the one in hand. */
+/**
+ * A spec's own row and, when it is one in hand, a row per phase under it: the one done is
+ * struck through, the one in progress points at itself, the rest wait in plain text. The
+ * count of phases done stays on the spec's row, beside its name.
+ */
 function specRows(spec, depth, columns, isInHand, key, press) {
+  const phases = isInHand && Array.isArray(spec.phases) ? spec.phases : [];
+  const done = phases.filter((phase) => phase.status === "Done").length;
   /** @type {Row[]} */
   const rows = [
     namedRow(
       {
         key,
-        indent: pad(depth),
+        indent: depth,
         prefix: `${markOf(spec.status)} ${isInHand ? "Spec : " : ""}`,
         title: spec.title,
         id: spec.id,
@@ -423,19 +455,24 @@ function specRows(spec, depth, columns, isInHand, key, press) {
         url: spec.url,
         // The status goes first when the pane is narrow: what a row is read for is the
         // name, and then whether it is the one in hand.
-        tails: [spec.status ? `  [${spec.status}]` : "", isInHand ? `  ${IN_HAND_TEXT}` : ""],
+        tails: [
+          phases.length > 0 ? `  ${done}/${phases.length}` : "",
+          spec.status ? `  [${spec.status}]` : "",
+          isInHand ? `  ${IN_HAND_TEXT}` : "",
+        ],
         press,
       },
       columns,
     ),
   ];
-  if (isInHand && Array.isArray(spec.phases) && spec.phases.length > 0) {
-    const phaseIndent = pad(depth + 4);
+  phases.forEach((phase, index) => {
+    const isDone = phase.status === "Done";
     rows.push({
-      key: `${key}-phases`,
-      segments: [{ text: phaseIndent }, { text: phaseLineText(spec.phases, columns - phaseIndent.length), dim: true }],
+      key: `${key}-phase-${index}`,
+      lead: { indent: depth + 4, prefix: `${phaseRowMarkOf(phase.status)} ` },
+      segments: [{ text: nameOf(phase.title, phase.id || undefined), ...(isDone ? { strikethrough: true } : {}) }],
     });
-  }
+  });
   return rows;
 }
 
@@ -520,4 +557,8 @@ export function inlineRows(model, view) {
 }
 
 /** The rows as plain text, one string a line — what a test reads instead of a screen. */
-export const plainOf = (rows) => rows.map((row) => row.segments.map((segment) => segment.text).join(""));
+export const plainOf = (rows) =>
+  rows.map((row) => `${leadText(row)}${row.segments.map((segment) => segment.text).join("")}`);
+
+/** The lead of a row as its columns read: the indentation, then the prefix. */
+export const leadText = (row) => (row.lead ? `${pad(row.lead.indent)}${row.lead.prefix}` : "");

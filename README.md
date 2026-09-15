@@ -133,8 +133,10 @@ T2 2026 · 2026
       └ 🚀 Le MMM arbitre les enchères entre les canaux
           RC  200 reprises presse · 141 / 200 par an (71 %)
         ▸ Brief : MMM — moteur d'allocation & application des recos  [InProgress]
-            ● Spec : Split canal × pays dans le fit Meridian — priors…  [InProgress]  ← en main
-                ✓ Split + calibrateur par cellule · ● Bascule Worker1  1/2
+            ● Spec : Split canal × pays dans le fit Meridian — priors par pays,
+                     hérités du canal sinon  1/2  [InProgress]  ← en main
+                ✓ Split + calibrateur par cellule
+                ▶ Bascule Worker1 + fit officiel
             ✓ MCP gel/dégel manuel d'un canal MMM (sans SQL)  [Done]
             … et 2 de plus
 ```
@@ -153,6 +155,15 @@ where an emoji takes two, rather than in characters.
 Two specs of one brief in hand are one piece of work: the pane draws the chain and the
 brief once, marks every held spec `← en main` with its phases, newest first, and lists the
 brief's other specs once below. Two specs of two briefs are two subtrees, as before.
+
+A name is never cut. An objective, the brief, a spec, a phase: a title longer than the pane
+wraps under its own first character, past a mark the pane draws once, and the row keeps its
+status and its `← en main` at the end. The phases of a spec in hand are rows of their own,
+one level under it — the one done struck through, the one in progress marked `▶`, the rest
+`○` — and the spec's row keeps the count of those done. A sibling spec is a button, and a
+button is a label: it stays cut to the width, its status dropped before its name. A tree
+taller than the pane scrolls under the engine's own window. Inline, above the prompt, the
+eight-row summary keeps the compact form, marks and a count on one line.
 
 **Each row opens the page it names.** An objective, a brief, the spec in hand: where the
 workspace answers the address of that entity's page, the name is a link, and a click lands
