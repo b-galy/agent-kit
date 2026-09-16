@@ -17,6 +17,15 @@ export const COMMAND_DESCRIPTION =
 /** Where the person's own open/close choice is remembered, across sessions of this machine. */
 export const STORE_OPEN_KEY = "where/open";
 
+/**
+ * Where a drawing that failed leaves its stack.
+ *
+ * The interface's own log dies with the terminal it is printed in, and the failure this key
+ * exists for is precisely the one nobody can read afterwards. The store is on disk and shared
+ * by every session of the machine, so the next one opened can be asked what the last one hit.
+ */
+export const STORE_DRAW_ERROR_KEY = "where/last-draw-error";
+
 /** How long a name read from the workspace stays good, in milliseconds. */
 export const NAMES_TTL_MS = 180_000;
 
