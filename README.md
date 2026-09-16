@@ -127,7 +127,7 @@ the file while dying, thirty seconds after the new one had written to it.
 ## The pane beside the transcript
 
 The row under the prompt names what this working copy has in hand. It does not say where
-that work sits. In fullscreen, `/where` opens a pane docked to the right of the conversation
+that work sits. In fullscreen, `/bg:okr-panel` opens a pane docked to the right of the conversation
 and draws the rest of the answer for this copy alone:
 
 ```
@@ -156,7 +156,7 @@ The chain of objectives is drawn in blue, so it reads apart from the brief and t
 under it; the period above it, the key results, the brief, the specs, their phases and
 their checks keep the terminal's own colour. A linked row of the chain keeps its underline.
 
-It opens by itself the first time a copy takes something up, closes on `/where`, and
+It opens by itself the first time a copy takes something up, closes on `/bg:okr-panel`, and
 remembers that choice for the next session. Below 110 columns, and outside fullscreen, it
 sits inline above the prompt as an eight-row summary instead. With nothing in hand it does
 not open at all, and opened by hand it says `Pas de travail en cours.`
@@ -239,7 +239,7 @@ minutes for the whole machine, and speaks both spellings of the contract: `specI
 settings — `--no-pane` skips it, `npx -y github:b-galy/agent-kit --enable-pane` does it
 alone on a workstation installed before this existed — and it takes effect at the next
 start of Claude Code. Without the flag nothing of the module loads: the row under the
-prompt and the classic hooks go on exactly as they did, and `/where` is simply not there.
+prompt and the classic hooks go on exactly as they did, and `/bg:okr-panel` is simply not there.
 
 One limit is worth knowing before you meet it: Claude Code caps what an MCP call may
 answer, and past the cap it replaces the result with a notice of its own. A spec whose
