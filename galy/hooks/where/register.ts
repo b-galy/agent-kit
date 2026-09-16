@@ -299,22 +299,55 @@ export function register(on: On) {
     return next(e)
   })
 
+  /**
+   * Drawing runs INSIDE the host, and that is the one thing this module does that the host
+   * cannot survive on its own: every other path here is a promise this module already catches,
+   * so a failure there costs a stale pane and nothing more. An exception thrown while drawing
+   * has no such net — it leaves the terminal with the session gone and not one line written
+   * anywhere, which is precisely what makes it impossible to diagnose after the fact.
+   *
+   * So the pane refuses to be worth a session: anything thrown here hands the surface back
+   * unchanged and says so in the interface's own log. A pane that stops drawing is a defect to
+   * fix; a pane that closes the conversation is a defect that also destroys the evidence.
+   */
   on('ui.render', { component: 'Pane' }, async ($, e, next) => {
     if (e.requestId !== Names.PANE_ID || host === null || !isOnPaneSurface(e)) return next(e)
 
-    const { Box, Text, Button, Link } = await $.ui.resolve(e)
+    try {
+      const { Box, Text, Button, Link } = await $.ui.resolve(e)
 
-    columns = e.viewport?.columns ?? columns
-    isPaneOpen = true
+      columns = e.viewport?.columns ?? columns
+      isPaneOpen = true
 
-    const view = { columns: e.props.bodyColumns, isLoading, expanded }
-    const rows: Row[] =
-      e.props.placement === 'dock' ? dockRows(model, view) : inlineRows(model, view)
+      const view = { columns: e.props.bodyColumns, isLoading, expanded }
+      const rows: Row[] =
+        e.props.placement === 'dock' ? dockRows(model, view) : inlineRows(model, view)
 
-    return paneView({ Box, Text, Button, Link }, rows, press => onPress(press))
+      return paneView({ Box, Text, Button, Link }, rows, press => onPress(press))
+    } catch (error) {
+      const said = error instanceof Error ? (error.stack ?? error.message) : String(error)
+
+      host.uiLog(`où j'en suis : le panneau n'a pas pu être dessiné, ${said}`)
+      void host
+        .storeSet(Names.STORE_DRAW_ERROR_KEY, { at: Date.now(), error: said })
+        .catch(() => undefined)
+
+      return next(e)
+    }
   })
 
+  /** A press answers the person, so it never throws at them either. */
   function onPress(press: Press) {
+    try {
+      pressed(press)
+    } catch (error) {
+      host?.uiLog(
+        `où j'en suis : ${error instanceof Error ? error.message : String(error)}`,
+      )
+    }
+  }
+
+  function pressed(press: Press) {
     if (host === null) return
 
     if (press.kind === 'refresh') {
@@ -477,8 +510,18 @@ export function register(on: On) {
       // The tool's own arguments are spread beside `tool` on the event, and the verb's rule
       // reads them by name. A read arms nothing: the copy's own file is re-read at the end
       // of the turn as it always was.
-      if (host !== null && burstFor(host).wrote(String(e.tool), e as unknown as Record<string, unknown>)) {
-        void openOnFirstHold(host).catch(() => undefined)
+      //
+      // Wrapped for the same reason as the drawing: this runs in a `finally`, so anything
+      // thrown here would replace the tool's own result — the pane would decide the fate of
+      // a call it has no business in.
+      try {
+        if (host !== null && burstFor(host).wrote(String(e.tool), e as unknown as Record<string, unknown>)) {
+          void openOnFirstHold(host).catch(() => undefined)
+        }
+      } catch (error) {
+        host?.uiLog(
+          `où j'en suis : ${error instanceof Error ? error.message : String(error)}`,
+        )
       }
     }
   })
