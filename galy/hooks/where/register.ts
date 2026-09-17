@@ -234,20 +234,18 @@ export function register(on: On) {
   // ── The bind ────────────────────────────────────────────────────────────
 
   async function bind(engine: Host, cwd: string): Promise<void> {
-    try {
-      await engine.registerCommand({
-        name: Names.COMMAND_NAME,
-        description: Names.COMMAND_DESCRIPTION,
-      })
-    } catch (error) {
-      engine.uiLog(
-        `/${Names.COMMAND_NAME} is already taken, so the pane has no door: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+    // The plugin's `okr-panel` skill is the door the person is told about, and it exists whether
+    // or not this succeeds. The bare name is registered beside it for a session whose skills did
+    // not load; a name already taken costs that spare door and nothing else, so the bind goes on.
+    await engine
+      .registerCommand({ name: Names.COMMAND_NAME, description: Names.COMMAND_DESCRIPTION })
+      .catch((error: unknown) =>
+        engine.uiLog(
+          `/${Names.COMMAND_NAME} is already taken, so ${Names.COMMAND_LABEL} is the only door: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        ),
       )
-
-      return
-    }
 
     host = engine
     root = await workingCopyRootOf(cwd, path => engine.exists(path).catch(() => false))
@@ -448,7 +446,7 @@ export function register(on: On) {
     return result
   })
 
-  on('command.run', { command: Names.COMMAND_NAME }, async ($, e, next) => {
+  on('command.run', { command: Names.COMMAND_KEYS }, async ($, e, next) => {
     if (host === null) return next(e)
 
     columns = e.presentation.columns

@@ -7,8 +7,24 @@ export const PANE_ID = "bg-where";
 /** The pane's tab label. */
 export const PANE_TITLE = "Où j'en suis";
 
-/** The slash command that opens and closes it. */
-export const COMMAND_NAME = "where";
+/**
+ * The slash command that opens and closes it.
+ *
+ * The plugin serves it as a skill, so the person runs `/bg:okr-panel` and the name sits in the
+ * plugin's namespace beside `okr-checkin` and `okr-review`. `$.command.register` cannot carry
+ * that prefix — a registered name takes letters, digits, `_` and `-` only — so the bare name is
+ * also registered as a door of last resort, for a session whose skills did not load.
+ */
+export const COMMAND_NAME = "okr-panel";
+
+/**
+ * Every key `command.run` may hand the hook for this command: the plugin's namespaced skill, and
+ * the bare registered name. Matching both is what lets the hook answer whichever door was used.
+ */
+export const COMMAND_KEYS = [COMMAND_NAME, `bg:${COMMAND_NAME}`];
+
+/** How the command reads in a sentence written for the person. */
+export const COMMAND_LABEL = `/bg:${COMMAND_NAME}`;
 
 /** The one line `/help` and the typeahead show for it. */
 export const COMMAND_DESCRIPTION =
@@ -49,7 +65,7 @@ export const REFRESH_AFTER_WRITE_MS = 1_500;
 /** How often the work file's modification time is read again. */
 export const FILE_POLL_MS = 60_000;
 
-/** Below this many columns the dock is not drawn, and `/where` answers the resize line. */
+/** Below this many columns the dock is not drawn, and the command answers the resize line. */
 export const OPEN_MIN_COLUMNS = 110;
 
 /** Sibling specs drawn before the rest become a count. */
@@ -96,8 +112,8 @@ export const OUTSIDE_STRATEGY_TEXT = "brief hors stratégie";
 export const REFRESH_TEXT = "rafraîchir";
 export const TOO_LARGE_TEXT = "trop volumineuse pour l'API des mods";
 export const RESIZE_TEXT =
-  "The terminal is too narrow for the pane — widen it to at least 110 columns, then /where again.";
-export const SHOWN_TEXT = "Où j'en suis is beside the transcript. /where hides it.";
-export const HIDDEN_TEXT = "Où j'en suis is hidden. /where brings it back.";
+  `The terminal is too narrow for the pane — widen it to at least ${OPEN_MIN_COLUMNS} columns, then ${COMMAND_LABEL} again.`;
+export const SHOWN_TEXT = `Où j'en suis is beside the transcript. ${COMMAND_LABEL} hides it.`;
+export const HIDDEN_TEXT = `Où j'en suis is hidden. ${COMMAND_LABEL} brings it back.`;
 export const NO_WORKSPACE_TEXT =
   "No workspace answers `feature_spec_get` here — connect this repository first (the `connect` skill).";
