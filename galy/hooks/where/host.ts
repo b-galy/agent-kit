@@ -64,6 +64,9 @@ export type Host = {
   /** `$.ui.close`. */
   closePane: (pane: PaneCloseArgs) => Promise<void>
 
-  /** `$.command.register`; rejects while another `/where` is listed. */
+  /** `$.command.list`: the names the person can run now, the plugin's own skills included. */
+  listCommands: () => Promise<{ name: string }[]>
+
+  /** `$.command.register`; rejects a name already taken, the plugin's own skill included. */
   registerCommand: (spec: CommandSpec) => Promise<unknown>
 }

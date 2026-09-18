@@ -18,13 +18,20 @@ export const PANE_TITLE = "Où j'en suis";
 export const COMMAND_NAME = "okr-panel";
 
 /**
+ * The plugin's own skill, as `$.command.list()` names it and as the person runs it (without the
+ * slash). While it is listed, the bare name is not registered: the engine refuses a name that is
+ * already the plugin's skill, and asking first keeps that expected refusal off the screen.
+ */
+export const SKILL_COMMAND = `bg:${COMMAND_NAME}`;
+
+/**
  * Every key `command.run` may hand the hook for this command: the plugin's namespaced skill, and
  * the bare registered name. Matching both is what lets the hook answer whichever door was used.
  */
-export const COMMAND_KEYS = [COMMAND_NAME, `bg:${COMMAND_NAME}`];
+export const COMMAND_KEYS = [COMMAND_NAME, SKILL_COMMAND];
 
 /** How the command reads in a sentence written for the person. */
-export const COMMAND_LABEL = `/bg:${COMMAND_NAME}`;
+export const COMMAND_LABEL = `/${SKILL_COMMAND}`;
 
 /** The one line `/help` and the typeahead show for it. */
 export const COMMAND_DESCRIPTION =

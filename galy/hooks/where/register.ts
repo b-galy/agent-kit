@@ -234,18 +234,24 @@ export function register(on: On) {
   // ── The bind ────────────────────────────────────────────────────────────
 
   async function bind(engine: Host, cwd: string): Promise<void> {
-    // The plugin's `okr-panel` skill is the door the person is told about, and it exists whether
-    // or not this succeeds. The bare name is registered beside it for a session whose skills did
-    // not load; a name already taken costs that spare door and nothing else, so the bind goes on.
-    await engine
-      .registerCommand({ name: Names.COMMAND_NAME, description: Names.COMMAND_DESCRIPTION })
-      .catch((error: unknown) =>
-        engine.uiLog(
-          `/${Names.COMMAND_NAME} is already taken, so ${Names.COMMAND_LABEL} is the only door: ${
-            error instanceof Error ? error.message : String(error)
-          }`,
-        ),
-      )
+    // The plugin's `okr-panel` skill is the door the person is told about. The bare name is only a
+    // spare, for a session whose skills did not load — and in every other session the engine
+    // refuses it, because it is the skill's own name. Registering it regardless printed that
+    // refusal at the top of every session ("/okr-panel is already taken…"), a warning about
+    // nothing. So the list is read first, and the spare is only tried when the skill is absent;
+    // a refusal then is real, and worth the line.
+    const listed = await engine.listCommands().catch((): { name: string }[] => [])
+    if (!listed.some(command => command.name === Names.SKILL_COMMAND)) {
+      await engine
+        .registerCommand({ name: Names.COMMAND_NAME, description: Names.COMMAND_DESCRIPTION })
+        .catch((error: unknown) =>
+          engine.uiLog(
+            `/${Names.COMMAND_NAME} is already taken, so ${Names.COMMAND_LABEL} is the only door: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          ),
+        )
+    }
 
     host = engine
     root = await workingCopyRootOf(cwd, path => engine.exists(path).catch(() => false))
@@ -289,6 +295,7 @@ export function register(on: On) {
         uiLog: text => $.ui.log(text),
         openPane: pane => $.ui.open(pane),
         closePane: pane => $.ui.close(pane),
+        listCommands: () => $.command.list(),
         registerCommand: spec => $.command.register(spec),
       },
       e.cwd,
