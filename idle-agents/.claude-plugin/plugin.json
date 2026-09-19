@@ -1,0 +1,16 @@
+{
+  "name": "idle-agents",
+  "version": "0.1.0",
+  "description": "Names the subagents and teammates that reported back and have sat idle since, in a quiet status line at the end of each turn, with the ready SendMessage line to close them. It closes nothing itself.",
+  "author": {
+    "name": "B.Galy"
+  },
+  "userConfig": {
+    "idleThresholdMinutes": {
+      "type": "number",
+      "title": "Idle threshold (minutes)",
+      "description": "How long an agent sits idle before it is named. 3 minutes is often still a pause between instructions; 30 is usually forgotten. Default: 15.",
+      "default": 15
+    }
+  }
+}

@@ -15,5 +15,5 @@
     "jsxFactory": "h",
     "jsxFragmentFactory": "Fragment"
   },
-  "include": ["types/**/*.d.ts", "galy/hooks/where/**/*"]
+  "include": ["types/**/*.d.ts", "galy/hooks/where/**/*", "idle-agents/hooks/**/*"]
 }
