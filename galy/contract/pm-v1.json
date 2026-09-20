@@ -61,7 +61,7 @@
     }
   },
   "rest_api": {
-    "description": "The REST surface the `bg` CLI uses (galy PmContentController), same Bearer auth. Read side only + the markdown body round-trip. Content bodies are raw markdown whose sections are delimited by <!-- @field <name> --> and composed/parsed server-side.",
+    "description": "The REST surface the `bgaly` CLI uses (galy PmContentController), same Bearer auth. Read side only + the markdown body round-trip. Content bodies are raw markdown whose sections are delimited by <!-- @field <name> --> and composed/parsed server-side.",
     "base": "https://<your-workspace>.galy.cloud",
     "routes": [
       {
@@ -94,7 +94,7 @@
   },
   "conventions": {
     "return_envelope": "Every tool returns a JSON string { success: bool, ... } and { success: false, error: string } on failure.",
-    "bodies": "Long markdown bodies (brief problem/vision, spec executive summary/problem/solution) are never passed as tool arguments — read and write them with the `bg content pull|push <type> <id>` CLI. Tools carry metadata only (title, phases, status, risks).",
+    "bodies": "Long markdown bodies (brief problem/vision, spec executive summary/problem/solution) are never passed as tool arguments — read and write them with the `bgaly content pull|push <type> <id>` CLI. Tools carry metadata only (title, phases, status, risks).",
     "forbidden_fields": "No tool declares a parameter named code, diff, patch, file_content or source_code. The flow is outward-only.",
     "addresses": "An entity answer MAY carry `url`, the absolute https address of that entity's own page, computed by the workspace that served it because it alone knows its host: on `feature_spec_get` and `feature_brief_get`, on each node of `strategy_get_objective_breadcrumb`, on each item of `strategy_navigate_children`, and on any objective a workspace answers outside this contract. It is optional in both directions — a workspace that serves none is conformant, and a client that reads it falls back to plain text when it is absent, and when it is an address its own surface would refuse."
   },
@@ -413,7 +413,7 @@
     {
       "name": "feature_brief_create",
       "kind": "write",
-      "description": "Create a new feature brief (business framing: title, domain, objective). Returns the new brief id. Write the body (problem/vision/executive summary) with `bg content push feature-brief <id>`, not as arguments.",
+      "description": "Create a new feature brief (business framing: title, domain, objective). Returns the new brief id. Write the body (problem/vision/executive summary) with `bgaly content push feature-brief <id>`, not as arguments. Creation takes no owner and no follow-up date: the owner is a `feature_brief_assign` call, and a date to look again is a `followup_check_add`.",
       "params": [
         {
           "name": "title",
@@ -428,26 +428,9 @@
           "description": "marketing | product | internal | editorial"
         },
         {
-          "name": "periodId",
-          "type": "int",
-          "required": false
-        },
-        {
           "name": "objectiveId",
           "type": "int",
           "required": false
-        },
-        {
-          "name": "ownerUserId",
-          "type": "int",
-          "required": false,
-          "description": "Omit to default to the authenticated user."
-        },
-        {
-          "name": "nextFollowupDate",
-          "type": "string",
-          "required": false,
-          "description": "ISO YYYY-MM-DD."
         }
       ],
       "returns": {
@@ -603,9 +586,64 @@
       }
     },
     {
+      "name": "feature_brief_add_acceptance_test",
+      "kind": "write",
+      "description": "Add a business acceptance criterion to a brief, in three parts: given / when / then. NOT the same object as a spec's acceptance test — this one says what \"done\" means before anyone knows how, and mentions no code. It lands at the end of the brief's list.",
+      "params": [
+        {
+          "name": "featureBriefId",
+          "type": "int",
+          "required": true
+        },
+        {
+          "name": "givenText",
+          "type": "string",
+          "required": true,
+          "description": "The situation the criterion starts from."
+        },
+        {
+          "name": "whenText",
+          "type": "string",
+          "required": true,
+          "description": "What happens."
+        },
+        {
+          "name": "thenText",
+          "type": "string",
+          "required": true,
+          "description": "What must be true afterwards."
+        }
+      ],
+      "returns": {
+        "success": "bool",
+        "acceptance_test_id": "int"
+      }
+    },
+    {
+      "name": "feature_brief_assign",
+      "kind": "write",
+      "description": "Assign a brief to a workspace member, or clear the assignment with null. Creation does not take an owner, so the brief's owner is set in a second call.",
+      "params": [
+        {
+          "name": "featureBriefId",
+          "type": "int",
+          "required": true
+        },
+        {
+          "name": "userId",
+          "type": "int",
+          "required": false,
+          "description": "Workspace user id, or null to unassign."
+        }
+      ],
+      "returns": {
+        "success": "bool"
+      }
+    },
+    {
       "name": "feature_spec_create",
       "kind": "write",
-      "description": "Create a technical spec under a brief (1..N specs per brief). Write the body with `bg content push feature-spec <id>`, not as arguments.",
+      "description": "Create a technical spec under a brief (1..N specs per brief). Write the body with `bgaly content push feature-spec <id>`, not as arguments.",
       "params": [
         {
           "name": "featureBriefId",

@@ -1855,22 +1855,22 @@ function purge(args) {
   }
   print({ removed, removedObjects, retentionDays });
 }
-const HELP = `bg bug-evaluation — local, isolated runner
+const HELP = `bgaly bug-evaluation — local, isolated runner
 
-  bg bug-evaluation profile qualify       qualify the bwrap/WSL profile and print its hash
-  bg bug-evaluation can-run               report whether the local sandbox is available
-  bg bug-evaluation snapshot create       snapshot --root <workspace> with exclusions and a 2 GiB preflight
-  bg bug-evaluation inspect --run-id <id> [--namespace <24-hex>] inspect one archive run; an unambiguous local match is accepted
-  bg bug-evaluation purge                 purge local archives after 180 days
-  bg bug-evaluation oracle verify         run one shared baseline/reference/candidate oracle script in the sandbox
-  bg bug-evaluation run self-test         execute fixture analyst → solver → oracle → judge with no billing
-  bg bug-evaluation run poll              find a queued run through MCP (worker id from env or option)
-  bg bug-evaluation run execute           claim, heartbeat and publish one run through MCP
-  bg bug-evaluation run resume             resume execute for the same worker after a checkpoint
-  bg bug-evaluation run heartbeat          renew one lease through MCP
-  bg bug-evaluation run settle             attach one immutable provider bill to a journaled attempt
-  bg bug-evaluation rejudge                approve/reuse and execute one judge-only protocol against the final archive
-  bg bug-evaluation rejudge --approve-only prepare a protocol without executing its judge
+  bgaly bug-evaluation profile qualify       qualify the bwrap/WSL profile and print its hash
+  bgaly bug-evaluation can-run               report whether the local sandbox is available
+  bgaly bug-evaluation snapshot create       snapshot --root <workspace> with exclusions and a 2 GiB preflight
+  bgaly bug-evaluation inspect --run-id <id> [--namespace <24-hex>] inspect one archive run; an unambiguous local match is accepted
+  bgaly bug-evaluation purge                 purge local archives after 180 days
+  bgaly bug-evaluation oracle verify         run one shared baseline/reference/candidate oracle script in the sandbox
+  bgaly bug-evaluation run self-test         execute fixture analyst → solver → oracle → judge with no billing
+  bgaly bug-evaluation run poll              find a queued run through MCP (worker id from env or option)
+  bgaly bug-evaluation run execute           claim, heartbeat and publish one run through MCP
+  bgaly bug-evaluation run resume             resume execute for the same worker after a checkpoint
+  bgaly bug-evaluation run heartbeat          renew one lease through MCP
+  bgaly bug-evaluation run settle             attach one immutable provider bill to a journaled attempt
+  bgaly bug-evaluation rejudge                approve/reuse and execute one judge-only protocol against the final archive
+  bgaly bug-evaluation rejudge --approve-only prepare a protocol without executing its judge
 
 Limits: snapshot 2 GiB, patch 20 MiB, log 50 MiB. Secrets, histories, caches, instructions and links are excluded.
 Production Galy endpoints require explicit --allow-production after the approved budget and worker are ready.
@@ -1909,9 +1909,9 @@ export async function runCli(argv) {
   if (command === "run" && (action === "settle" || action === "reconcile")) return settleAttempt(args);
   if (command === "rejudge" || (command === "run" && action === "rejudge")) return rejudge(args);
   if (command === "run" && (action === "execute" || action === "resume")) return execute(args);
-  die(`unknown bug-evaluation command; run 'bg bug-evaluation help'`);
+  die(`unknown bug-evaluation command; run 'bgaly bug-evaluation help'`);
 }
 export { AnthropicMessagesAdapter, FixtureAdapter, OpenAIResponsesAdapter, createProviderAdapter, runLocalOracle,
   sandboxRunMounts, validateJudgeCriteria, humanReviewProjection };
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href)
-  runCli(process.argv.slice(2)).catch(error => { console.error(`bg bug-evaluation: ${error.message}`); process.exitCode = 1; });
+  runCli(process.argv.slice(2)).catch(error => { console.error(`bgaly bug-evaluation: ${error.message}`); process.exitCode = 1; });

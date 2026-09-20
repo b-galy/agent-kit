@@ -29,7 +29,7 @@ watchdog never fires — ideal.
 2. **Arm the watchdog once** (skip on `--continue` or if `CronList` already shows one for this spec):
    `CronCreate(cron: "7,27,47 * * * *", prompt: "/feature-implement <specId> --continue", durable: true)`.
 3. **Read the spec.** `mcp__bg__feature_spec_get(specId)` for phases (id + status), risks, acceptance
-   tests. `bg content pull feature-spec <specId>` then read the buffer for the solution body. Skip
+   tests. `bgaly content pull feature-spec <specId>` then read the buffer for the solution body. Skip
    `Done` phases; finish `InProgress` ones first; target `NotStarted` next.
 4. **Implement phase by phase, same turn.** For each phase:
    - Mark it `mcp__bg__feature_spec_set_phase_status(phaseId, status="InProgress")`.

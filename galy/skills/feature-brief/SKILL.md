@@ -1,6 +1,6 @@
 ---
 name: feature-brief
-description: Frame a business need into a Galy brief — problem, vision, user stories, success criteria — attached to an objective. Interactive discovery with targeted questions; writes the brief via the Galy MCP and its body via the bg CLI. This is the WHAT and WHY, never the HOW (that is feature-spec).
+description: Frame a business need into a Galy brief — problem, vision, user stories, success criteria — attached to an objective. Interactive discovery with targeted questions; writes the brief via the Galy MCP and its body via the bgaly CLI. This is the WHAT and WHY, never the HOW (that is feature-spec).
 ---
 
 # feature-brief — frame a business need
@@ -35,17 +35,26 @@ buffer synced by the CLI, never passed as a tool argument.
 2. **Discovery.** Ask only what you cannot infer: who is the user, what breaks today, what "better"
    looks like, how you would know it worked. Keep it to a handful of questions. Announce the domain you
    inferred in one line and continue.
-3. **Create the brief (metadata only):**
-   `mcp__bg__feature_brief_create(title, domain, objectiveId, ownerUserId=<userId>, nextFollowupDate?)`
-   → capture `brief_id`. Never pass the body as an argument.
-4. **Write the body via the CLI.** `bg content pull feature-brief <brief_id>` to seed the buffer,
+3. **Create the brief (metadata only):** `mcp__bg__feature_brief_create(title, domain, objectiveId)`
+   → capture `brief_id`. Never pass the body as an argument. **Creation takes no owner**, so give it
+   one in the next call: `mcp__bg__feature_brief_assign(featureBriefId=<brief_id>, userId=<userId>)`.
+   A second call is not a workaround waiting for a better create — a brief changes hands, and the
+   verb that hands it over is the one that has to work anyway.
+4. **Write the body via the CLI.** `bgaly content pull feature-brief <brief_id>` to seed the buffer,
    edit `.tmp/galy-content/feature-brief/<brief_id>.md` (fields `problem`, `vision`, `executive` —
-   executive ≤ 375 words, readable without internal jargon), then `bg content push feature-brief <brief_id>`.
+   executive ≤ 375 words, readable without internal jargon), then `bgaly content push feature-brief <brief_id>`.
 5. **User stories** (P0 first): `mcp__bg__feature_brief_add_user_story(briefId, persona, action, benefit, priority)`.
-6. **Business success criteria:** a brief carries no acceptance test of its own — that verb belongs
-   to specs. Capture measurable outcomes as **business follow-up checks** instead —
+6. **What "done" means, before anyone knows how:**
+   `mcp__bg__feature_brief_add_acceptance_test(featureBriefId=<brief_id>, givenText, whenText, thenText)`,
+   one per outcome the brief promises. A brief's criterion is not a spec's: it is given / when / then
+   in business words, it names no file, no route and no library, and it is written while the solution
+   is still open. Anything you can only state by naming code belongs to the spec.
+7. **Measuring it afterwards** is a different object again, and both are wanted: the criterion says
+   what has to be true, a follow-up check says when someone goes and looks —
    `mcp__bg__followup_check_add(featureBriefId=<brief_id>, checkType="business", title, followupPromptMd=<outcome + pass/fail threshold>, scheduleOffsetDays=<J+N>, onFailAction="create_spec")`.
-   See `${CLAUDE_PLUGIN_ROOT}/instructions/followup-conventions.md`.
+   See `${CLAUDE_PLUGIN_ROOT}/instructions/followup-conventions.md`. A date on the brief itself is not
+   how this skill schedules one: the check carries its own offset, and two places to say "look again
+   on the 12th" is one place too many.
 
 ## Confirmation
 

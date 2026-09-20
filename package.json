@@ -18,6 +18,7 @@
     "build:codex": "node scripts/build-codex.mjs",
     "check:codex": "node scripts/build-codex.mjs --check",
     "check:statusline": "node scripts/check-statusline.mjs",
+    "check:cli": "node scripts/check-cli.mjs",
     "check:where": "node scripts/check-where.mjs",
     "check:types": "npx -y -p typescript@5 tsc -p tsconfig.json"
   }

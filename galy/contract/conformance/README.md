@@ -29,7 +29,7 @@ GALY_ENDPOINT=https://<your-workspace>.galy.cloud GALY_TOKEN=<token> node runner
 2. **Advertised verbs** — every verb in `pm-v1.json` is present in `tools/list`.
 3. **Read envelopes** — read verbs return `{ success: true, ... }`.
 
-**REST layer** (the routes the `bg` CLI uses — `PmContentController`):
+**REST layer** (the routes the `bgaly` CLI uses — `PmContentController`):
 4. `GET /api/pm/search?q=ping` returns `{ briefs:[], specs:[] }`.
 5. The same call **without** a token is rejected (401/403) — the outward API requires the Bearer token.
 6. The token looks like the expected 64-hex string.

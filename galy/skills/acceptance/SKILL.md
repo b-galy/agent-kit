@@ -31,8 +31,8 @@ back months later — but **the file is written first, always**.
 
 ```json
 {
-  "session": "acceptance-checkout-1",
-  "branch": "acceptance-checkout-1",
+  "session": "checkout",
+  "branch": "<the host's own convention — see start, step 2>",
   "galy_session": 12,
   "spec": null,
   "pr": null,
@@ -66,16 +66,24 @@ backwards.
 
 ## start
 
-1. Name the session after what is being reviewed, not after a date. Create the branch from the base
-   branch if you are not already on one for this session; resume the existing file if there is one.
-2. `acceptance_open(title=<what is being reviewed>, branch_name=<branch>)` → record `galy_session`.
+1. Name the session after what is being reviewed, not after a date. That name is the file's and the
+   pass's; it is local, and no host has an opinion about it.
+2. **The branch name is the host's, never this skill's.** Read the convention where this repository
+   writes it — its `CLAUDE.md` or `AGENTS.md`, the names `main` already carries
+   (`git branch -r --sort=-committerdate --format='%(refname:short)' | head -20`), and its commit
+   hooks. Plenty of teams refuse a commit on a branch whose name carries no ticket identifier, and
+   that refusal lands at the FIRST commit of the drain — after the person has already fired ten
+   remarks at you. So if the convention needs an identifier you do not have, ask for it before
+   opening the branch, not after. Then create it from the base branch if you are not already on one
+   for this session; resume the existing file if there is one.
+3. `acceptance_open(title=<what is being reviewed>, branch_name=<branch>)` → record `galy_session`.
    It is idempotent on the branch, so resuming hands back the same pass rather than forking the queue.
-3. Start the product the way this repository starts it, and keep it running — every item is verified on
+4. Start the product the way this repository starts it, and keep it running — every item is verified on
    the real surface before it is called done.
-4. Open **one** draft PR for the whole session, record its URL in the file, and
+5. Open **one** draft PR for the whole session, record its URL in the file, and
    `acceptance_set_pr(galy_session, prNumber, prUrl)`. One session, one PR: a PR per remark buries the
    reviewer, and a reviewer who skims is a reviewer you no longer have.
-5. Say in one line that you are ready to take remarks, then stop talking. The person is looking at the
+6. Say in one line that you are ready to take remarks, then stop talking. The person is looking at the
    product, not at your terminal.
 
 **EVERYTHING YOU SAY IN THIS PASS IS IN THE PERSON'S OWN LANGUAGE**, and that includes the four words

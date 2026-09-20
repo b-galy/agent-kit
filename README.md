@@ -22,10 +22,10 @@ You are connecting *your assistant* to *your Galy workspace* — not giving Galy
 
 ## Local bug evaluation runner
 
-The plugin ships the portable `bg bug-evaluation` command. It qualifies a Linux bubblewrap profile,
+The plugin ships the portable `bgaly bug-evaluation` command. It qualifies a Linux bubblewrap profile,
 creates a content-addressed local snapshot, polls and claims a server run, and keeps reports, patches
 and prompts in the workstation archive. The server receives only the typed run contract and opaque
-hashes. Use `bg bug-evaluation run self-test` for the controlled analyst → solver → oracle → judge
+hashes. Use `bgaly bug-evaluation run self-test` for the controlled analyst → solver → oracle → judge
 qualification; it makes no model or billing request. Real runs use a named provider adapter
 (`openai` Responses API or `anthropic` Messages API; `--adapter <name>`) whose model, harness and
 effort identity must match the server contract. Unknown providers and harnesses are refused, and
@@ -38,7 +38,7 @@ A remote oracle is available only for explicit adapter qualification with `--all
 Each provider request is journaled before dispatch with a stable workspace/run/role identity and
 idempotency key. A `requesting` or `unknown` journal is reconciled by the adapter before any retry;
 an unresolved billable request stays recoverable and is never dispatched a second time. When a
-provider supplies its receipt later, `bg bug-evaluation run settle` attaches the immutable amount,
+provider supplies its receipt later, `bgaly bug-evaluation run settle` attaches the immutable amount,
 currency, cost basis and pricing version to that same attempt without another provider request.
 
 Snapshots exclude Git history, caches, instruction files, secrets and links. Archive retention is 180
@@ -47,9 +47,9 @@ days by default, with preflight limits of 2 GiB per snapshot, 20 MiB per patch, 
 `--profile-file` and `--profile-root`; the runner re-runs the qualification probe before any model
 call. Production Galy endpoints require an explicit `--allow-production` after the approved budget
 and worker are ready; otherwise point a qualification at a disposable local or staging endpoint.
-Keep `GALY_TOKEN` in the process environment. `bg bug-evaluation inspect --human` emits a separate
+Keep `GALY_TOKEN` in the process environment. `bgaly bug-evaluation inspect --human` emits a separate
 opaque reviewer projection without model, configuration, verdict or billing fields, and
-`bg bug-evaluation rejudge` approves (or reuses `--protocol-revision`) and executes one judge-only
+`bgaly bug-evaluation rejudge` approves (or reuses `--protocol-revision`) and executes one judge-only
 protocol against the existing final archive. It records a new attempt/evaluation revision without
 rerunning analysis or solver work; pass the approved worker and lease generation for publication.
 Use `--approve-only` when preparing a protocol without executing its judge.
@@ -366,21 +366,45 @@ Eighteen skills that take a need from idea to shipped, each driven by the Galy o
 The kit **stops at "PR ready"** on purpose. Merging and deploying stay with your own CI/process — a
 documented extension point, not a gap.
 
-## The `bg` CLI
+## The `bgaly` CLI
 
 A shell-friendly companion to the MCP tools — search work items, read compact JSON cards, and pull/push
 the large markdown bodies of briefs and specs as local files:
 
 ```
-bg search "seller onboarding"
-bg brief 12
-bg spec 42
-bg content pull feature-spec 42     # → .tmp/galy-content/feature-spec/42.md
-bg content push feature-spec 42     # after you edit the buffer
+bgaly search "seller onboarding"
+bgaly brief 12
+bgaly spec 42
+bgaly content pull feature-spec 42     # → .tmp/galy-content/feature-spec/42.md
+bgaly content push feature-spec 42     # after you edit the buffer
 ```
 
-It reads its config from `GALY_ENDPOINT` / `GALY_TOKEN` or `.bg/config.json`. Like the tools, it only
-carries work items and their text — never your source.
+**The command is `bgaly`, and everything else in the kit stays `bg`.** The plugin, the MCP alias, the
+`mcp__bg__*` tools and the `.bg/` folder are never typed at a shell prompt; this is, and `bg` is a
+Bourne-shell builtin. A builtin is resolved before `PATH`, by every shell that has one, so a file named
+`bg` next to this one could never run — `bg search x` answers `bg: no job control`, the CLI is not
+reached, and the status left behind is the builtin's rather than ours. On some shells that status is
+`0`, which is the expensive half: a caller testing the exit code is told the push succeeded.
+
+**It finds its workspace the same four ways the status line does**, in the same order, because two
+readers of one config file that disagree on its shape is how `No endpoint` gets answered on a working
+copy whose status line is showing the workspace at that very moment:
+
+1. `.bg/config.json` `{ "mcp": "<server name>" }` — that server in the nearest `.mcp.json`, headers and
+   all, including a token the harness holds rather than the file;
+2. `GALY_ENDPOINT` / `GALY_TOKEN`;
+3. `.bg/config.json` `{ "endpoint", "token" }` — what `/bg:connect` writes;
+4. the MCP server the harness registered for this project, for a copy connected through it alone.
+
+The search climbs the ancestors of the working directory **and of the main checkout**, so it answers
+inside a git worktree, where neither the config file nor the harness's registration was ever written.
+
+The content buffer serves `feature-brief` and `feature-spec` and no other type — that is exactly what
+the REST surface routes. Every other object carries its text as a plain tool argument: an objective's
+on `strategy_create_objective(description_md)`, a suggestion's on `suggestion_create(bodyMd)`. Asking
+the CLI for one of those is refused by name rather than by a usage line.
+
+Like the tools, it only carries work items and their text — never your source.
 
 ## More than one harness
 
@@ -436,7 +460,8 @@ galy/
   instructions/                   # shared conventions the skills reference
   contract/pm-v1.json             # the project-management tool + REST contract
   contract/conformance/           # the outward-only conformance suite (MCP + REST)
-  bin/bg.mjs                      # the bg CLI
+  bin/bg.mjs                      # the CLI itself
+  bin/bgaly, bin/bgaly.cmd        # what is on PATH: `bg` is a shell builtin and could never be reached
 types/claude-code.d.ts            # the function-hooks API, as /plugin-types wrote it; the pane is typed against this
 tsconfig.json                     # what CI recompiles on every push
 package.json                      # makes the repo itself runnable: npx -y github:b-galy/agent-kit

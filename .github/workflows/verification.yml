@@ -62,6 +62,15 @@ jobs:
       - name: La ligne sous le prompt rejoue ses contrats
         run: npm run check:statusline
 
+      # The CLI is the one part of the kit a human TYPES, and it was typeable nowhere: the
+      # plugin's bin folder is on PATH and held only a .mjs file, which PowerShell does not
+      # resolve and which bash shadows with its `bg` builtin — answering, on some shells, with
+      # a zero status. A defect whose signature is "failed, and said it succeeded" is only
+      # caught by a check that reads the exit code, so this one does, on a throwaway workspace
+      # served from 127.0.0.1.
+      - name: The CLI is reachable, honest about failing, and finds its workspace
+        run: npm run check:cli
+
       - name: Le bac bwrap est obligatoire pour les contrats d'isolation
         run: |
           if ! command -v bwrap >/dev/null 2>&1; then

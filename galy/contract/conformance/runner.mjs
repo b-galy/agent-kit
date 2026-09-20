@@ -272,7 +272,7 @@ async function scanLiveWorkflowCatalog(client, liveNames) {
   record(CHECK, ok, detail);
 }
 
-// ── Live REST layer (the routes the bg CLI uses) ───────────────────────────
+// ── Live REST layer (the routes the bgaly CLI uses) ───────────────────────────
 async function runRest(base, token) {
   console.log(`\nLive REST checks against ${base}:`);
   const routes = (CONTRACT.rest_api && CONTRACT.rest_api.routes) || [];

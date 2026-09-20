@@ -1,0 +1,7 @@
+# The POSIX shim on PATH must keep LF endings wherever it is checked out.
+#
+# A client on Windows commonly runs with core.autocrlf=true, and this file would then arrive
+# with CRLF — which a POSIX shell reads as part of the interpreter's name: `/bin/sh^M: bad
+# interpreter: No such file or directory`. The kit installs from a git checkout on every
+# platform, so the guarantee belongs here rather than in anyone's local config.
+galy/bin/bgaly text eol=lf
