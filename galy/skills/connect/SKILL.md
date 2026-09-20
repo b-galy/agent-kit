@@ -88,7 +88,7 @@ a developer who has never seen Galy work concludes the product does not exist. T
 public and `npx` runs it as it is. The day the package is published, the short form comes back — here
 and on the screen, together.
 
-It registers the MCP endpoint for **this project only**, writes `.bg/config.json` for the `bg` CLI,
+It registers the MCP endpoint for **this project only**, writes `.bg/config.json` for the `bgaly` CLI,
 makes sure that file is gitignored, and tests the connection before claiming success.
 
 It also installs the **status line**: one row under the prompt naming the specs and briefs this

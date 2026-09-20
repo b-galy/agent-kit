@@ -10,7 +10,7 @@
 //   b) registers the MCP endpoint for THIS project under the alias `bg`, with the address and
 //      the token written literally into the local scope — so the connection does not depend on
 //      an environment variable that only one launcher knows how to set;
-//   c) writes .bg/config.json { endpoint, token } for the `bg` CLI, and makes sure the whole
+//   c) writes .bg/config.json { endpoint, token } for the `bgaly` CLI, and makes sure the whole
 //      .bg/ directory is gitignored — neither the token nor the workflow mirror, which carries
 //      a consent decision, ever lands in a committable file;
 //   d) smoke-tests the endpoint (GET /api/pm/search?q=ping) with the token;
@@ -53,7 +53,7 @@ const PLUGIN = `bg@${MARKETPLACE_NAME}`;
 const MCP_ALIAS = "bg";
 const FORMER_MCP_ALIAS = "galy";
 
-// The config folder, and its name before the rename. The `bg` CLI still reads `.galy/config.json`
+// The config folder, and its name before the rename. The `bgaly` CLI still reads `.galy/config.json`
 // as a fallback, so nobody loses a token; setup writes the new folder only.
 const CONFIG_DIR = ".bg";
 const FORMER_CONFIG_DIR = ".galy";
@@ -255,7 +255,7 @@ function registerMcp(haveClaude, endpoint, token) {
 
 // (c) Write .bg/config.json for the CLI, and make sure it is gitignored.
 function writeConfig(endpoint, token) {
-  step(`Writing local config for the \`${MCP_ALIAS}\` CLI`);
+  step("Writing local config for the `bgaly` CLI");
   const dir = join(process.cwd(), CONFIG_DIR);
   mkdirSync(dir, { recursive: true });
   const path = join(dir, "config.json");
@@ -300,7 +300,7 @@ function writeConfig(endpoint, token) {
 //             the MCP route, on an image older than the profile fix.
 //
 // And it is /mcp we prove, not /api/pm. Those are two different doors: the REST one is what the
-// `bg` CLI uses, the MCP one is what the ASSISTANT uses — the whole point of this command.
+// `bgaly` CLI uses, the MCP one is what the ASSISTANT uses — the whole point of this command.
 // Testing only the first announced "token accepted" on instances where the agent would then
 // have found no tool at all, which is the single outcome this script exists to rule out.
 async function smoke(endpoint, token) {

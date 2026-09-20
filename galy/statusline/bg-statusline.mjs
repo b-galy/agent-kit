@@ -78,8 +78,13 @@ const TEXT = `${ESC}[0;36m`;
 const RESET = `${ESC}[0m`;
 
 // ── The workspace ─────────────────────────────────────────────────────────
-// Same order as the `bg` CLI, then one fallback it does not need: a workspace
-// connected through the harness alone has no `.bg/config.json` on disk, and its
+// The same shapes and the same order as the `bgaly` CLI, and that is a contract rather
+// than a coincidence: this row and that CLI read ONE file, and they disagreed about it
+// until 21 September 2026 — the row named the workspace while `bgaly search` answered
+// `No endpoint`, on the same working copy, in the same second. Change one, change the
+// other, and `scripts/check-cli.mjs` replays all four shapes through both.
+//
+// A workspace connected through the harness alone has no `.bg/config.json` on disk, and its
 // token lives in the harness's own registration. Reading it there is what makes
 // the line work on a machine where nobody ran a setup script.
 //

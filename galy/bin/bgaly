@@ -1,0 +1,23 @@
+#!/bin/sh
+# bgaly — the kit's CLI, on PATH.
+#
+# Claude Code puts <plugin>/bin on PATH, so this file IS the command. It exists because a
+# .mjs file on PATH is not a command anywhere: PowerShell resolves nothing, and a POSIX
+# shell would need the interpreter spelt out at every call site.
+#
+# The name is `bgaly` and not `bg` on purpose, and the purpose is not taste. `bg` is a
+# Bourne-shell builtin — resume a job in the background — and a builtin is resolved BEFORE
+# PATH, always, by every shell that has one. A file named `bg` sitting right here would
+# therefore never run: `bg search x` answers `bg: no job control` and the CLI is not
+# reached. What makes that the worst shape of defect is the status it leaves behind — it is
+# the builtin's, not ours, and on some shells it is 0, so a caller that tests the exit code
+# is told the call succeeded. Renaming the file is the only fix a shell cannot undo.
+#
+# Everything else in the kit stays `bg`: the plugin, the MCP alias, the mcp__bg__* tools,
+# the .bg/ folder. None of those is ever typed at a shell prompt.
+set -e
+command -v node >/dev/null 2>&1 || {
+  echo "bgaly: node is not on PATH. The kit's CLI runs on Node 18 or later." >&2
+  exit 127
+}
+exec node "$(dirname "$0")/bg.mjs" "$@"

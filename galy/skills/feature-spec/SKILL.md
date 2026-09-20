@@ -1,6 +1,6 @@
 ---
 name: feature-spec
-description: Turn a Galy brief into a technical spec — explore your own codebase, weigh design options, then write phases, risks and acceptance tests. Writes the spec via the Galy MCP and its body via the bg CLI. Your code stays local; only the plan and its metadata go to Galy.
+description: Turn a Galy brief into a technical spec — explore your own codebase, weigh design options, then write phases, risks and acceptance tests. Writes the spec via the Galy MCP and its body via the bgaly CLI. Your code stays local; only the plan and its metadata go to Galy.
 ---
 
 # feature-spec — write the technical spec for a brief
@@ -22,7 +22,7 @@ synced by the CLI.
 
 ## Steps
 
-1. **Load the brief.** `mcp__bg__feature_brief_get(briefId)` for metadata; `bg content pull
+1. **Load the brief.** `mcp__bg__feature_brief_get(briefId)` for metadata; `bgaly content pull
    feature-brief <briefId>` then read the buffer for the problem/vision. Fetch the objective header with
    `mcp__bg__strategy_get_objective_breadcrumb`.
 2. **Explore the codebase — locally.** Use Read/Grep/Glob over the client's repository to find where the
@@ -37,8 +37,8 @@ synced by the CLI.
    not executable test code; use proportional alternatives for wording, spacing or instruction changes.
 4. **Create the spec (metadata only):**
    `mcp__bg__feature_spec_create(featureBriefId=<briefId>, title, scope, category, initialEstimateHours?)`
-   → capture `spec_id`. Write the body via `bg content pull feature-spec <spec_id>`, edit the buffer
-   (fields `executive`, `problem`, `solution`), `bg content push feature-spec <spec_id>`.
+   → capture `spec_id`. Write the body via `bgaly content pull feature-spec <spec_id>`, edit the buffer
+   (fields `executive`, `problem`, `solution`), `bgaly content push feature-spec <spec_id>`.
 5. **Phases.** One `mcp__bg__feature_spec_add_phase(specId, title, objectiveMd, actionPlanMd,
    validationCriterionMd, estimateHours)` per phase — cut at natural seams (layers, page sets,
    independent modules), each a coherent unit an implementer can finish and verify. Store its observable
