@@ -41,6 +41,9 @@ their tracker, its equivalent. **An unattended run answers too**: leaving a sale
 of a customer with no reply costs an account, where a reasoned refusal costs an afternoon. Hand it
 to a person only when the arbitration is genuinely someone else's — `bug_set_requires_human` with
 its required reason, so the ticket says what it is waiting for — never as a way of not answering.
+**And when what you are handing over is a choice, hand over the choice itself**: the options
+first, the way step 4 writes them, then the park. A reason sentence with nothing to keep is a
+question, and it asks the person to compose the answer you already had the material for.
 
 A symptom that is measured and reproduces outside that account is not a demand. It is an ordinary
 bug, and it follows the order below.
@@ -115,7 +118,14 @@ would raise it**. A figure you are unwilling to write down is a figure you do no
 
 Write it as a comment on the ticket, **signed as the automaton whenever nobody asked for it in
 this turn** — `discussion_post(…, author_kind="agent")` in Galy — so the thread says a machine
-concluded instead of signing it as the person whose token it used.
+concluded instead of signing it as the person whose token it used. `bug_add_comment` carries no
+signature at all: it is right for "what I tried, what I found" and wrong for a verdict or for a
+reply somebody is owed.
+
+**The same signature exists at the moment a ticket is opened, and a run with nobody in it uses
+it.** A ticket this run files for itself — the wrongly-firing signal of step 4, a design point it
+could not repair here — takes `author_kind="agent"` on `bug_create` too, so nobody is told they
+reported something they never opened.
 
 **Two closes an unattended run never makes, however sure it is.** It does not close a ticket a
 human filed when its own confidence is under this workspace's bar. And it never again closes, with
@@ -132,6 +142,28 @@ No file, no figure: write the confidence in the comment and leave the ticket to 
 
 ### 4. Fix the cause
 
+**When more than one remedy is defensible, the options are written down before one is chosen.**
+A defect rarely admits a single repair — the guard goes at the boundary or at the call site, the
+bad rows are migrated or tolerated, the contract is tightened or its caller is — and each of those
+gives something up. Settled in a commit message, the choice reaches the ticket as a fact and
+nobody can see there was a decision at all. So write one option per approach —
+`bug_add_decision_option(id, title, approach_md, risk, is_recommended)` — with **what it costs and
+what it leaves behind** in `approach_md`, mark the one you recommend, and let a person keep one
+with `bug_choose_fix_approach`. A ticket you picked up may already carry that answer: `bug_get`
+returns its decision options, and one with `chosen_at` set is a person's arbitration — **a
+constraint on the fix, not a suggestion**.
+
+This is `feature-spec`'s "at least two realistic options, and the criterion that separated them",
+at the moment a defect is repaired instead of a feature designed — the same discipline, for the
+same reason: an option nobody wrote down is proposed again by the next reader, and the argument is
+had twice, the second time without the facts. **A bug's version has one thing a spec's does not:
+the options come in rounds, and a round is superseded rather than erased.** When the evidence
+moves under a decision already settled — a later comment undermines the premise the chosen
+approach rested on — open the next round with `start_new_round` and re-flag with
+`bug_set_requires_human`, instead of executing a decision the evidence has since disproved. The
+superseded round stays readable, so the ticket goes on saying what was decided, on what, and why
+it stopped holding.
+
 - First extend existing regression coverage and observe the relevant failure before implementing
   the fix, following `${CLAUDE_PLUGIN_ROOT}/instructions/acceptance-criteria.md`. Keep the case and
   evidence in the bug's own tracker when there is no spec; do not create a spec just for this table.
@@ -145,8 +177,10 @@ No file, no figure: write the confidence in the comment and leave the ticket to 
 - Change as little as the cause requires. A refactor bundled with a fix makes the fix
   unreviewable, and a reviewer who cannot isolate the fix approves the refactor by accident.
 - If the fix is at the wrong altitude — the real repair is a design change nobody asked for —
-  say so, apply the smallest correct fix, and record the design point as a follow-up rather than
-  quietly widening the change.
+  that is not a call to settle alone: the smallest correct fix and the design change are the two
+  options, written as such with what each one gives up. Recommend the small one, say what it
+  leaves behind, and let a person keep one. A follow-up then records the design point; it does not
+  decide it, and it is no place to bury the option you did not take.
 
 ### 5. Prove it on the path the user took
 
