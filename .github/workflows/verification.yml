@@ -74,6 +74,32 @@ jobs:
       - name: La projection Codex resout ce qu'elle epelle
         run: npm run verify:codex
 
+      # And the same projection run from SOMEWHERE ELSE, against the INSTALLED layout: in a
+      # workstation's plugin cache, `skills/`, `instructions/` and `agents/` sit directly under the
+      # plugin root, where here they sit under `galy/`. That is the client's journey, and it is
+      # played nowhere unless it is played here — the generator could only ever build inside this
+      # repository, for as long as it existed, with every check green throughout.
+      #
+      # It asserts on the PRODUCED TREE, never on the generator's summary. A run that reads its own
+      # report is a run that believes whatever it just said.
+      - name: La projection tourne depuis un depot hote, sur la disposition installee
+        run: |
+          set -e
+          kit="$(mktemp -d)/bg"
+          host="$(mktemp -d)"
+          mkdir -p "$kit"
+          cp -r galy/. "$kit/"
+          cd "$host"
+          node "$GITHUB_WORKSPACE/scripts/build-codex.mjs" --plugin-root "$kit" --repo-root . --quiet
+          test -f .agents/skills/ship/SKILL.md
+          test -f .agents/instructions/host-instructions.md
+          test -d .codex/agents
+          # The root instruction file is named by role, and the Codex spelling survives the copy.
+          grep -q 'AGENTS.md' .agents/instructions/host-instructions.md
+          # And nothing was written back into the kit.
+          test ! -e "$kit/.agents"
+          test ! -e "$kit/.codex"
+
       - name: Le bac bwrap est obligatoire pour les contrats d'isolation
         run: |
           if ! command -v bwrap >/dev/null 2>&1; then

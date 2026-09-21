@@ -402,6 +402,29 @@ node scripts/build-codex.mjs --check    # --verify, plus drift against your own 
 `--check` presumes a projection on disk, so it belongs to the developer who has one; the output is
 gitignored and a fresh checkout has none. CI runs `--verify`, which reads the sources alone.
 
+### Projecting the installed kit into your own repository
+
+The kit is installed on your machine and your code is somewhere else, so the generator names the
+two roots separately rather than deriving both from where it happens to sit:
+
+```
+node <kit>/scripts/build-codex.mjs --plugin-root "$CLAUDE_PLUGIN_ROOT" --repo-root .
+```
+
+- `--plugin-root` is the **installed kit**: the folder holding `skills/`, `instructions/` and
+  `agents/`. It is exactly what `${CLAUDE_PLUGIN_ROOT}` names, so inside a skill it is that
+  variable verbatim; outside one it is `~/.claude/plugins/cache/b-galy/bg/<version>`. Left out, it
+  is `galy/` — this repository's own plugin root, which is why the bare command above is unchanged.
+- `--repo-root` is the **repository the projection is written into**: `.agents/` and `.codex/`
+  appear at its root, beside your code, which is where a Codex tab looks for them. Left out, it is
+  this repository.
+
+Add `.agents/` and `.codex/` to your `.gitignore`: it is build output, regenerated whenever the
+kit is upgraded. Two things are refused rather than written, because each of them produces a
+complete, green, useless run: a `--plugin-root` that holds no `skills/` (an empty projection, exit
+code 0), and a `--repo-root` inside the installed kit (a projection no tab reads, deleted by the
+next upgrade).
+
 Three properties make it trustworthy rather than decorative:
 
 - **The transformation is mechanical.** The body markdown is copied byte for byte — published
@@ -424,13 +447,29 @@ What the projection currently declares missing:
 
 | Capability | Where | What a Codex session does instead |
 |---|---|---|
-| `AskUserQuestion` | `audit` | Ask in plain text with numbered options and wait — never assume a default |
-| the `bg:` namespace | `adapt`, `audit`, `bug-fix`, `connect`, `autonomy` | One flat namespace: drop the prefix; a `bg:<agent>` is a Codex subagent, a `bg:<skill>` a Codex skill |
-| `${CLAUDE_PLUGIN_ROOT}` | 9 skills, `design-reviewer` | The plugin root is `.agents/`: `${CLAUDE_PLUGIN_ROOT}/instructions/x.md` is `.agents/instructions/x.md` |
+| the `bg:` namespace | 7 skills, `host-instructions`, `autonomy`, `delivery` | One flat namespace: drop the prefix; a `bg:<agent>` is a Codex subagent, a `bg:<skill>` a Codex skill |
+| `${CLAUDE_PLUGIN_ROOT}` | 11 skills, `workflow-defaults`, `design-reviewer` | The plugin root is `.agents/`: `${CLAUDE_PLUGIN_ROOT}/instructions/x.md` is `.agents/instructions/x.md` |
+| `CLAUDE.md` | 4 skills, `host-instructions`, `review-lenses`, `design-reviewer` | The root instruction file, under the name Claude Code gives it: here it is `AGENTS.md` at the repository root |
+| `AskUserQuestion` | `audit-organisation`, `connect` | Ask in plain text with numbered options and wait — never assume a default |
 | `CronCreate` | `feature-implement` | A scheduled task on the host, with a written stop condition |
 
-The first line is the honest one: `audit` orchestrates through a question only some harnesses can
-ask. Codex reads that it must ask in text and wait, rather than finding the step quietly removed.
+`AskUserQuestion` is the honest one: `audit-organisation` orchestrates through a question only some
+harnesses can ask. Codex reads that it must ask in text and wait, rather than finding the step
+quietly removed.
+
+`CLAUDE.md` is the one that was silently wrong. Twelve mentions told a session to propose an edit
+to a file Codex does not read, and — worse, because it was a hole in a feature one day old — five
+skills look for the `<!-- galy:instructions -->` marker in "the root instruction file", which
+under Codex is `AGENTS.md`. A host's own rules therefore reached the kit's skills under Claude
+Code and nowhere else, invisibly: no marker found and no marker written look identical from the
+inside. `host-instructions.md` now names that file by its role, and has a skill read every
+`CLAUDE.md` and `AGENTS.md` at the repository root rather than only the one its harness handed it.
+The union is deliberate: it settles the hole without deciding a precedence between the two files,
+which nothing here has measured.
+
+A `description:` counts as part of the file. `adapt` mentions `CLAUDE.md` exactly once, in its
+frontmatter, while its body says "the root instruction file" throughout — and the declaration used
+to scan only the body, so the one line that needed it was the one line uncovered.
 
 The output is gitignored. It is a build artifact, not a second copy to maintain.
 
