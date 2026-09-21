@@ -62,6 +62,18 @@ jobs:
       - name: La ligne sous le prompt rejoue ses contrats
         run: npm run check:statusline
 
+      # La projection Codex : chaque `${CLAUDE_PLUGIN_ROOT}/<chemin>` qu'une skill epelle doit
+      # exister dans l'arbre que le generateur vient d'ecrire. Sans ce pas, une reference qui ne
+      # resout rien sous Codex ne casse rien : l'onglet lit « ouvre ce fichier », ne trouve rien,
+      # et continue sans les conventions pour lesquelles on l'y envoyait. C'est reste vrai pour
+      # dix-huit references jusqu'au 21 septembre 2026, tous les controles au vert.
+      #
+      # `--verify` et non `--check` : la sortie est gitignoree, donc un checkout neuf n'en a
+      # aucune et `--check` y lit chaque fichier comme une derive. `--check` est le controle du
+      # developpeur, sur sa propre projection construite.
+      - name: La projection Codex resout ce qu'elle epelle
+        run: npm run verify:codex
+
       - name: Le bac bwrap est obligatoire pour les contrats d'isolation
         run: |
           if ! command -v bwrap >/dev/null 2>&1; then

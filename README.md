@@ -390,15 +390,19 @@ and tests it — its maturity catalogue carries no vendor name, so a client who 
 their score — and this repository is the side the client actually installs, so it has to hold the
 same line.
 
-`galy/skills/` and `galy/agents/` are the source of truth. A projection turns them into the layouts
-Codex reads:
+`galy/skills/`, `galy/instructions/` and `galy/agents/` are the source of truth. A projection turns
+them into the layouts Codex reads:
 
 ```
-node scripts/build-codex.mjs           # write .agents/skills/ and .codex/agents/
-node scripts/build-codex.mjs --check   # report drift, write nothing (CI)
+node scripts/build-codex.mjs            # write .agents/ and .codex/agents/
+node scripts/build-codex.mjs --verify   # assert every reference resolves, write nothing (CI)
+node scripts/build-codex.mjs --check    # --verify, plus drift against your own built projection
 ```
 
-Two properties make it trustworthy rather than decorative:
+`--check` presumes a projection on disk, so it belongs to the developer who has one; the output is
+gitignored and a fresh checkout has none. CI runs `--verify`, which reads the sources alone.
+
+Three properties make it trustworthy rather than decorative:
 
 - **The transformation is mechanical.** The body markdown is copied byte for byte — published
   measurements put model-authored instruction files at -20% success rate and +20% inference cost,
@@ -408,6 +412,13 @@ Two properties make it trustworthy rather than decorative:
   the list of proprietary capabilities its body uses and what to do instead. The reader sees the
   gap; the text stays intact. Substituting names inside the prose would corrupt code fences and
   tables, and would be a rewrite.
+- **A path that resolves on one side resolves on the other.** `.agents/` is what
+  `${CLAUDE_PLUGIN_ROOT}` names under Codex, so the projection reproduces the plugin root's shape
+  one level down and the same relative path opens the same file. CI asserts it on every push:
+  every `${CLAUDE_PLUGIN_ROOT}/<path>` a body spells must exist in the tree just built. Until
+  21 September 2026 only `galy/skills/` was projected, so eighteen references across nine skills
+  and one agent pointed at nothing — a Codex tab running `feature-implement` was sent to read its
+  acceptance criteria from a path that did not exist, and went on without them, green throughout.
 
 What the projection currently declares missing:
 
@@ -415,7 +426,7 @@ What the projection currently declares missing:
 |---|---|---|
 | `AskUserQuestion` | `audit` | Ask in plain text with numbered options and wait — never assume a default |
 | the `bg:` namespace | `adapt`, `audit`, `bug-fix`, `connect`, `autonomy` | One flat namespace: drop the prefix; a `bg:<agent>` is a Codex subagent, a `bg:<skill>` a Codex skill |
-| `${CLAUDE_PLUGIN_ROOT}` | 8 skills | Read the file from `.agents/skills/` relative to the repository |
+| `${CLAUDE_PLUGIN_ROOT}` | 9 skills, `design-reviewer` | The plugin root is `.agents/`: `${CLAUDE_PLUGIN_ROOT}/instructions/x.md` is `.agents/instructions/x.md` |
 | `CronCreate` | `feature-implement` | A scheduled task on the host, with a written stop condition |
 
 The first line is the honest one: `audit` orchestrates through a question only some harnesses can
@@ -434,7 +445,7 @@ galy/
   statusline/bg-statusline.mjs    # the row under the prompt: objective > brief > spec, for this copy's own work
   agents/<name>.md                # the 6 subject agents the first pass dispatches
   skills/<name>/SKILL.md          # the 17 skills
-  instructions/                   # shared conventions the skills reference
+  instructions/                   # shared conventions the skills reference, projected to .agents/instructions/
   contract/pm-v1.json             # the project-management tool + REST contract
   contract/conformance/           # the outward-only conformance suite (MCP + REST)
   bin/bg.mjs                      # the bg CLI
