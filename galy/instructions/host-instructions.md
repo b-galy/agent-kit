@@ -1,8 +1,8 @@
 # Host instructions — the local rules a repository hands a skill
 
-Read by `bug-fix`, `feature-implement` and `ship` before they touch a team's code. It says how a
-repository declares a file of its own rules, and what happens to that file the moment a skill
-delegates.
+Read by `bug-fix`, `feature-implement` and `ship` before they touch a team's code, and by
+`feature-brief` and `feature-spec` before they write a plan against it. It says how a repository
+declares a file of its own rules, and what happens to that file the moment a skill delegates.
 
 ## Why a declaration, when the root instruction file is already in context
 
@@ -64,7 +64,7 @@ taken responsibility for.
 
 ## Adding a skill to the contract
 
-Three skills honour the marker today. A fourth is two sentences inside that skill — the step that
+Five skills honour the marker today. A sixth is two sentences inside that skill — the step that
 reads, and the report line when a declared file is absent — and nothing changes in any host's file:
 a name that nobody honoured simply starts being honoured. Nothing here is versioned, negotiated or
 announced.
