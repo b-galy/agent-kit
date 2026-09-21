@@ -38,10 +38,26 @@ answers.
 
 `mcp__bg__feature_brief_get(briefId)` — it returns the brief with its child specs.
 
-- **It already carries a spec** → that spec is the work. Go to *Build it*.
 - **It carries none** → `mcp__bg__feature_spec_create(featureBriefId, title)`, then one phase,
   `mcp__bg__feature_spec_add_phase(specId, title)` — the phase's title is the deliverable, never
   "Phase 1". Go to *Build it*.
+- **It carries exactly one** → that spec is the work. Go to *Build it*.
+- **It carries several** → **stop, and name them.** List each one's id and title and say you cannot
+  tell which the deliverable belongs under. Do not pick.
+
+That third case is not an edge. A brief that has grown several specs is a *theme* — "the migration",
+"the mobile app" — and a theme is precisely the shape this door refuses at the front. Reaching it
+through a brief id does not make it one deliverable. The first team to run this door in anger hit it
+within hours, on a brief carrying a dozen, and had to be told out of band which spec to use: a door
+that needs a human to steer it past its own hole has the hole, not the human.
+
+**Picking the first, the newest, or the only open one would all look reasonable and all be wrong** —
+the work would land under a spec somebody else is answering, and nobody would find out until the
+pull request arrived somewhere unexpected. A refusal that names what it saw costs one sentence and
+is read once; a wrong pick is read for weeks.
+
+The caller settles it, and both answers are cheap: name the spec and this becomes the one-spec case,
+or say it is new work under that brief and you create one alongside the others.
 
 Nothing else is edited on the way past. A brief somebody wrote is theirs.
 
