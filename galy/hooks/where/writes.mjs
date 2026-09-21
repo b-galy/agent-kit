@@ -84,6 +84,10 @@ export const WRITES = {
   followup_check_update: { of: "followup", read: FOLLOWUP },
 
   feature_brief_create: { of: null, read: [] },
+  // A brief, a spec and a phase born at once, none of them drawn yet: there is nothing stale to
+  // forget. It is named all the same, because a verb absent from this table arms no refresh —
+  // the pane would go on showing a tree the work has just left.
+  feature_single_deliverable_create: { of: null, read: [] },
   feature_brief_update: { of: "brief", read: BRIEF },
   feature_brief_assign: { of: "brief", read: BRIEF },
   feature_brief_add_user_story: { of: "brief", read: BRIEF },

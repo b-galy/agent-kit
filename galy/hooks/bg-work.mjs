@@ -60,6 +60,11 @@ const CLAIMS = {
   feature_brief_create:             { of: "briefs", read: "@answer" },
   feature_brief_update:             { of: "briefs", read: BRIEF },
   feature_brief_add_user_story:     { of: "briefs", read: BRIEF },
+  // One gesture, four objects: a brief, its story, a spec and its single phase. What the copy
+  // then HAS IN HAND is the spec — the implementation loop is handed that id and nothing else —
+  // and the answer names both, `feature_spec_id` before `feature_brief_id`, which is the order
+  // `CREATED` reads. Filing the brief instead would put the row one level above the work.
+  feature_single_deliverable_create: { of: "specs", read: "@answer" },
 };
 const RELEASES = {
   feature_spec_complete:            { of: "specs",  read: SPEC },
