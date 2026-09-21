@@ -1177,7 +1177,7 @@
     {
       "name": "workflow_default_set",
       "kind": "write",
-      "description": "Persist (upsert) one workflow preference for the current user. value is the canonical machine string the skill expects (e.g. 'on', 'off', 'ask').",
+      "description": "Persist (upsert) one workflow preference for the current user. value is the canonical machine string the skill expects (e.g. 'stop-before-merge', 'always-manual', 'ask'), always one of the option's own values - 'on' and 'off' are not among them, and never a scalar: the vocabulary is closed and every value in it is a string.",
       "params": [
         {
           "name": "skill",
