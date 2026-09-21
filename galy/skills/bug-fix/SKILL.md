@@ -22,6 +22,18 @@ root instruction file, and it decides where you read from and where you write ba
 If you are handed a bare error and cannot tell which system owns it, **ask** — one question, one
 line. Writing the outcome into the wrong tracker is worse than not writing it.
 
+## What this team knows about its own estate
+
+**Read the host's local rules before you diagnose**, following
+`${CLAUDE_PLUGIN_ROOT}/instructions/host-instructions.md`: in the root instruction file, the lines
+carrying `<!-- galy:instructions -->` name the files a skill must open, and a marker naming
+`bug-fix` is addressed to you. Their monitoring, their replica, the query that says what the
+production actually did — that is the half of a diagnosis nobody else can write for you, and it
+lives where they put it, not in the root file.
+
+**Nothing names you, or there is no such line: say nothing and carry on.** The whole step is
+invisible to a team that never wrote one.
+
 ## The order, and it does not bend
 
 ### 1. Reproduce, before you understand anything
