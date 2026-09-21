@@ -45,6 +45,7 @@ and end with the `settings_url`. No option is worth more than one line.
 | `feature-implement` | `merge_mode` | whether the loop hands the ready pull request straight to **your** merge process — and on to your release — or stops at "PR ready" for your review |
 | `bug-fix` | `merge_mode` | the same question at the end of a fix, answered separately: a team can want a spec handed over and a fix looked at |
 | `bug-fix` | `auto_ship` | whether an unattended run finishes a low-risk fix on its own, or always stops for a person |
+| `bug-fix` | `refutation_close` | whether an unattended run may close a ticket it concluded is *not* a defect, or leaves every refusal for a person |
 | `feature-single-deliverable` | `merge_mode` | the same question once more, at the end of one afternoon's deliverable — answered at the door the work came through |
 | `ship` | `preview_deploy` | whether a change is put on a preview environment before the merge, so it can be seen running |
 | `ship` | `release_trigger` | whether merging is already shipping here, or a separate call ships it afterwards |

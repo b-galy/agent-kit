@@ -88,6 +88,7 @@ a page offered a control no skill read, and a skill could have offered a value n
 | `feature-implement` | `merge_mode` | `stop-before-merge`, `auto-merge`, `merge-and-release`, `ask` |
 | `bug-fix`           | `merge_mode` | `stop-before-merge`, `auto-merge`, `merge-and-release`, `ask` |
 | `bug-fix`           | `auto_ship`  | `confident`, `always-manual`, `ask` |
+| `bug-fix`           | `refutation_close` | `confident`, `always-manual`, `ask` |
 | `feature-single-deliverable` | `merge_mode` | `stop-before-merge`, `auto-merge`, `merge-and-release`, `ask` |
 | `ship`              | `auto_ship`  | `confident`, `always-manual`, `ask` |
 | `ship`              | `preview_deploy` | `deploy-a-preview`, `skip-the-preview`, `ask` |
@@ -106,6 +107,26 @@ about a spec.
 Read by `ship` on a ready change: `confident` → open the PR and finish without asking **only when**
 confidence is high and risk is low; below that bar, or `always-manual`, the human gate fires. Lets a
 developer opt into hands-off shipping of safe changes. Follows the two-question pattern when absent.
+
+### `refutation_close` flow
+
+Read by `bug-fix` when the diagnosis ends in "this is not a defect". It governs a close, not a
+handover: `confident` lets an unattended run close a refused ticket when its own confidence clears
+the bar this team wrote down; `always-manual` leaves every refusal to a person; `ask` asks.
+
+**It is not `auto_ship` under another name**, and the two are answered differently more often than
+not. `auto_ship` hands over a change a reviewer will see in a pull request; this one closes
+somebody's report having produced nothing, and the person who filed it is the only one who finds
+out. A team that happily ships safe fixes unattended can very reasonably want no robot telling a
+salesperson "not a bug" at three in the morning.
+
+Its default is `always-manual`, and so is the behaviour when the instance does not know the option
+at all — an unreadable setting is never permission. **The confidence figure itself is not in this
+vocabulary**: the values here are canonical strings, a bar is a number, and a number hardcoded in
+a kit shipped to everyone is a policy decided for people who never chose it. Each team writes its
+own in the file its root instruction block declares for `bug-fix`
+(`${CLAUDE_PLUGIN_ROOT}/instructions/host-instructions.md`); no file means no figure, and the run
+leaves the ticket to a person.
 
 ### `merge_mode` flow
 
