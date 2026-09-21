@@ -57,6 +57,21 @@ command, or error already visible to the agent where available. An improvement's
 supplies both the gain and the current situation when the person gives them together. Do not add a
 severity question: the server proposes severity from the report.
 
+## When the person is relaying, say so in the text
+
+Some reports are not the reporter's own trouble: a salesperson, a support agent or an account
+manager is passing on a customer's words, and those words usually name a remedy — a setting, a
+threshold, an exception for one account — rather than what the product does. Filed as they
+arrive, the remedy becomes the subject of the ticket and the symptom underneath it is never
+written down, so whoever picks it up later is arguing with the ticket's own framing.
+
+When the wording shows a relay — “a client says”, “the X account is asking for”, “support
+reports” — put two things into the `text` you send: **who is affected behind the relay**, named
+as precisely as the person can name them, and **what the product does today**, kept apart from
+what they are asking for. Both are context you collected, not facts you invented: never fill
+either in yourself, and never spend a fourth question on them. The original wording keeps the
+demanded remedy exactly as it was said; it simply stops standing in for the symptom.
+
 ## Duplicates first
 
 As soon as there is enough information for useful search terms, derive concise terms without

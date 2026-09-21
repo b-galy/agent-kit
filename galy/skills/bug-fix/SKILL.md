@@ -1,6 +1,6 @@
 ---
 name: bug-fix
-description: Take a bug from a report to a pull request — reproduce it first, find the cause, fix the cause, prove the fix on the path the user actually took, and record the follow-up. Accepts a raw error, a stack trace, or a ticket id from whichever system holds this team's bugs. Ends at "PR ready"; it never merges and never deploys.
+description: Take a bug from a report to a pull request — reproduce it first, settle whether it is a defect at all, find the cause and the change that brought it in, fix the cause, prove the fix on the path the user actually took, and record the follow-up. Also answers a ticket relayed by a salesperson or a customer, and motivates a "this is not a bug" verdict instead of closing it in one word. Accepts a raw error, a stack trace, or a ticket id from whichever system holds this team's bugs. Ends at "PR ready"; it never merges and never deploys.
 ---
 
 # bug-fix — from a report to a pull request
@@ -21,6 +21,29 @@ root instruction file, and it decides where you read from and where you write ba
 
 If you are handed a bare error and cannot tell which system owns it, **ask** — one question, one
 line. Writing the outcome into the wrong tracker is worse than not writing it.
+
+## A relayed ticket is a demand until it is proved a defect
+
+A ticket a salesperson or a customer relayed arrives with its remedy already chosen — a setting,
+a threshold, an exception for one account — and the symptom underneath it unwritten, because the
+person who suffered it is not the person who typed it. Fix the remedy and you have shipped a
+product decision nobody made.
+
+So before a line of code, **separate what the product does from the remedy that was dictated**,
+and challenge the need with figures rather than opinion: how many accounts other than this one
+meet it, **counted today** over the reporter's own population; what the rule costs the others if
+it bends; whether a setting that already exists answers it. **A business rule is never bent for
+one account.**
+
+**The challenge happens on the ticket and is answered there**, mentioning the reporter — in Galy,
+`discussion_post` with `entity_type="bug"`, `author_kind="agent"` and `mentioned_user_ids`; in
+their tracker, its equivalent. **An unattended run answers too**: leaving a salesperson in front
+of a customer with no reply costs an account, where a reasoned refusal costs an afternoon. Hand it
+to a person only when the arbitration is genuinely someone else's — `bug_set_requires_human` with
+its required reason, so the ticket says what it is waiting for — never as a way of not answering.
+
+A symptom that is measured and reproduces outside that account is not a demand. It is an ordinary
+bug, and it follows the order below.
 
 ## What this team knows about its own estate
 
@@ -44,6 +67,14 @@ repairs what the trace showed, which is where the error surfaced and rarely wher
 Write the reproduction down as you get it: the exact input, the exact path, the exact wrong
 output. That sentence becomes the acceptance test later, so write it as one.
 
+**Before you spend a day on it, ask whether it is already fixed.** Search the merged pull requests
+that touch the failing path, and read the one the ticket already links to. **A merge is not a
+deployment**: a fix sitting on the default branch and not yet on the build the reporter used
+explains the report exactly, and the answer is a comment naming the build that carries it — not a
+second fix laid on top of the first. Then make the data agree: replay the reporter's own case
+against today's state. A report that stops reproducing because somebody repaired one row by hand
+is not a fixed bug, and it comes back on the next row.
+
 If you **cannot** reproduce it, stop and say so. A bug you cannot reproduce is not ready to fix,
 and the honest outcome is a question to whoever reported it — what they did, on what data, at
 what time. Guessing here is how a second bug is introduced beside the first.
@@ -54,36 +85,87 @@ Follow the failure backwards until the first place where the state is already wr
 place. Then ask one question before touching it: **why did nothing catch this?** The answer is
 usually a missing check at a boundary, and it is worth more than the fix.
 
-### 3. Fix the cause
+**Then name the change that brought it in** — `git log --reverse -S'<the wrong expression>' -- <path>`,
+oldest first. The `--reverse` is the whole gesture: **`git log -S` alone hands you the commit that
+last CHANGED that line, which reads exactly like the one that introduced it**, and dates the
+regression to a refactor that only moved it. `git blame` answers a line's last writer, never a
+behaviour's first. The commit or pull request you come back with is what says how long this has
+been served, who can confirm the intent in one message, and whether anything else that shipped in
+the same change is suspect too. When the search comes back empty, say so: "present since the
+beginning" is a finding, a guess dressed as one is not.
+
+### 3. Settle the nature, and motivate a refusal
+
+Four natures, and the diagnosis is not finished until one of them is written down with what its
+row demands:
+
+| Nature | What you exhibit with it |
+|---|---|
+| **Real defect** | the layer where the state first went wrong — go on to the fix |
+| **Intended behaviour** | the place that behaviour is defined: file and line, or the rule that decided it |
+| **Data** | the offending row, with the query that shows it |
+| **Configuration** | the setting and its value, on the instance the reporter used |
+
+The last three close a ticket without a line of code, and that is the outcome a team is most
+tempted to write in one word. **"Not a bug" is a verdict, and a verdict is motivated and
+quantified.** It carries the nature and its evidence; **how many others meet it**, counted today
+over the reporter's population, because a symptom nobody else shows and one half the accounts
+show are two different tickets; and **your confidence as a percentage, with the one thing that
+would raise it**. A figure you are unwilling to write down is a figure you do not have.
+
+Write it as a comment on the ticket, **signed as the automaton whenever nobody asked for it in
+this turn** — `discussion_post(…, author_kind="agent")` in Galy — so the thread says a machine
+concluded instead of signing it as the person whose token it used.
+
+**Two closes an unattended run never makes, however sure it is.** It does not close a ticket a
+human filed when its own confidence is under this workspace's bar. And it never again closes, with
+nobody in the room, a ticket its reporter has reopened: a reopening is that person saying the
+verdict was wrong, and a second automatic close answers them with the same sentence and teaches
+them the thread is not read.
+
+**Whether a refusal may close at all is `bug-fix`/`refutation_close`**, resolved following
+`${CLAUDE_PLUGIN_ROOT}/instructions/workflow-defaults.md`; an instance that does not know the
+option resolves to nothing, and nothing is `always-manual`. **The bar itself is a number, and the
+kit ships none** — a percentage hardcoded here would be a policy decided for people who never
+chose it. Each team writes its own in the file its root instruction block declares for `bug-fix`.
+No file, no figure: write the confidence in the comment and leave the ticket to a person.
+
+### 4. Fix the cause
 
 - First extend existing regression coverage and observe the relevant failure before implementing
   the fix, following `${CLAUDE_PLUGIN_ROOT}/instructions/acceptance-criteria.md`. Keep the case and
   evidence in the bug's own tracker when there is no spec; do not create a spec just for this table.
 - Repair the layer where the state first went wrong, not the one where it became visible.
+- **Never turn off the signal instead of the cause.** A log line deleted, an alert threshold
+  raised until it stops firing, a test skipped, quarantined or with its assertion loosened — none
+  of those is a fix, and each leaves the estate worse than the bug did: the failure goes on
+  happening and the one thing that would have told you is gone. A signal that is genuinely wrong,
+  firing on a case that is correct, is its own ticket with its own reproduction — never landed in
+  the same change as the fix it would have caught.
 - Change as little as the cause requires. A refactor bundled with a fix makes the fix
   unreviewable, and a reviewer who cannot isolate the fix approves the refactor by accident.
 - If the fix is at the wrong altitude — the real repair is a design change nobody asked for —
   say so, apply the smallest correct fix, and record the design point as a follow-up rather than
   quietly widening the change.
 
-### 4. Prove it on the path the user took
+### 5. Prove it on the path the user took
 
 Two proofs, both required:
 
 - **A regression test** observed failing before the change and passing after, or the justified
-  alternative for a change that does not warrant an automated test. Reuse the evidence from step 3;
+  alternative for a change that does not warrant an automated test. Reuse the evidence from step 4;
   do not revert solely to repeat it. A resumed fix without red evidence follows the shared convention's
   baseline replay. Confirm the delivered commit and actual CI selection before claiming durable coverage.
 - **The user's own path**, replayed. Same input, same screen, same query — the reproduction from
   step 1, now producing the right answer. This is what "verified" means; a green suite is not it.
 
-### 5. Record what it would take to see it earlier
+### 6. Record what it would take to see it earlier
 
 Add a follow-up check with `mcp__bg__followup_check_add`, or in their system if that is where
 bugs live: what to look at, on what horizon, to know this class of failure has not returned. One
 check, concrete enough to run without you.
 
-### 6. Hand it over
+### 7. Hand it over
 
 Use `bg:ship` before reporting completion, including when the fix is already applied locally.
 It commits in the house style, opens the pull request, runs the self-review
@@ -118,9 +200,14 @@ never because a setting sounded like permission to do it yourself.
 Four lines, business first:
 
 1. **What was broken**, in the words of someone who suffered it — not the exception name.
-2. **Why**, in one sentence: the cause and the layer it lived in.
+2. **What it turned out to be**: the nature you settled, and for a real defect the cause, the
+   layer it lived in, and the change that brought it in.
 3. **What proves it is fixed**: the test that went red then green, and the replayed path.
 4. **The pull-request link**, and the follow-up check you left behind.
+
+A refused ticket hands back the same four lines with the verdict in place of the fix: the nature
+and its evidence, the count over the reporter's population, the confidence and what would raise
+it, and where the ticket now sits.
 
 Then, if it applies, the one sentence that is worth more than the fix: what would have caught
 this at the boundary, and what it would cost to add.

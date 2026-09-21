@@ -56,6 +56,11 @@
           "confident",
           "always-manual",
           "ask"
+        ],
+        "refutation_close": [
+          "confident",
+          "always-manual",
+          "ask"
         ]
       },
       "feature-single-deliverable": {
@@ -1125,6 +1130,7 @@
             "auto_ship",
             "merge_mode",
             "preview_deploy",
+            "refutation_close",
             "release_hold",
             "release_trigger",
             "rollback_mode"
@@ -1177,6 +1183,7 @@
             "auto_ship",
             "merge_mode",
             "preview_deploy",
+            "refutation_close",
             "release_hold",
             "release_trigger",
             "rollback_mode"
@@ -1238,6 +1245,7 @@
             "auto_ship",
             "merge_mode",
             "preview_deploy",
+            "refutation_close",
             "release_hold",
             "release_trigger",
             "rollback_mode"
