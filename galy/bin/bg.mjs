@@ -33,6 +33,7 @@
 //   bg spec <id>
 //   bg content pull <type> <id>        # type = feature-brief | feature-spec
 //   bg content push <type> <id>
+//   bg codex                           # project this kit into the layouts Codex reads
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -168,6 +169,8 @@ const HELP = `bg — Galy project-management CLI
   bg spec <id>                      # a spec with its phases, risks, acceptance tests
   bg content pull <type> <id>       # type = feature-brief | feature-spec
   bg content push <type> <id>
+  bg codex [--verify|--check]       # project this kit's skills, instructions and agents into
+                                    #   .agents/ and .codex/ here, for a Codex session
   bg bug-evaluation help              # local isolated bug-evaluation runner
 
 Config: env GALY_ENDPOINT / GALY_TOKEN, or .bg/config.json { "endpoint", "token" }.
@@ -178,6 +181,14 @@ async function main() {
   if (cmd === "bug-evaluation") {
     const runner = await import("./bug-evaluation-runner.mjs");
     return runner.runCli(rest);
+  }
+  // `codex` parses its own flags — two of them are directories resolved against the caller's
+  // working directory — so the raw tail goes through untouched, as `bug-evaluation`'s does. Its
+  // defaults need no argument: the plugin root is this file's own folder one level up, and the
+  // repository to write into is where the user is standing.
+  if (cmd === "codex") {
+    const projection = await import("./build-codex.mjs");
+    return projection.runCli(rest);
   }
   const args = parseArgs(rest);
   switch (cmd) {
