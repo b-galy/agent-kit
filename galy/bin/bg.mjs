@@ -200,7 +200,25 @@ async function main() {
     case "-h":
     case "--help":
     case "help": return console.log(HELP);
-    default: die(`Unknown command '${cmd}'. Run 'bg help'.`);
+    default: die(`Unknown command '${cmd}' in bg ${installedVersion()}. Run 'bg help' for what this version knows — and if you expected '${cmd}', the kit answering here is older than the one that has it.`);
+  }
+}
+
+/// The version of the kit this file belongs to, read from the manifest beside it rather than
+/// hardcoded. It exists for one sentence, in one place: the refusal above.
+///
+/// A host discovered why on 21 September 2026, the day `codex` shipped. Their repository pinned
+/// the plugin at 1.5.3 while their user scope had 1.5.9, so `bg codex` resolved to the old kit and
+/// answered `Unknown command 'codex'` — true, useless, and indistinguishable from a typo. They
+/// worked around it by testing for `bin/build-codex.mjs` on disk instead of trusting the pin,
+/// which is a fine remedy for them and one nobody else should have to invent. A subcommand added
+/// after a pin will keep happening; naming the version turns the next occurrence into one line.
+function installedVersion() {
+  try {
+    const manifest = join(dirname(fileURLToPath(import.meta.url)), "..", ".claude-plugin", "plugin.json");
+    return JSON.parse(readFileSync(manifest, "utf8")).version ?? "an unknown version";
+  } catch {
+    return "an unknown version";
   }
 }
 
