@@ -196,8 +196,8 @@ Three ways to get it wrong, and each costs something different:
 
 - **Naming every skill.** A file named for all of them is a file all of them read, most for
   nothing — and the block's whole argument is that length is what kills it. Name the skills the
-  file actually speaks to. `bug-fix`, `feature-implement` and `ship` honour the marker today; any
-  other name is written down and waits.
+  file actually speaks to. `bug-fix`, `feature-implement`, `ship`, `feature-brief` and `feature-spec`
+  honour the marker today; any other name is written down and waits.
 - **Naming a file you have not opened.** The line makes a claim about a path. Check it resolves
   before you write it, the way you check a chain file before quoting it.
 - **Writing it when they have nothing.** No domain file → **no line**, not an empty one and not a

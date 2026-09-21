@@ -32,17 +32,34 @@ buffer synced by the CLI, never passed as a tool argument.
 1. **Identity + objective.** `mcp__bg__whoami` for the userId. Pick the objective the need serves —
    invoke the `strategy` skill or `mcp__bg__strategy_navigate_children` to find it. A brief with no
    objective has no reason to exist: refuse to create one without it.
-2. **Discovery.** Ask only what you cannot infer: who is the user, what breaks today, what "better"
+2. **Read who this repository already writes for**, following
+   `${CLAUDE_PLUGIN_ROOT}/instructions/host-instructions.md`: the lines carrying
+   `<!-- galy:instructions -->` in the root instruction file name the files a skill must open, and a
+   marker naming `feature-brief` is addressed to you — their personas, their vocabulary, the customers
+   they do not serve. **The story's persona is one of theirs**, never one invented at the moment of
+   writing it: a brief framed for an average user gets a feature an average user does not buy.
+   **Nothing names you, or there is no such line: say nothing and carry on.**
+3. **Discovery.** Ask only what you cannot infer: who is the user, what breaks today, what "better"
    looks like, how you would know it worked. Keep it to a handful of questions. Announce the domain you
    inferred in one line and continue.
-3. **Create the brief (metadata only):**
-   `mcp__bg__feature_brief_create(title, domain, objectiveId, ownerUserId=<userId>, nextFollowupDate?)`
-   → capture `brief_id`. Never pass the body as an argument.
-4. **Write the body via the CLI.** `bg content pull feature-brief <brief_id>` to seed the buffer,
+   **And carry the plausible answers into the question.** Where you can name two or three, name them
+   and let one be picked. An open question hands the framing back to the person who came to have it
+   done, and it is answered with a shrug or with whatever is shortest to type — which you then write
+   down as their intent.
+4. **Look for the brief before you create one.**
+   `mcp__bg__feature_brief_list(ownerUserId=<userId>, statusFilter="Draft", query=<a distinctive word
+   of the title>)`. One that is plainly this need is the one you continue: `mcp__bg__feature_brief_get`
+   it, say in one line what it already carries, and pick up at the first step it is missing.
+   **A session that died between the create and the body leaves a brief with a title and nothing else**
+   — invisible to whoever relaunches, so they frame it again, and the workspace ends with two records
+   of one need and a spec hanging off whichever the second run remembered.
+   Nothing matches → `mcp__bg__feature_brief_create(title, domain, objectiveId, ownerUserId=<userId>,
+   nextFollowupDate?)` → capture `brief_id`. Never pass the body as an argument.
+5. **Write the body via the CLI.** `bg content pull feature-brief <brief_id>` to seed the buffer,
    edit `.tmp/galy-content/feature-brief/<brief_id>.md` (fields `problem`, `vision`, `executive` —
    executive ≤ 375 words, readable without internal jargon), then `bg content push feature-brief <brief_id>`.
-5. **User stories** (P0 first): `mcp__bg__feature_brief_add_user_story(briefId, persona, action, benefit, priority)`.
-6. **Business success criteria:** a brief carries no acceptance test of its own — that verb belongs
+6. **User stories** (P0 first): `mcp__bg__feature_brief_add_user_story(briefId, persona, action, benefit, priority)`.
+7. **Business success criteria:** a brief carries no acceptance test of its own — that verb belongs
    to specs. Capture measurable outcomes as **business follow-up checks** instead —
    `mcp__bg__followup_check_add(featureBriefId=<brief_id>, checkType="business", title, followupPromptMd=<outcome + pass/fail threshold>, scheduleOffsetDays=<J+N>, onFailAction="create_spec")`.
    See `${CLAUDE_PLUGIN_ROOT}/instructions/followup-conventions.md`.
