@@ -33,9 +33,11 @@ jobs:
       - name: Les scripts s'analysent
         run: |
           node --check setup/setup.mjs
-          node --check galy/bin/bg.mjs
-          node --check galy/bin/bug-evaluation-runner.mjs
           node --check scripts/validate.mjs
+          # Les binaires par le motif, pour la meme raison que les hooks : `bin/` est publie tel
+          # quel dans le cache du plugin, donc un module ajoute la et absent d'une liste ecrite a
+          # la main ne serait lu nulle part avant un poste de client.
+          for binary in galy/bin/*.mjs; do node --check "$binary"; done
           # Les hooks par le motif, jamais par la liste : un hook ajoute sans etre ajoute ici
           # serait le seul script publie que rien ne lit avant un poste de client.
           for hook in galy/hooks/*.mjs galy/hooks/*/*.mjs; do node --check "$hook"; done
@@ -97,6 +99,61 @@ jobs:
           # The root instruction file is named by role, and the Codex spelling survives the copy.
           grep -q 'AGENTS.md' .agents/instructions/host-instructions.md
           # And nothing was written back into the kit.
+          test ! -e "$kit/.agents"
+          test ! -e "$kit/.codex"
+
+      # And the same run again, reached the way a CLIENT reaches it: the CLI that ships with the
+      # plugin, from their own repository, with no flag at all. The step above proves the generator
+      # works from a host repository; it proves nothing about whether anyone can get at it, because
+      # it calls a path under `$GITHUB_WORKSPACE`. `scripts/` never reaches a client's machine — the
+      # plugin cache mirrors `galy/` alone — so until 21 September 2026 the file was correct and
+      # out of reach, and every check above was green the whole time.
+      #
+      # The two roots are therefore supplied by NOTHING: `--plugin-root` defaults to the installed
+      # kit `bin/bg.mjs` sits in, `--repo-root` to the working directory. A flag passed here would
+      # test the flag and leave the defaults — which is all a client types — unexercised.
+      - name: Un client lance la projection depuis le kit installe, sans aucun drapeau
+        run: |
+          set -e
+          kit="$(mktemp -d)/bg"
+          host="$(mktemp -d)"
+          mkdir -p "$kit"
+          cp -r galy/. "$kit/"
+          cd "$host"
+          node "$kit/bin/bg.mjs" codex --quiet
+          # Read the produced tree, never the summary.
+          test -f .agents/skills/feature-implement/SKILL.md
+          test -f .agents/instructions/acceptance-criteria.md
+          test -f .codex/agents/design-reviewer.toml
+          # Every `${CLAUDE_PLUGIN_ROOT}/<path>` the produced files spell opens a real file under
+          # `.agents/`, which is what that variable names here. The generator asserts this on its
+          # own tree; this reads it back from the disk a client would be looking at.
+          spelled="$(grep -rho '\${CLAUDE_PLUGIN_ROOT}/[A-Za-z0-9_./-]*' .agents .codex | sort -u)"
+          test -n "$spelled"
+          for path in $spelled; do
+            test -f ".agents/${path#'${CLAUDE_PLUGIN_ROOT}/'}"
+          done
+          echo "$spelled" | wc -l
+          # The banner names the command a client can actually type, not a file they do not have.
+          grep -q 're-run bg codex' .agents/skills/ship/SKILL.md
+          # And nothing was written back into the kit.
+          test ! -e "$kit/.agents"
+          test ! -e "$kit/.codex"
+
+      # Standing INSIDE the installed kit must be refused, whatever the operating system calls the
+      # two folders. The guard compares the destination against the kit, and the shipped path reads
+      # them from two different places — this file's folder and the working directory — so one
+      # directory can arrive under two spellings. It did: a run from inside the kit wrote the
+      # projection into the plugin cache, where no Codex tab reads it and the next upgrade deletes
+      # it.
+      - name: Ecrire dans le kit installe est refuse
+        run: |
+          set -e
+          kit="$(mktemp -d)/bg"
+          mkdir -p "$kit"
+          cp -r galy/. "$kit/"
+          cd "$kit"
+          if node "$kit/bin/bg.mjs" codex --quiet; then echo "the guard let it through"; exit 1; fi
           test ! -e "$kit/.agents"
           test ! -e "$kit/.codex"
 

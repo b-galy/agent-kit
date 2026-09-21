@@ -378,6 +378,7 @@ bg brief 12
 bg spec 42
 bg content pull feature-spec 42     # → .tmp/galy-content/feature-spec/42.md
 bg content push feature-spec 42     # after you edit the buffer
+bg codex                            # project the kit into .agents/ + .codex/ for a Codex session
 ```
 
 It reads its config from `GALY_ENDPOINT` / `GALY_TOKEN` or `.bg/config.json`. Like the tools, it only
@@ -391,7 +392,35 @@ their score — and this repository is the side the client actually installs, so
 same line.
 
 `galy/skills/`, `galy/instructions/` and `galy/agents/` are the source of truth. A projection turns
-them into the layouts Codex reads:
+them into the layouts Codex reads.
+
+### From your own repository
+
+The projection ships with the kit, as a subcommand of the `bg` CLI. From the root of your
+repository, with no flag:
+
+```
+bg codex            # write .agents/ and .codex/agents/ here
+bg codex --verify   # assert every reference resolves, write nothing
+bg codex --check    # --verify, plus drift against the projection already on disk
+```
+
+The two roots it needs both have an answer that needs no typing: the kit is the folder `bg` itself
+is installed in, and the repository is where you are standing. Should you need to override either —
+`bg codex --plugin-root "$CLAUDE_PLUGIN_ROOT" --repo-root .` from inside a skill, say, where the
+variable is already there:
+
+- `--plugin-root` is the **installed kit**: the folder holding `skills/`, `instructions/` and
+  `agents/`. It is exactly what `${CLAUDE_PLUGIN_ROOT}` names, so inside a skill it is that
+  variable verbatim; outside one it is `~/.claude/plugins/cache/b-galy/bg/<version>`. Left out, it
+  is the kit the running CLI belongs to.
+- `--repo-root` is the **repository the projection is written into**: `.agents/` and `.codex/`
+  appear at its root, beside your code, which is where a Codex tab looks for them. Left out, it is
+  the working directory.
+
+If `bg` is not on your `PATH`, it is `node "$CLAUDE_PLUGIN_ROOT/bin/bg.mjs" codex` — the same file.
+
+### From a checkout of this repository
 
 ```
 node scripts/build-codex.mjs            # write .agents/ and .codex/agents/
@@ -399,25 +428,18 @@ node scripts/build-codex.mjs --verify   # assert every reference resolves, write
 node scripts/build-codex.mjs --check    # --verify, plus drift against your own built projection
 ```
 
-`--check` presumes a projection on disk, so it belongs to the developer who has one; the output is
-gitignored and a fresh checkout has none. CI runs `--verify`, which reads the sources alone.
+That script is a **caller, not a copy**: it runs `galy/bin/build-codex.mjs`, the same file the
+installed kit carries, and supplies only the two defaults that are true here — `galy/` as the
+plugin root, this repository as the destination. One implementation, so the client's path and ours
+cannot drift.
 
-### Projecting the installed kit into your own repository
+Until 21 September 2026 the implementation was the script, and `scripts/` is repository-only: the
+plugin cache mirrors `galy/` alone. The generator had already been taught to run from a host
+repository and was still out of reach of everyone who installed the kit rather than cloning it — a
+command nobody can type is the same defect as a path that resolves to nothing, one floor up.
 
-The kit is installed on your machine and your code is somewhere else, so the generator names the
-two roots separately rather than deriving both from where it happens to sit:
-
-```
-node <kit>/scripts/build-codex.mjs --plugin-root "$CLAUDE_PLUGIN_ROOT" --repo-root .
-```
-
-- `--plugin-root` is the **installed kit**: the folder holding `skills/`, `instructions/` and
-  `agents/`. It is exactly what `${CLAUDE_PLUGIN_ROOT}` names, so inside a skill it is that
-  variable verbatim; outside one it is `~/.claude/plugins/cache/b-galy/bg/<version>`. Left out, it
-  is `galy/` — this repository's own plugin root, which is why the bare command above is unchanged.
-- `--repo-root` is the **repository the projection is written into**: `.agents/` and `.codex/`
-  appear at its root, beside your code, which is where a Codex tab looks for them. Left out, it is
-  this repository.
+`--check` presumes a projection on disk, so it belongs to whoever has one; the output is gitignored
+and a fresh checkout has none. CI runs `--verify`, which reads the sources alone.
 
 Add `.agents/` and `.codex/` to your `.gitignore`: it is build output, regenerated whenever the
 kit is upgraded. Two things are refused rather than written, because each of them produces a
@@ -488,11 +510,12 @@ galy/
   contract/pm-v1.json             # the project-management tool + REST contract
   contract/conformance/           # the outward-only conformance suite (MCP + REST)
   bin/bg.mjs                      # the bg CLI
+  bin/build-codex.mjs             # the Codex projection, shipped so a client can run `bg codex`
 types/claude-code.d.ts            # the function-hooks API, as /plugin-types wrote it; the pane is typed against this
 tsconfig.json                     # what CI recompiles on every push
 package.json                      # makes the repo itself runnable: npx -y github:b-galy/agent-kit
 setup/setup.mjs                   # the one-command setup
-scripts/build-codex.mjs           # projection into the layouts Codex reads (gitignored output)
+scripts/build-codex.mjs           # the projection with this repository's defaults — a caller, not a copy
 scripts/check-where.mjs           # the pane's rows, replayed on both workspaces' real answers
 ```
 
