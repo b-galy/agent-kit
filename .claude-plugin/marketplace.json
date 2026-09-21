@@ -8,6 +8,11 @@
       "name": "bg",
       "source": "./galy",
       "description": "B.Galy project-management kit: strategy → briefs → specs → code, driven by your own agent. Skills answer to /bg:<skill>."
+    },
+    {
+      "name": "idle-agents",
+      "source": "./idle-agents",
+      "description": "Names the background agents that reported back and have sat idle since, in a quiet status line at the end of each turn, with the ready line to close them. It closes nothing itself."
     }
   ],
   "renames": {

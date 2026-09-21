@@ -1,0 +1,4 @@
+{
+  "description": "Idle agents — at the end of a main-loop turn, names the background agents that reported back and have sat idle since, in a status line, with `/idle-agents` for the full list and the line ready to copy to close them.",
+  "modules": ["./register.ts"]
+}
