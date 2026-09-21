@@ -5,6 +5,28 @@
 // modified. This script reads them and writes `.agents/` and `.codex/agents/`, both gitignored:
 // nothing here is a second copy to maintain, it is a build output. Delete it and rebuild.
 //
+// IT READS ONE ROOT AND WRITES ANOTHER, AND THE TWO ARE NAMED SEPARATELY. Until 21 September 2026
+// both hung off this script's own location: the sources were `<script>/../galy`, the output
+// `<script>/..`, and the projection could therefore only ever be built inside this repository. That
+// is the wrong place for it. The kit is INSTALLED into a client's machine and their code lives
+// somewhere else entirely, so a Codex tab in their repository saw no `bg:*` skill and never had —
+// their own generator projects their `.claude/` and knows nothing of the kit. The two flags below
+// say where to read and where to write, and they are separate because those are separate machines'
+// worth of distance.
+//
+//   --plugin-root <dir>   the installed kit — the folder holding `skills/`, `instructions/` and
+//                         `agents/`. It is exactly what `${CLAUDE_PLUGIN_ROOT}` names, so inside a
+//                         skill it is `"$CLAUDE_PLUGIN_ROOT"` verbatim, and outside one it is
+//                         `~/.claude/plugins/cache/b-galy/bg/<version>`.
+//                         Default: `galy/`, which IS this repository's plugin root — the manifest
+//                         is `galy/.claude-plugin/plugin.json` and the marketplace entry points at
+//                         `./galy`. So the flag changes nothing when it is absent.
+//   --repo-root <dir>     the repository the projection is written into: `.agents/` and `.codex/`
+//                         appear at its root, beside that team's code. Default: this repository.
+//
+// The default of each one is what the script did before they existed, so `node
+// scripts/build-codex.mjs` with no argument is unchanged, here and only here.
+//
 // THE TRANSFORMATION IS MECHANICAL. No sentence is rewritten, reworded or summarised — published
 // measurements put model-authored instruction files at -20% success rate and +20% inference cost,
 // so the body markdown is copied byte for byte. The only thing added is a preamble, above the
@@ -44,27 +66,77 @@
 //   node scripts/build-codex.mjs --check    # --verify, plus drift against the projection on disk
 //   node scripts/build-codex.mjs --quiet    # only the summary line
 //
+// From a host repository, with the kit installed:
+//   node <kit>/scripts/build-codex.mjs --plugin-root "$CLAUDE_PLUGIN_ROOT" --repo-root .
+//
 // `--check` presumes a built projection on disk and is therefore a DEVELOPER's check, not CI's: the
 // output is gitignored, so a fresh checkout has none and every file reads as drift. CI runs
 // `--verify`, which needs nothing but the sources.
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, rmSync, statSync } from "node:fs";
-import { dirname, join, relative } from "node:path";
+import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), "..");
-const SKILLS_SRC = join(REPO, "galy", "skills");
-const AGENTS_SRC = join(REPO, "galy", "agents");
-const INSTRUCTIONS_SRC = join(REPO, "galy", "instructions");
 
 const args = process.argv.slice(2);
 const CHECK = args.includes("--check");
 const VERIFY = args.includes("--verify") || CHECK;
 const QUIET = args.includes("--quiet");
 
-const OUT_ROOT = VERIFY ? join(tmpdir(), `codex-projection-${randomUUID()}`) : REPO;
+/** `--name <value>` or `--name=<value>`, resolved against the caller's working directory. */
+function option(name) {
+  const inline = args.find((a) => a.startsWith(`--${name}=`));
+  const value = inline ? inline.slice(name.length + 3) : args[args.indexOf(`--${name}`) + 1];
+  if (!inline && !args.includes(`--${name}`)) return null;
+  // An empty or missing value must not fall through to `resolve("")`, which is the working
+  // directory — a silent "here" is the one answer nobody typed and the hardest to notice.
+  if (!value || value.startsWith("--")) {
+    console.error(`\n✗ --${name} wants a directory after it.\n`);
+    process.exit(1);
+  }
+  return resolve(value);
+}
+
+const PLUGIN_ROOT = option("plugin-root") ?? join(REPO, "galy");
+const REPO_ROOT = option("repo-root") ?? REPO;
+
+const SKILLS_SRC = join(PLUGIN_ROOT, "skills");
+const AGENTS_SRC = join(PLUGIN_ROOT, "agents");
+const INSTRUCTIONS_SRC = join(PLUGIN_ROOT, "instructions");
+
+// A plugin root pointed one folder too high produces an EMPTY projection and exit code 0: zero
+// skills, zero references, every check satisfied by having read nothing. That is the same shape of
+// defect this script exists to close, so the absence of the sources is fatal and says which layout
+// was expected.
+if (!existsSync(SKILLS_SRC)) {
+  console.error(
+    `\n✗ no skills under ${PLUGIN_ROOT}\n\n` +
+    "  --plugin-root wants the folder that HOLDS `skills/`, `instructions/` and `agents/` — the\n" +
+    "  installed plugin's own root, which is what `${CLAUDE_PLUGIN_ROOT}` names:\n" +
+    "    ~/.claude/plugins/cache/b-galy/bg/<version>\n" +
+    "  In a checkout of this repository that folder is `galy/`, not the repository root.\n",
+  );
+  process.exit(1);
+}
+
+// Writing the projection INTO the installed kit is the failure this whole change is about: the
+// output lands in the plugin cache instead of beside the client's code, where no Codex tab reads
+// it, and the next plugin upgrade deletes it without a word.
+const inside = (child, parent) => child === parent || child.startsWith(parent + sep);
+if (!VERIFY && inside(REPO_ROOT, PLUGIN_ROOT)) {
+  console.error(
+    `\n✗ --repo-root ${REPO_ROOT} is inside the installed kit.\n\n` +
+    "  The projection belongs at the root of the repository that holds your code — that is where a\n" +
+    "  Codex tab looks for `.agents/` and `.codex/`. Written into the plugin it is read by nobody,\n" +
+    "  and the next upgrade of the plugin removes it.\n",
+  );
+  process.exit(1);
+}
+
+const OUT_ROOT = VERIFY ? join(tmpdir(), `codex-projection-${randomUUID()}`) : REPO_ROOT;
 // `.agents/` is what `${CLAUDE_PLUGIN_ROOT}` names on the Codex side; everything the plugin root
 // holds and a projected body may reference hangs off it.
 const OUT_PLUGIN_ROOT = join(OUT_ROOT, ".agents");
@@ -111,6 +183,20 @@ const DEGRADATIONS = [
       "and the skills in `.agents/skills/`, so everything written under that variable is read there.",
   },
   {
+    // NOT a capability either — a file that exists under one name here and another there, and the
+    // one entry whose absence had a skill telling a Codex session to edit a file Codex does not
+    // read. The evidence is narrow on purpose: Codex reads `AGENTS.md` at the repository root,
+    // measured in a real repository by the team that owns it. Nothing is claimed about which of
+    // the two files wins where both exist, or what happens where neither does — so the advice is
+    // written to need neither answer.
+    id: "CLAUDE.md",
+    pattern: /\bCLAUDE\.md\b/,
+    advice: "The repository's root instruction file, under the name the Claude Code harness gives " +
+      "it. Here that file is `AGENTS.md` at the root of the repository: read it there, and propose " +
+      "an edit there. Where a repository holds both, they are two spellings of one role — take the " +
+      "union when reading, and say which file you edited.",
+  },
+  {
     id: "WebFetch",
     pattern: /\bWebFetch\b/,
     advice: "Codex's native web tool.",
@@ -147,9 +233,18 @@ function tomlString(value) {
   return `"${String(value).replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\r?\n/g, " ")}"`;
 }
 
-/** Which proprietary capabilities this body actually uses, in table order. */
-function usedCapabilities(body) {
-  return DEGRADATIONS.filter((d) => d.pattern.test(body));
+/**
+ * Which proprietary capabilities the produced file actually mentions, in table order.
+ *
+ * THE DESCRIPTION COUNTS, and it took the `CLAUDE.md` entry to notice. `adapt` names that file
+ * once, in its `description:` — and its body, throughout, says "the root instruction file". The
+ * description is copied into the produced frontmatter and is read by the harness and by the
+ * session, so scanning the body alone declared nothing above the one line that needed it. What the
+ * preamble announces is what the reader will meet; the reader meets the frontmatter first.
+ */
+function usedCapabilities(body, description = "") {
+  const seen = `${description}\n${body}`;
+  return DEGRADATIONS.filter((d) => d.pattern.test(seen));
 }
 
 function preamble(origin, used) {
@@ -199,10 +294,10 @@ function projectSkills() {
     if (!existsSync(source)) continue;
     const raw = readFileSync(source, "utf8");
     const { frontmatter, body } = splitFrontmatter(raw);
-    const used = usedCapabilities(body);
+    const description = unquote(frontmatter.description) ?? name;
+    const used = usedCapabilities(body, description);
     for (const d of used) noteGap(d.id, `skills/${name}`);
 
-    const description = unquote(frontmatter.description) ?? name;
     const head = [
       "---",
       `name: ${name}`,
@@ -245,13 +340,14 @@ function projectAgents() {
     const name = file.replace(/\.md$/, "");
     const raw = readFileSync(join(AGENTS_SRC, file), "utf8");
     const { frontmatter, body } = splitFrontmatter(raw);
-    const used = usedCapabilities(body);
+    const description = unquote(frontmatter.description) ?? name;
+    const used = usedCapabilities(body, description);
     for (const d of used) noteGap(d.id, `agents/${name}`);
 
     const instructions = preamble(`galy/agents/${file}`, used) + body;
     const toml = [
       `name = ${tomlString(name)}`,
-      `description = ${tomlString(unquote(frontmatter.description) ?? name)}`,
+      `description = ${tomlString(description)}`,
     ];
     // `model` and `color` have no Codex counterpart; `tools` is a Claude-side allow-list whose
     // names do not exist here, so it is dropped rather than mistranslated — the preamble already
@@ -361,7 +457,7 @@ if (!resolves) process.exitCode = 1;
 
 if (CHECK) {
   const fresh = collect(OUT_ROOT);
-  const committed = collect(REPO);
+  const committed = collect(REPO_ROOT);
 
   // Told apart from drift on purpose. A fresh checkout has no projection — the output is
   // gitignored — and reporting every file as "missing" reads as a broken generator rather than as
@@ -402,7 +498,11 @@ if (CHECK) {
     );
   }
 } else if (!QUIET) {
+  // The destination is named in full, and that is not verbosity. Once the output root is a flag,
+  // "written to .agents/" no longer says WHERE: a mistyped `--repo-root` lands a complete, correct
+  // projection one directory away from the repository that needed it, and the summary reads green.
   console.log(
-    "\nWritten to .agents/skills/, .agents/instructions/ and .codex/agents/ — build output, gitignored.\n",
+    `\nWritten to ${join(OUT_ROOT, ".agents", "skills")}, ${join(OUT_ROOT, ".agents", "instructions")}\n` +
+    `and ${join(OUT_ROOT, ".codex", "agents")} — build output, to be gitignored.\n`,
   );
 }
