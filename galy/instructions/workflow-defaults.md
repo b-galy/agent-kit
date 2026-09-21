@@ -88,16 +88,18 @@ a page offered a control no skill read, and a skill could have offered a value n
 | `feature-implement` | `merge_mode` | `stop-before-merge`, `auto-merge`, `merge-and-release`, `ask` |
 | `bug-fix`           | `merge_mode` | `stop-before-merge`, `auto-merge`, `merge-and-release`, `ask` |
 | `bug-fix`           | `auto_ship`  | `confident`, `always-manual`, `ask` |
+| `feature-single-deliverable` | `merge_mode` | `stop-before-merge`, `auto-merge`, `merge-and-release`, `ask` |
 | `ship`              | `auto_ship`  | `confident`, `always-manual`, `ask` |
 | `ship`              | `preview_deploy` | `deploy-a-preview`, `skip-the-preview`, `ask` |
 | `ship`              | `release_trigger` | `merge-ships`, `separate-call`, `ask` |
 | `ship`              | `release_hold` | `hold-for-a-human`, `go-when-green`, `ask` |
 | `ship`              | `rollback_mode` | `revert-and-reship`, `redeploy-previous`, `no-way-back`, `ask` |
 
-**`merge_mode` and `auto_ship` each appear twice, and the skill name is what separates them.**
-Same question, two moments — the end of a spec, the end of a fix — and a team answers them
-differently more often than not. Resolving `merge_mode` without saying which skill you meant is
-how a fix ends up governed by the answer somebody gave about a spec.
+**`merge_mode` appears three times, `auto_ship` twice, and the skill name is what separates them.**
+One question, several moments — the end of a spec, the end of a fix, the end of one afternoon's
+deliverable — and a team answers them differently more often than not. Resolving `merge_mode`
+without saying which skill you meant is how a fix ends up governed by the answer somebody gave
+about a spec.
 
 ### `auto_ship` flow
 
@@ -107,7 +109,9 @@ developer opt into hands-off shipping of safe changes. Follows the two-question 
 
 ### `merge_mode` flow
 
-Read by `feature-implement` before the final merge step, and by `bug-fix` at the end of a fix:
+Read by `feature-implement` before the final merge step, by `bug-fix` at the end of a fix, and by
+`feature-single-deliverable` before it hands its one-phase spec to that loop — the answer given at
+the door the work came through is the one that governs.
 `stop-before-merge` → stop at "PR ready" for human review; `auto-merge` → hand the ready PR to your own
 merge process; `merge-and-release` → hand it over, then trigger your release too. Galy's kit never merges
 and never releases for you — both are always your CI/process (extension point). This option only decides

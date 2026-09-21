@@ -57,6 +57,14 @@
           "always-manual",
           "ask"
         ]
+      },
+      "feature-single-deliverable": {
+        "merge_mode": [
+          "stop-before-merge",
+          "auto-merge",
+          "merge-and-release",
+          "ask"
+        ]
       }
     }
   },
@@ -453,6 +461,65 @@
       "returns": {
         "success": "bool",
         "brief_id": "int"
+      }
+    },
+    {
+      "name": "feature_single_deliverable_create",
+      "kind": "write",
+      "description": "ONE deliverable, one pull request: creates a brief, its single user story and a spec with one phase, in a single gesture. Use it when the work is one thing that takes an afternoon — not a need with several stories, which is feature_brief_create, and not something broken, which is bug_create. Filing small work through the brief door asks for a problem, a vision, an out-of-scope and a phased plan, and what happens is not that people write all of it: it is that they write none of it. The brief is created Accepted, because somebody who names one deliverable has already decided it is worth doing.",
+      "params": [
+        {
+          "name": "title",
+          "type": "string",
+          "required": true,
+          "description": "What is being delivered, in one line. It titles the brief, the spec and the phase."
+        },
+        {
+          "name": "persona",
+          "type": "string",
+          "required": false,
+          "description": "Persona (who). Supply the three story fields or none."
+        },
+        {
+          "name": "action",
+          "type": "string",
+          "required": false,
+          "description": "Action (wants to)."
+        },
+        {
+          "name": "benefit",
+          "type": "string",
+          "required": false,
+          "description": "Benefit (so that)."
+        },
+        {
+          "name": "problem_md",
+          "type": "string",
+          "required": false,
+          "description": "What is wrong or missing today (markdown). Carried by both the brief and the spec."
+        },
+        {
+          "name": "solution_md",
+          "type": "string",
+          "required": false,
+          "description": "How it will be done (markdown). Carried by the spec and by its single phase."
+        },
+        {
+          "name": "objective_id",
+          "type": "int",
+          "required": false,
+          "description": "Optional strategy objective to attach."
+        }
+      ],
+      "returns": {
+        "success": "bool",
+        "feature_brief_id": "int",
+        "feature_spec_id": "int",
+        "spec_phase_id": "int",
+        "brief": "object",
+        "spec": "object",
+        "user_story": "object | null",
+        "phase": "object"
       }
     },
     {
@@ -1045,6 +1112,7 @@
           "enum": [
             "bug-fix",
             "feature-implement",
+            "feature-single-deliverable",
             "ship"
           ]
         },
@@ -1096,6 +1164,7 @@
           "enum": [
             "bug-fix",
             "feature-implement",
+            "feature-single-deliverable",
             "ship"
           ]
         },
@@ -1157,6 +1226,7 @@
           "enum": [
             "bug-fix",
             "feature-implement",
+            "feature-single-deliverable",
             "ship"
           ]
         },
