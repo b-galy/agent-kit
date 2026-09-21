@@ -102,6 +102,23 @@ deliverable — and a team answers them differently more often than not. Resolvi
 without saying which skill you meant is how a fix ends up governed by the answer somebody gave
 about a spec.
 
+### Two the instance owns, and no skill here reads
+
+| Namespace | Option | Values |
+|---|---|---|
+| `intake` | `robot_eligible` | `false`, `true` |
+| `intake` | `backlog_visible` | `false`, `true` |
+
+**`intake` is not a skill of this kit.** Galy itself honours these two, server-side: the backlog
+hides tickets filed by a customer system unless `backlog_visible` says otherwise, and an unattended
+robot is kept off them unless `robot_eligible` does. Both default to `false`, so a new client
+integration changes neither the backlog nor what runs unattended.
+
+They are in the verbs' enums because a workspace can set them from here, and in the contract's
+vocabulary because the instance serves them — an option served and undeclared is the same drift as
+one declared and unserved, and this pair was the undeclared half of it. Do not look for a skill
+that reads them, and do not write one: the reader is the product.
+
 ### `auto_ship` flow
 
 Read by `ship` on a ready change: `confident` → open the PR and finish without asking **only when**

@@ -389,6 +389,16 @@ function scanCriterionCoverage() {
 // forever with nothing changing.
 //
 // This is not zeal. Removing this check restores exactly the failure it was written for.
+//
+// ONE NAMESPACE IS NOT A SKILL OF THIS KIT, and the check had no way to say so. `intake` is the
+// instance's own: the product filters its backlog on `intake`/`backlog_visible` and gates its
+// unattended robot on `intake`/`robot_eligible`, server-side, and no skill here reads either.
+// They still belong in the vocabulary — they are served by `workflow_catalog_list` and settable
+// through the verbs, so leaving them out is the drift this file exists to catch. Without the
+// exemption below the check would have called them ghosts, and a check that cries wrongly is
+// deleted within the month. The exemption is not a hole: a name declared server-owned that IS one
+// of this kit's skills is refused outright, which is the only way it could be used to silence a
+// ghost that is real.
 function scanWorkflowOptions() {
   const vocabulary = CONTRACT.workflow_options?.options;
   if (!vocabulary) {
@@ -455,16 +465,30 @@ function scanWorkflowOptions() {
     }
   }
 
+  const serverOwned = new Set(CONTRACT.workflow_options?.server_owned_skills ?? []);
+
   const undeclared = [...cited.keys()].filter((k) => !declared.has(k));
   // An option is "read" when the skill that OWNS it cites it - listing it in the workflows table
-  // or in the instructions proves it is documented, not that anything gates on it.
-  const unread = [...declared.keys()].filter((k) => !cited.get(k)?.has(`skills/${declared.get(k)}`));
+  // or in the instructions proves it is documented, not that anything gates on it. Unless the
+  // instance owns the whole namespace, in which case there is no skill here to cite it and the
+  // reader is the product.
+  const unread = [...declared.keys()].filter(
+    (k) => !serverOwned.has(declared.get(k)) && !cited.get(k)?.has(`skills/${declared.get(k)}`));
+  // The guards on the exemption, both of which would otherwise turn it into a way of not looking:
+  // a kit skill named server-owned would have its ghosts waved through, and a server-owned name
+  // absent from the vocabulary is a line nobody maintains.
+  const notServerOwned = [...serverOwned].filter((s) => realSkills.has(s));
+  const serverOwnedGhosts = [...serverOwned].filter((s) => !skillNames.has(s));
 
-  const ok = undeclared.length === 0 && unread.length === 0;
+  const ok = undeclared.length === 0 && unread.length === 0
+    && notServerOwned.length === 0 && serverOwnedGhosts.length === 0;
   const detail = ok
     ? `${declared.size} declared, each cited by the skill that owns it`
+      + (serverOwned.size ? ` (${[...serverOwned].join(", ")}: owned by the instance, read there)` : "")
     : [undeclared.length ? `cited but not declared: ${undeclared.join(", ")}` : null,
-       unread.length ? `declared but not read by its own skill: ${unread.join(", ")}` : null]
+       unread.length ? `declared but not read by its own skill: ${unread.join(", ")}` : null,
+       notServerOwned.length ? `declared server-owned but this kit ships a skill of that name: ${notServerOwned.join(", ")}` : null,
+       serverOwnedGhosts.length ? `declared server-owned but absent from the vocabulary: ${serverOwnedGhosts.join(", ")}` : null]
       .filter(Boolean).join("; ");
   record("workflow options: every option is both declared and read", ok, detail);
 }

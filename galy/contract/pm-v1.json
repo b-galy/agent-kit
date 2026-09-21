@@ -8,6 +8,10 @@
   },
   "workflow_options": {
     "description": "The complete vocabulary of workflow preferences this kit knows: which skill owns which option, and the canonical values each accepts. This is the single authority - the enums on workflow_default_set, workflow_default_unset and workflow_policy_resolve are checked against it, and so is every option a skill cites. An option that is not here does not exist.",
+    "server_owned_skills": [
+      "intake"
+    ],
+    "server_owned_note": "Namespaces in the vocabulary below that NO skill of this kit owns: the Galy instance itself honours them, and the agent's only business with them is setting them. They are listed so that the 'declared but never read' check does not cry ghost over an option the product really does read - and a name here that IS one of this kit's skills is refused, so the exemption cannot be used to silence a real ghost.",
     "options": {
       "feature-implement": {
         "merge_mode": [
@@ -69,6 +73,16 @@
           "auto-merge",
           "merge-and-release",
           "ask"
+        ]
+      },
+      "intake": {
+        "robot_eligible": [
+          "false",
+          "true"
+        ],
+        "backlog_visible": [
+          "false",
+          "true"
         ]
       }
     }
@@ -1118,6 +1132,7 @@
             "bug-fix",
             "feature-implement",
             "feature-single-deliverable",
+            "intake",
             "ship"
           ]
         },
@@ -1128,11 +1143,13 @@
           "description": "Option name. Must belong to the skill named above - see workflow_options.",
           "enum": [
             "auto_ship",
+            "backlog_visible",
             "merge_mode",
             "preview_deploy",
             "refutation_close",
             "release_hold",
             "release_trigger",
+            "robot_eligible",
             "rollback_mode"
           ]
         }
@@ -1171,6 +1188,7 @@
             "bug-fix",
             "feature-implement",
             "feature-single-deliverable",
+            "intake",
             "ship"
           ]
         },
@@ -1181,11 +1199,13 @@
           "description": "Option key. Must belong to the skill named above - see workflow_options.",
           "enum": [
             "auto_ship",
+            "backlog_visible",
             "merge_mode",
             "preview_deploy",
             "refutation_close",
             "release_hold",
             "release_trigger",
+            "robot_eligible",
             "rollback_mode"
           ]
         },
@@ -1200,6 +1220,7 @@
             "auto-merge",
             "confident",
             "deploy-a-preview",
+            "false",
             "go-when-green",
             "hold-for-a-human",
             "merge-and-release",
@@ -1209,7 +1230,8 @@
             "revert-and-reship",
             "separate-call",
             "skip-the-preview",
-            "stop-before-merge"
+            "stop-before-merge",
+            "true"
           ]
         }
       ],
@@ -1234,6 +1256,7 @@
             "bug-fix",
             "feature-implement",
             "feature-single-deliverable",
+            "intake",
             "ship"
           ]
         },
@@ -1243,11 +1266,13 @@
           "required": true,
           "enum": [
             "auto_ship",
+            "backlog_visible",
             "merge_mode",
             "preview_deploy",
             "refutation_close",
             "release_hold",
             "release_trigger",
+            "robot_eligible",
             "rollback_mode"
           ]
         }
