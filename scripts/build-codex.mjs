@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// Projects the kit's skills and agents into the layouts Codex reads.
+// Projects the kit's skills, shared instructions and agents into the layouts Codex reads.
 //
-// `galy/skills/` and `galy/agents/` are the SOURCE OF TRUTH and are never modified. This script
-// reads them and writes `.agents/skills/` and `.codex/agents/`, both gitignored: nothing here is a
-// second copy to maintain, it is a build output. Delete it and rebuild.
+// `galy/skills/`, `galy/instructions/` and `galy/agents/` are the SOURCE OF TRUTH and are never
+// modified. This script reads them and writes `.agents/` and `.codex/agents/`, both gitignored:
+// nothing here is a second copy to maintain, it is a build output. Delete it and rebuild.
 //
 // THE TRANSFORMATION IS MECHANICAL. No sentence is rewritten, reworded or summarised — published
 // measurements put model-authored instruction files at -20% success rate and +20% inference cost,
@@ -11,7 +11,22 @@
 // original text, that never touches it.
 //
 //   galy/skills/<name>/SKILL.md  ->  .agents/skills/<name>/SKILL.md
+//   galy/instructions/<name>.md  ->  .agents/instructions/<name>.md
 //   galy/agents/<name>.md        ->  .codex/agents/<name>.toml
+//
+// `.agents/` IS THE PLUGIN ROOT UNDER CODEX, and that is why the mapping above keeps the source's
+// shape one level down instead of flattening it. A skill body spells its shared conventions
+// `${CLAUDE_PLUGIN_ROOT}/instructions/<file>.md`; under Claude Code that variable is the installed
+// plugin's folder, which is `galy/`. Reproduce `galy/`'s layout under `.agents/` and the same
+// relative path resolves on both sides, with nothing rewritten inside the body.
+//
+// Until 21 September 2026 only `galy/skills/` was projected. Eighteen references across nine skills
+// and one agent therefore resolved to nothing under Codex — a tab running `feature-implement` was
+// told to read its acceptance criteria from a path that did not exist, and went on without them
+// while every check stayed green. The table below even declared the gap, pointing at
+// `.agents/skills/`, which held no such file either: a degradation nobody can act on reads as a
+// bug. `assertReferencesResolve` below is what keeps that shut — every `${CLAUDE_PLUGIN_ROOT}/…`
+// path the produced files spell must exist in the tree that produced them, and CI replays it.
 //
 // CAPABILITIES CODEX LACKS ARE DECLARED, NEVER SILENTLY DROPPED. Substituting tool names inside
 // the prose would corrupt code fences, tables and examples — and would be a rewrite. So each
@@ -25,8 +40,13 @@
 //
 // Usage:
 //   node scripts/build-codex.mjs            # write the projection
-//   node scripts/build-codex.mjs --check    # build into a temp tree and report drift, write nothing
+//   node scripts/build-codex.mjs --verify   # build into a temp tree, assert every reference resolves
+//   node scripts/build-codex.mjs --check    # --verify, plus drift against the projection on disk
 //   node scripts/build-codex.mjs --quiet    # only the summary line
+//
+// `--check` presumes a built projection on disk and is therefore a DEVELOPER's check, not CI's: the
+// output is gitignored, so a fresh checkout has none and every file reads as drift. CI runs
+// `--verify`, which needs nothing but the sources.
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, rmSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
@@ -37,13 +57,19 @@ import { randomUUID } from "node:crypto";
 const REPO = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SKILLS_SRC = join(REPO, "galy", "skills");
 const AGENTS_SRC = join(REPO, "galy", "agents");
+const INSTRUCTIONS_SRC = join(REPO, "galy", "instructions");
 
 const args = process.argv.slice(2);
 const CHECK = args.includes("--check");
+const VERIFY = args.includes("--verify") || CHECK;
 const QUIET = args.includes("--quiet");
 
-const OUT_ROOT = CHECK ? join(tmpdir(), `codex-projection-${randomUUID()}`) : REPO;
-const OUT_SKILLS = join(OUT_ROOT, ".agents", "skills");
+const OUT_ROOT = VERIFY ? join(tmpdir(), `codex-projection-${randomUUID()}`) : REPO;
+// `.agents/` is what `${CLAUDE_PLUGIN_ROOT}` names on the Codex side; everything the plugin root
+// holds and a projected body may reference hangs off it.
+const OUT_PLUGIN_ROOT = join(OUT_ROOT, ".agents");
+const OUT_SKILLS = join(OUT_PLUGIN_ROOT, "skills");
+const OUT_INSTRUCTIONS = join(OUT_PLUGIN_ROOT, "instructions");
 const OUT_AGENTS = join(OUT_ROOT, ".codex", "agents");
 
 // Proprietary capability -> what a Codex session should do instead. The table lives here, beside
@@ -69,10 +95,20 @@ const DEGRADATIONS = [
       "Codex skill invoked by name.",
   },
   {
+    // NOT a missing capability — a variable with a different spelling on each side, and the only
+    // entry whose advice a reader can act on by itself. It says the whole substitution rather than
+    // one folder: `${CLAUDE_PLUGIN_ROOT}/skills/…` and `${CLAUDE_PLUGIN_ROOT}/instructions/…` both
+    // resolve once the root is read as `.agents/`.
     id: "${CLAUDE_PLUGIN_ROOT}",
     pattern: /\$\{CLAUDE_PLUGIN_ROOT\}/,
-    advice: "The installed plugin's root. Under Codex, read the file from `.agents/skills/` " +
-      "relative to the repository.",
+    // No example path here, however much clearer one would read: this advice is copied into the
+    // preamble of every file that mentions the variable, and the invariant below scans the PRODUCED
+    // files. An illustrative `${CLAUDE_PLUGIN_ROOT}/instructions/x.md` is therefore a path the check
+    // has to chase and never finds — on the first run, twenty dangling references across ten files,
+    // invented by the sentence explaining how to resolve them.
+    advice: "The installed plugin's root. Under Codex it is the `.agents/` folder at the root of " +
+      "the repository, laid out the same way: the shared conventions are in `.agents/instructions/` " +
+      "and the skills in `.agents/skills/`, so everything written under that variable is read there.",
   },
   {
     id: "WebFetch",
@@ -150,7 +186,7 @@ function write(path, content) {
   writeFileSync(path, content, "utf8");
 }
 
-const report = { skills: [], agents: [], gaps: new Map() };
+const report = { skills: [], instructions: [], agents: [], gaps: new Map(), references: 0 };
 
 function noteGap(name, where) {
   if (!report.gaps.has(name)) report.gaps.set(name, []);
@@ -185,6 +221,22 @@ function projectSkills() {
       const from = join(SKILLS_SRC, name, extra);
       if (statSync(from).isFile()) write(join(OUT_SKILLS, name, extra), readFileSync(from, "utf8"));
     }
+  }
+}
+
+// The shared conventions the skills reference. They are not skills — no `name`/`description`
+// frontmatter is invented for them — but they are read by the same session, so they get the same
+// treatment: the generated banner, the capability declarations if the text uses any, and the body
+// byte for byte underneath.
+function projectInstructions() {
+  for (const file of listFiles(INSTRUCTIONS_SRC, ".md")) {
+    const name = file.replace(/\.md$/, "");
+    const body = readFileSync(join(INSTRUCTIONS_SRC, file), "utf8");
+    const used = usedCapabilities(body);
+    for (const d of used) noteGap(d.id, `instructions/${name}`);
+
+    write(join(OUT_INSTRUCTIONS, file), preamble(`galy/instructions/${file}`, used) + body);
+    report.instructions.push({ name, used });
   }
 }
 
@@ -225,22 +277,76 @@ function collect(root) {
     }
   };
   walk(join(root, ".agents", "skills"));
+  walk(join(root, ".agents", "instructions"));
   walk(join(root, ".codex", "agents"));
   return out;
 }
 
+// ── The invariant the projection has to satisfy ───────────────────────────────
+//
+// A path that resolves under one harness and not the other is the quietest defect this script can
+// ship: the session is told to open a file, finds nothing, and carries on without the conventions it
+// was sent for. Nothing errors, nothing is red, and the work comes back subtly wrong. So every
+// `${CLAUDE_PLUGIN_ROOT}/<path>` is resolved against `.agents/` — the folder that variable names
+// here — and must land on something.
+//
+// READ FROM THE PRODUCED FILES, NEVER FROM THE SOURCES, and that distinction earned itself on the
+// first run: the preamble is part of what a Codex tab reads, so an example path inside a
+// degradation's advice is a reference like any other. One written as an illustration dangled in
+// every file carrying that entry — ten of them, twenty references — and a check that only looked at
+// the inputs would have called the projection clean.
+//
+// Anchored on the slash that follows: `analyse` names the variable on its own, as prose about the
+// build output, and a mention is not a path to resolve.
+const REFERENCE = /\$\{CLAUDE_PLUGIN_ROOT\}((?:\/[A-Za-z0-9_.-]+)+)/g;
+
+function assertReferencesResolve() {
+  const dangling = new Map();
+  for (const [file, content] of collect(OUT_ROOT)) {
+    for (const [, path] of content.matchAll(REFERENCE)) {
+      report.references += 1;
+      const target = join(OUT_PLUGIN_ROOT, path.slice(1));
+      if (existsSync(target)) continue;
+      if (!dangling.has(path)) dangling.set(path, new Set());
+      dangling.get(path).add(file);
+    }
+  }
+  if (dangling.size === 0) return true;
+
+  console.error(`\n✗ ${dangling.size} plugin-root path(s) that no file in the projection answers:`);
+  for (const [path, where] of dangling) {
+    console.error(`   \${CLAUDE_PLUGIN_ROOT}${path} — spelled by ${[...where].sort().join(", ")}`);
+  }
+  console.error(
+    "\nUnder Codex `${CLAUDE_PLUGIN_ROOT}` is `.agents/`. Either project the file the reference\n" +
+    "names, or stop spelling that path in something a Codex session reads.\n",
+  );
+  return false;
+}
+
 // ── Main ─────────────────────────────────────────────────────────────────────
 
-rmSync(OUT_SKILLS, { recursive: true, force: true });
-rmSync(OUT_AGENTS, { recursive: true, force: true });
-mkdirSync(OUT_SKILLS, { recursive: true });
-mkdirSync(OUT_AGENTS, { recursive: true });
+for (const dir of [OUT_SKILLS, OUT_INSTRUCTIONS, OUT_AGENTS]) {
+  rmSync(dir, { recursive: true, force: true });
+  mkdirSync(dir, { recursive: true });
+}
 
 projectSkills();
+projectInstructions();
 projectAgents();
 
+const resolves = assertReferencesResolve();
+
 if (!QUIET) {
-  console.log(`\nCodex projection — ${report.skills.length} skills, ${report.agents.length} agents\n`);
+  console.log(
+    `\nCodex projection — ${report.skills.length} skills, ` +
+    `${report.instructions.length} instruction files, ${report.agents.length} agents\n`,
+  );
+  console.log(
+    `Plugin-root references: ${report.references}, ` +
+    (resolves ? "every one resolving" : "SOME RESOLVING TO NOTHING") +
+    " under .agents/ — the folder `${CLAUDE_PLUGIN_ROOT}` names here\n",
+  );
   console.log("Capabilities declared missing under Codex:");
   if (report.gaps.size === 0) {
     console.log("  (none — nothing in the sources mentions a proprietary capability)");
@@ -251,25 +357,52 @@ if (!QUIET) {
   }
 }
 
+if (!resolves) process.exitCode = 1;
+
 if (CHECK) {
   const fresh = collect(OUT_ROOT);
   const committed = collect(REPO);
-  const drift = [];
-  for (const [path, content] of fresh) {
-    if (!committed.has(path)) drift.push(`missing: ${path}`);
-    else if (committed.get(path) !== content) drift.push(`stale: ${path}`);
-  }
-  for (const path of committed.keys()) if (!fresh.has(path)) drift.push(`orphan: ${path}`);
-  rmSync(OUT_ROOT, { recursive: true, force: true });
 
-  if (drift.length) {
-    console.log(`\n✗ the projection is out of date — ${drift.length} file(s):`);
-    for (const line of drift.slice(0, 20)) console.log(`   ${line}`);
-    console.log("\nRun: node scripts/build-codex.mjs\n");
+  // Told apart from drift on purpose. A fresh checkout has no projection — the output is
+  // gitignored — and reporting every file as "missing" reads as a broken generator rather than as
+  // a build that was never run. That misreading is why nothing called this check.
+  if (committed.size === 0) {
+    rmSync(OUT_ROOT, { recursive: true, force: true });
+    console.error(
+      "\n✗ there is no projection on disk to compare against — the output is gitignored, so a\n" +
+      "  fresh checkout has none.\n\n" +
+      "Run: node scripts/build-codex.mjs      (then --check tells you whether it is stale)\n" +
+      "CI wants --verify, which reads the sources and needs nothing on disk.\n",
+    );
     process.exitCode = 1;
   } else {
-    console.log("\n✓ the projection matches the sources.\n");
+    const drift = [];
+    for (const [path, content] of fresh) {
+      if (!committed.has(path)) drift.push(`missing: ${path}`);
+      else if (committed.get(path) !== content) drift.push(`stale: ${path}`);
+    }
+    for (const path of committed.keys()) if (!fresh.has(path)) drift.push(`orphan: ${path}`);
+    rmSync(OUT_ROOT, { recursive: true, force: true });
+
+    if (drift.length) {
+      console.log(`\n✗ the projection is out of date — ${drift.length} file(s):`);
+      for (const line of drift.slice(0, 20)) console.log(`   ${line}`);
+      console.log("\nRun: node scripts/build-codex.mjs\n");
+      process.exitCode = 1;
+    } else if (resolves) {
+      console.log("\n✓ the projection matches the sources, and every reference in it resolves.\n");
+    }
+  }
+} else if (VERIFY) {
+  rmSync(OUT_ROOT, { recursive: true, force: true });
+  if (resolves) {
+    console.log(
+      `\n✓ ${report.references} plugin-root reference(s) resolve in the projection; ` +
+      "nothing written.\n",
+    );
   }
 } else if (!QUIET) {
-  console.log(`\nWritten to .agents/skills/ and .codex/agents/ — build output, gitignored.\n`);
+  console.log(
+    "\nWritten to .agents/skills/, .agents/instructions/ and .codex/agents/ — build output, gitignored.\n",
+  );
 }
