@@ -28,7 +28,11 @@ reconciliation in QA/PR evidence and update the linked phase's coverage cells.
    - Detect mode (light for docs-only, panel of 4 lenses otherwise) — and, on a visual diff, the
      **design** lens joins the panel: the `design-reviewer` agent, given the repository's design system.
    - Spawn the lenses as fresh sub-agents over the full diff + the changed files read in full + the
-     repo's own conventions. Each is adversarial — find problems, never validate.
+     repo's own conventions — **including the host's local rules, quoted into the brief** and not
+     named by path, per `${CLAUDE_PLUGIN_ROOT}/instructions/host-instructions.md`. A sub-agent's
+     context carries the root instruction file and nothing beside it, so a conventions lens given a
+     path reviews against half a doctrine and reports a clean diff. Each is adversarial — find
+     problems, never validate.
    - Dedup + confirm each finding by re-reading the cited lines; drop false positives.
    - Auto-fix every retained blocker (and clear-win warning) with `business_impact = false`; commit;
      re-run the panel on the new HEAD; max 3 rounds.

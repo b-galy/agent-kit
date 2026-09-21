@@ -1,0 +1,107 @@
+---
+name: feature-single-deliverable
+description: One deliverable, one pull request — create the brief, its single user story and a one-phase spec in a single gesture, then run the implementation loop to "PR ready". Use it when the work is one thing that takes an afternoon, or when a brief already exists and only needs building. A need carrying several user stories belongs to `bg:feature-brief`; a behaviour that used to work and no longer does belongs to `bg:bug-fix`. Never merges and never deploys.
+---
+
+# feature-single-deliverable — one deliverable, one pull request
+
+One thing to build, one record, one pull request. The brief, its single user story and a spec with
+one phase are created in a single gesture, and the work goes straight into the implementation loop.
+
+## The door, and the two it is not
+
+**More than one user story is a need and goes to `bg:feature-brief`; a behaviour that used to work
+and no longer does goes to `bg:bug-fix`; one thing that takes an afternoon stays here.** Say which
+door in one line and go — a routing question asked out loud costs more than the routing.
+
+That refusal is what the skill is for. Before it existed there were two doors and this work fitted
+neither, so it went through the brief door — which asks for a problem, a vision, an out-of-scope
+and a phased plan. What happened was not that people wrote all of it: it is that they wrote none
+of it, and an afternoon's work shipped with no record anywhere. A team that keeps its own command
+for small work is telling you a door is missing, not that it dislikes yours.
+
+The test, when the two are close: **could this be reviewed as one pull request?** A second story
+that a reviewer would want to see on its own is a second deliverable, and two of them is a need.
+
+## Arguments
+
+- `<what is being delivered>` — one line, free form. A ticket id from whichever system already
+  holds this team's work counts: read the ticket there, then carry its substance into the record
+  you create here, which is the one the loop reports to.
+- `<feature_brief_id>` — a brief that is already framed in Galy. Adopt it; never open a second one.
+
+## When the brief already exists
+
+Somebody handing you a brief id has already done the framing, and doing it again would leave the
+workspace with two records of one deliverable and no way to tell which one the pull request
+answers.
+
+`mcp__bg__feature_brief_get(briefId)` — it returns the brief with its child specs.
+
+- **It already carries a spec** → that spec is the work. Go to *Build it*.
+- **It carries none** → `mcp__bg__feature_spec_create(featureBriefId, title)`, then one phase,
+  `mcp__bg__feature_spec_add_phase(specId, title)` — the phase's title is the deliverable, never
+  "Phase 1". Go to *Build it*.
+
+Nothing else is edited on the way past. A brief somebody wrote is theirs.
+
+## Create the record
+
+`mcp__bg__feature_single_deliverable_create` makes all four objects at once — brief, user story,
+spec, phase:
+
+- `title` — one line, and it titles the brief, the spec **and** the phase. It is the whole of the
+  work, so write what will be delivered, not the area it touches.
+- `problem_md` — what is wrong or missing today. `solution_md` — how it will be done.
+- `persona` / `action` / `benefit` — the three story fields, all three or none.
+- `objective_id` — the strategy objective it serves, when you know it; `bg:strategy` finds it.
+  Unlike a brief, a deliverable is not refused for want of one.
+
+The answer carries `feature_brief_id`, `feature_spec_id` and `spec_phase_id`.
+
+**The brief comes back Accepted, and that is deliberate** — somebody who names one deliverable has
+already decided it is worth doing. Do not stage an approval they have given you.
+
+## Build it
+
+Invoke `bg:feature-implement` with the `feature_spec_id`, and let it run: it claims the spec, arms
+its watchdog, implements the phase against its validation criteria, reports the phase status back
+to Galy, and ends at "PR ready".
+
+**Do not restate that loop here, and do not run a shortened version of it.** A second copy of a
+loop is a second thing to keep in step, and it drifts on the first correction made to the
+original — the copy stays green while describing work nobody does any more.
+
+One phase means one pull request. Cutting it in two is the same mistake as filing it as a need.
+
+## Where it stops
+
+**Read the handover, never assume it.** `mcp__bg__workflow_policy_resolve` on
+`feature-single-deliverable`/`merge_mode`, following
+`${CLAUDE_PLUGIN_ROOT}/instructions/workflow-defaults.md` — apply a stored answer in silence, ask
+the two questions only when nothing is stored.
+
+| Value | What you do at the end |
+|---|---|
+| `stop-before-merge` | stop at "PR ready" — the pull request waits for a person |
+| `auto-merge` | hand the ready pull request to **their** merge process |
+| `merge-and-release` | hand it over, then trigger **their** release |
+
+Resolve it **before** you invoke the loop, and say the value out loud in the same breath.
+`bg:feature-implement` resolves `feature-implement`/`merge_mode` at its own last step and the two
+answers can differ — a team that wants a spec handed over and a small thing looked at first has
+said something precise, and the answer given at *this* door is the one that governs, because this
+is the door the work came through.
+
+An instance whose catalogue does not know this option yet answers `deny`, decided by `default`,
+and `deny` means the handover does not happen: you stop at "PR ready". That is this skill's own
+ending, so nothing is lost and there is nothing to work around.
+
+**The kit merges nothing and deploys nothing.** `auto-merge` means you hand over to the process
+they already have; `merge-and-release` means you hand over twice. Never merge because the checks
+went green, and never because a setting sounded like permission to do it yourself.
+
+## What you hand back
+
+The **ship — spec** variant of `${CLAUDE_PLUGIN_ROOT}/instructions/delivery-report.md`, with the
+brief's link beside the spec's: this is the one journey where a reader has never seen either.

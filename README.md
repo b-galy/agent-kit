@@ -353,6 +353,7 @@ Eighteen skills that take a need from idea to shipped, each driven by the Galy o
 | `strategy` | Explore your objectives tree (read-only) and map work to the objective it serves. |
 | `okr-review` | Where the objectives stand: the tree with its progress, off-track and unreported key results first, and the pace each one now demands. Reads only. |
 | `okr-checkin` | The check-in ritual: one pass over the key results you own, one question, a dated trace on every figure that moved. |
+| `feature-single-deliverable` | One deliverable, one pull request: brief, single story and one-phase spec in a single gesture, then the implementation loop to "PR ready". |
 | `feature-brief` | Frame a business need into a brief — problem, vision, user stories, success criteria. |
 | `feature-spec` | Turn a brief into a technical spec — explore your codebase, design, phases, risks, acceptance tests. |
 | `feature-implement` | Implement a spec autonomously in your repo, phase by phase, ending at "PR ready". |

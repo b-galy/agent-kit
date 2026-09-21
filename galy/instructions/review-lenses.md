@@ -37,7 +37,10 @@ Each lens returns JSON `{ findings: [...] }`, one entry =
 ## The 4 lenses (panel)
 
 Spawn all four in parallel, each with the full diff + the changed files read in full + your repo's
-conventions (its `CLAUDE.md`/`AGENTS.md`). Each is **adversarial — find problems, never validate**:
+conventions (its `CLAUDE.md`/`AGENTS.md`, **and the host's own rule files quoted inline** — see
+`host-instructions.md`: a path in a brief is a pointer a sub-agent is free not to follow, and a
+conventions lens that never opened the file reports a clean diff). Each is **adversarial — find
+problems, never validate**:
 
 1. **correctness** — logic bugs, null/edge cases, off-by-one, async misuse, broken contracts, swallowed
    exceptions.

@@ -104,6 +104,8 @@ The block itself:
 - <situation, dans les mots d'un développeur> → `<la skill>`
 - <situation> → `<la skill>`
 
+<!-- galy:instructions bug-fix feature-implement --> `<leur fichier de règles locales>` — <ce qu'il contient, en cinq mots>
+
 <le cadrage précède le code et n'écrit rien : le pourquoi, puis le comment>
 
 **Le contrôle d'aiguillage se déclenche au premier appel qui écrit un fichier**, pas au début
@@ -174,6 +176,36 @@ reason to have already started: it was only exploring, the user had approved, a 
 the writing. Each of those is true, and each of them is how the rule dies.
 
 Keep the whole thing to what a session reads in full every time. Five short blocks, not an essay.
+
+#### The line that hands a skill their own rules
+
+The routing table says which skill to go to. **It says nothing about what that skill must read once
+it is there**, and a team's real rules are rarely in this file — they are in
+`.github/instructions/`, in `docs/`, in `.cursor/rules`, wherever the audit found them, because a
+file every session reads in full cannot hold an estate's diagnostics. Until now a skill opened
+those only if it happened to choose to, and a pointer nobody is obliged to follow is the defect
+this line exists to close.
+
+One line per file, anywhere in the block, with the marker naming the skills that must read it:
+
+```markdown
+<!-- galy:instructions bug-fix --> `.github/instructions/diagnostics.md` — Datadog, la réplique, Site24x7.
+```
+
+Three ways to get it wrong, and each costs something different:
+
+- **Naming every skill.** A file named for all of them is a file all of them read, most for
+  nothing — and the block's whole argument is that length is what kills it. Name the skills the
+  file actually speaks to. `bug-fix`, `feature-implement` and `ship` honour the marker today; any
+  other name is written down and waits.
+- **Naming a file you have not opened.** The line makes a claim about a path. Check it resolves
+  before you write it, the way you check a chain file before quoting it.
+- **Writing it when they have nothing.** No domain file → **no line**, not an empty one and not a
+  commented placeholder. A team that never wrote one must not be able to tell the feature exists.
+
+The contract the skills follow is `${CLAUDE_PLUGIN_ROOT}/instructions/host-instructions.md`, and a
+block written before this line existed keeps working untouched: no line simply means no file, which
+is what every one of them already says.
 
 If the file does not exist, propose one — and then it is a doctrine, not a Galy section: cover
 the stack, how to build and test, the conventions read from their history, and above all the
