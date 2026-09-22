@@ -1,19 +1,19 @@
 ---
 name: connect
-description: Connect this repository to a Galy workspace — opening one first if the user has none, without ever sending them to a page they cannot sign in to. Also diagnoses a connection that is not answering — 401, wrong address, missing token, two servers with the same name. Registers the MCP endpoint for this project without the user pasting anything into a config file, and never writes a token into a committable file.
+description: Connect this repository to a Castalie workspace — opening one first if the user has none, without ever sending them to a page they cannot sign in to. Also diagnoses a connection that is not answering — 401, wrong address, missing token, two servers with the same name. Registers the MCP endpoint for this project without the user pasting anything into a config file, and never writes a token into a committable file.
 ---
 
-# connect — wire this repository to a Galy workspace
+# connect — wire this repository to a Castalie workspace
 
 The user is here because the `mcp__cs__*` tools answer nothing, or because they have never connected.
 
 ## First, the question they should never have to answer themselves
 
-**Do they already have a Galy workspace?**
+**Do they already have a Castalie workspace?**
 
 Ask it plainly, once, before anything else — and ask it as a person would, not as a system: *"Vous avez
-déjà un espace Galy, ou on en ouvre un ?"* The user is not thinking "am I enrolling or connecting"; they
-want their repository to talk to Galy. Which of the two paths that takes is your problem, not theirs.
+déjà un espace Castalie, ou on en ouvre un ?"* The user is not thinking "am I enrolling or connecting"; they
+want their repository to talk to Castalie. Which of the two paths that takes is your problem, not theirs.
 
 **They have one** — the rest of this skill applies. Diagnose, then the setup command.
 
@@ -42,13 +42,13 @@ skill does not care where it came from.
 
 Two values, and neither may be typed into a tracked file:
 
-- **the address of their instance** — `https://<their-workspace>.galy.cloud`, their own host. There is
-  no single Galy address to hardcode: this is a multi-tenant product, and every workspace answers on its
+- **the address of their instance** — `https://<their-workspace>.castalie.app`, their own host. There is
+  no single Castalie address to hardcode: this is a multi-tenant product, and every workspace answers on its
   own name. A kit that assumed one address would authenticate nobody.
 - **their token** — minted by them, shown once.
 
 Both are on the same page, and they never leave the machine: **Connect my agent**, in the top bar of
-any screen, at `https://<their-workspace>.galy.cloud/account/assistant`. Every active member of the
+any screen, at `https://<their-workspace>.castalie.app/account/assistant`. Every active member of the
 workspace reaches it and mints **their own** token — borrowing an administrator's would attribute
 their check-ins, their writes and every access-log line to somebody else. The page prints the exact
 command, address already filled in, with a copy button.
@@ -80,11 +80,11 @@ Read the answer against these four, which cover nearly every case:
 ## The command
 
 ```
-npx -y github:b-galy/agent-kit <token> --endpoint https://<their-workspace>.galy.cloud
+npx -y github:b-galy/agent-kit <token> --endpoint https://<their-workspace>.castalie.app
 ```
 
 **Not `npx galy-setup`.** That package is published on no registry: npm answers `E404 Not Found`, and
-a developer who has never seen Galy work concludes the product does not exist. The plugin repository is
+a developer who has never seen Castalie work concludes the product does not exist. The plugin repository is
 public and `npx` runs it as it is. The day the package is published, the short form comes back — here
 and on the screen, together.
 

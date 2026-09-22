@@ -95,7 +95,7 @@ export async function buildModel(input) {
     const briefId = spec?.briefId ?? null;
 
     // The spec's scheduled checks, drawn under its phases. The back office answers them
-    // inside the spec; Galy answers them on their own verb, once per spec in hand, and a
+    // inside the spec; Castalie answers them on their own verb, once per spec in hand, and a
     // spec nobody has scheduled a check for costs that one read and draws no block.
     const followupGaps = [];
     if (spec !== null && !Array.isArray(spec.followups) && serves(server, "followup_check_list")) {

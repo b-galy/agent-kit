@@ -1,12 +1,12 @@
 ---
 name: feature-implement
-description: Implement a Galy spec autonomously in your own repository — claim the spec, read its phases, code phase by phase with a cron watchdog as a safety net, verify against the acceptance tests, and end at "PR ready". Never merges (that is your CI/process). Reads the spec from Galy; the code never leaves your machine.
+description: Implement a Castalie spec autonomously in your own repository — claim the spec, read its phases, code phase by phase with a cron watchdog as a safety net, verify against the acceptance tests, and end at "PR ready". Never merges (that is your CI/process). Reads the spec from Castalie; the code never leaves your machine.
 ---
 
 # feature-implement — autonomous implementation loop
 
-Implement a complete `feature_spec` from Galy, autonomously, in the client's own repository. Reads the
-plan from Galy, writes code locally, reports phase statuses back to Galy, and ends at **PR ready** — the
+Implement a complete `feature_spec` from Castalie, autonomously, in the client's own repository. Reads the
+plan from Castalie, writes code locally, reports phase statuses back to Castalie, and ends at **PR ready** — the
 merge is always your own CI/process (extension point).
 
 ## Arguments
@@ -60,7 +60,7 @@ watchdog never fires — ideal.
    `feature-implement`/`merge_mode` default (see `${CLAUDE_PLUGIN_ROOT}/instructions/workflow-defaults.md`):
    `stop-before-merge` → stop at PR ready; `auto-merge` → hand the ready PR to your own merge process;
    `merge-and-release` → hand it over, then trigger your release too. **This kit never merges and never
-   releases for you** — the value says where the loop stops handing over, never what Galy does. On a
+   releases for you** — the value says where the loop stops handing over, never what Castalie does. On a
    chain where merging already ships, the last two describe the same thing, and `ship`/`release_trigger`
    is what says so.
 8. **Close.** `mcp__cs__feature_spec_complete(specId, prUrl)`. Adjust the brief's follow-up horizon if

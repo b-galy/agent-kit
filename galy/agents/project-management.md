@@ -23,9 +23,9 @@ You are read-only. You open nothing, close nothing, create no ticket.
 
 Three answers are possible and all three are legitimate:
 
-- **A system already holds the work.** Galy runs alongside it. The existing system stays the
-  system of record for what it already owns; Galy adds what it does not have.
-- **Nothing holds the work.** Galy becomes the system of record.
+- **A system already holds the work.** Castalie runs alongside it. The existing system stays the
+  system of record for what it already owns; Castalie adds what it does not have.
+- **Nothing holds the work.** Castalie becomes the system of record.
 - **Something holds the work but no assistant can reach it.** The most common case, and the one
   worth naming precisely, because it is a five-minute fix or a wall, and nothing in between.
 
@@ -45,7 +45,7 @@ Read the server names and, where you can, their verbs. A server exposing `*_brie
 `*_spec_*`, `*_ticket_*`, `*_issue_*`, `*_story_*` or `strategy_*` **is** their project
 management, whatever it is called. Note the transport and the host — never the token.
 
-If their verbs resemble Galy's, say so plainly: it means the kit's skills can drive both with a
+If their verbs resemble Castalie's, say so plainly: it means the kit's skills can drive both with a
 binding and no rewrite.
 
 ### 2. Commands and skills that already drive it
@@ -114,7 +114,7 @@ This is the output the rest of the pass depends on. Six short sections, no prose
 
 1. **Systems found** — name, transport, and whether an assistant can reach it. One line each.
 2. **Who owns what**, proposed: which system is the system of record for briefs, for specs, for
-   tickets and bugs, for strategy. Galy takes only what nothing else owns. Where two systems
+   tickets and bugs, for strategy. Castalie takes only what nothing else owns. Where two systems
    both could own something, say which and why, and leave the choice to the user.
 3. **The id shapes** an assistant will meet — `#1234`, `PROJ-123`, `AB#5678` — and which system
    each belongs to. This is what makes a skill able to route a reference it is handed.

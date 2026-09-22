@@ -1,7 +1,7 @@
 # Workflow defaults — an administrator's policy over a per-user preference
 
 What a skill is allowed to do on someone's behalf (ship / merge / auto-deploy / send a
-retrospective). The **source of truth is the Galy server**, read and written through the MCP tools
+retrospective). The **source of truth is the Castalie server**, read and written through the MCP tools
 `workflow_policy_resolve`, `workflow_default_get_all`, `workflow_default_set`,
 `workflow_default_unset`. A local `.cs/workflow-defaults.json` is kept as a **mirror** so
 headless/cron runs without MCP still have the values. **Never commit the mirror** (`.cs/` is
@@ -24,7 +24,7 @@ gitignored).
 ```
 
 - **Mirror** (`.cs/workflow-defaults.json`): rewritten on every set/unset; the fallback when the
-  Galy MCP is unavailable. It holds only the **user** layer — a policy is a workspace fact and is
+  Castalie MCP is unavailable. It holds only the **user** layer — a policy is a workspace fact and is
   never cached locally, because a stale `allow` is exactly the mistake that matters.
 
 Values are canonical machine strings; the reserved value `"ask"` forces the question every run.
@@ -109,7 +109,7 @@ about a spec.
 | `intake` | `robot_eligible` | `false`, `true` |
 | `intake` | `backlog_visible` | `false`, `true` |
 
-**`intake` is not a skill of this kit.** Galy itself honours these two, server-side: the backlog
+**`intake` is not a skill of this kit.** Castalie itself honours these two, server-side: the backlog
 hides tickets filed by a customer system unless `backlog_visible` says otherwise, and an unattended
 robot is kept off them unless `robot_eligible` does. Both default to `false`, so a new client
 integration changes neither the backlog nor what runs unattended.
@@ -151,7 +151,7 @@ Read by `feature-implement` before the final merge step, by `bug-fix` at the end
 `feature-single-deliverable` before it hands its one-phase spec to that loop — the answer given at
 the door the work came through is the one that governs.
 `stop-before-merge` → stop at "PR ready" for human review; `auto-merge` → hand the ready PR to your own
-merge process; `merge-and-release` → hand it over, then trigger your release too. Galy's kit never merges
+merge process; `merge-and-release` → hand it over, then trigger your release too. Castalie's kit never merges
 and never releases for you — both are always your CI/process (extension point). This option only decides
 whether the loop pauses for you before handing over, and how far the handover goes.
 

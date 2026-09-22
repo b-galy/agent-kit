@@ -28,7 +28,7 @@ that a reviewer would want to see on its own is a second deliverable, and two of
 - `<what is being delivered>` — one line, free form. A ticket id from whichever system already
   holds this team's work counts: read the ticket there, then carry its substance into the record
   you create here, which is the one the loop reports to.
-- `<feature_brief_id>` — a brief that is already framed in Galy. Adopt it; never open a second one.
+- `<feature_brief_id>` — a brief that is already framed in Castalie. Adopt it; never open a second one.
 
 ## When the brief already exists
 
@@ -82,7 +82,7 @@ already decided it is worth doing. Do not stage an approval they have given you.
 
 Invoke `cs:feature-implement` with the `feature_spec_id`, and let it run: it claims the spec, arms
 its watchdog, implements the phase against its validation criteria, reports the phase status back
-to Galy, and ends at "PR ready".
+to Castalie, and ends at "PR ready".
 
 **Do not restate that loop here, and do not run a shortened version of it.** A second copy of a
 loop is a second thing to keep in step, and it drifts on the first correction made to the

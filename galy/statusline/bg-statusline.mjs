@@ -5,7 +5,7 @@
 // brief and the spec, by their names, each one a clickable link into the workspace that
 // owns it. Nothing here is specific to one workspace: the address, the credentials and
 // the links are resolved from the working copy's own configuration, so the same script
-// serves every workspace that speaks the Galy tool contract.
+// serves every workspace that speaks the Castalie tool contract.
 //
 // What the row is NOT, and used to be: the workspace's queue — every spec in progress
 // and every brief cleared for a spec. On a workstation running ten worktrees that row
@@ -84,10 +84,10 @@ const RESET = `${ESC}[0m`;
 // the line work on a machine where nobody ran a setup script.
 //
 // A third shape serves a repository whose workspace is registered in its own `.mcp.json`
-// rather than in a Galy config: `{ "mcp": "<server name>" }` names that server, and the
+// rather than in a Castalie config: `{ "mcp": "<server name>" }` names that server, and the
 // row speaks to it with the headers the harness would send. Where the workspace's pages
 // live is the repository's to say too — `links` carries one template per kind, relative
-// to the server's origin — because the kit knows the pages of Galy and of nobody else.
+// to the server's origin — because the kit knows the pages of Castalie and of nobody else.
 const CONFIG_DIRS = [".cs", ".bg", ".galy"];
 const GALY_LINKS = { spec: "/specs/{id}", brief: "/briefs/{id}", objective: "/" };
 
@@ -227,7 +227,7 @@ function workspace(cwd) {
   }
   let base;
   try { base = new URL(mcp).origin; } catch { return null; }
-  // A Galy workspace's pages are the kit's to know; any other workspace says where its own are.
+  // A Castalie workspace's pages are the kit's to know; any other workspace says where its own are.
   const links = { ...(file.mcp ? {} : GALY_LINKS), ...(file.links || {}) };
   return { mcp, headers, base, links };
 }

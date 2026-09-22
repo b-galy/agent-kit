@@ -1,24 +1,24 @@
-# Galy Agent Kit
+# Castalie Agent Kit
 
-Drive your work in [Galy](https://galy.io) — strategy, briefs, specs — and let **your own agent**
+Drive your work in [Castalie](https://castalie.app) — strategy, briefs, specs — and let **your own agent**
 read those objects and implement them **in your own repository**.
 
-Galy is an agent-native project-management tool. You define the *why* (strategy → briefs) and the *how*
-(specs) inside Galy; this kit connects your assistant to that workspace over MCP so it can plan,
+Castalie is an agent-native project-management tool. You define the *why* (strategy → briefs) and the *how*
+(specs) inside Castalie; this kit connects your assistant to that workspace over MCP so it can plan,
 implement, and follow up — without you ever copy-pasting a ticket into a prompt.
 
-## Galy never sees your code
+## Castalie never sees your code
 
 This is the core guarantee, enforced end to end:
 
-- The flow is **strictly outward**. Your assistant *reads* strategy, briefs and specs from Galy, and
+- The flow is **strictly outward**. Your assistant *reads* strategy, briefs and specs from Castalie, and
   *writes back* plans, statuses and follow-ups. That's it.
 - **No tool accepts source code, a diff, or file content** — verified by the conformance suite
   (`galy/contract/conformance`), which fails if any verb ever declares a `code` / `diff` / `file_content`
   parameter.
 - Your codebase is explored **locally** by your assistant. It never leaves your machine.
 
-You are connecting *your assistant* to *your Galy workspace* — not giving Galy access to your repository.
+You are connecting *your assistant* to *your Castalie workspace* — not giving Castalie access to your repository.
 
 ## Local bug evaluation runner
 
@@ -45,7 +45,7 @@ Snapshots exclude Git history, caches, instruction files, secrets and links. Arc
 days by default, with preflight limits of 2 GiB per snapshot, 20 MiB per patch, 50 MiB per log and a
 4 GiB local archive. Every published run requires a frozen `IsolationProfileHash`, an explicit
 `--profile-file` and `--profile-root`; the runner re-runs the qualification probe before any model
-call. Production Galy endpoints require an explicit `--allow-production` after the approved budget
+call. Production Castalie endpoints require an explicit `--allow-production` after the approved budget
 and worker are ready; otherwise point a qualification at a disposable local or staging endpoint.
 Keep `GALY_TOKEN` in the process environment. `cs bug-evaluation inspect --human` emits a separate
 opaque reviewer projection without model, configuration, verdict or billing fields, and
@@ -59,10 +59,10 @@ Use `--approve-only` when preparing a protocol without executing its judge.
 ### Option A — one command (recommended)
 
 ```
-npx -y github:b-galy/agent-kit <your-galy-token> --endpoint https://<your-workspace>.galy.cloud
+npx -y github:b-galy/agent-kit <your-castalie-token> --endpoint https://<your-workspace>.castalie.app
 ```
 
-Both values are on one page in Galy — **Connect my agent**, in the top bar of any screen — which prints
+Both values are on one page in Castalie — **Connect my agent**, in the top bar of any screen — which prints
 that exact command with your address already filled in, and a copy button. Every active member of the
 workspace reaches it and mints **their own** token: a borrowed one would attribute your check-ins and
 every access-log line to somebody else.
@@ -72,7 +72,7 @@ literally in Claude Code's local scope, outside your repository), writes `.cs/co
 CLI, gitignores it, and proves the connection before saying it worked — by shaking hands with `/mcp`,
 the door your assistant will actually use, rather than with the REST surface it will not.
 
-There is no default address, on purpose: Galy is multi-tenant, and every workspace answers on its own
+There is no default address, on purpose: Castalie is multi-tenant, and every workspace answers on its own
 host. A guessed host does not fail loudly — it fails as a `401` that reads like a bad token.
 
 ### Option B — via the plugin marketplace
@@ -190,7 +190,7 @@ eight-row summary keeps the compact form, marks and a count on one line.
 Under the phases of a spec in hand, its scheduled post-delivery checks: a `Suivis` heading,
 then one row per check — `↻`, the verdict of its latest run where the workspace knows one
 (`✓` passed, `✗` failed, `…` still due, `?` run without a verdict), its title, and the day
-it is due after delivery, `J+n`. The back office answers them inside the spec; Galy answers
+it is due after delivery, `J+n`. The back office answers them inside the spec; Castalie answers
 them on `followup_check_list`, read once per spec in hand and kept with the other names,
 forgotten with the spec on a write. A spec with no check draws no heading, and the inline
 summary draws none of this.
@@ -258,7 +258,7 @@ decision the pane makes therefore lives in plain functions, replayed by
 `register.ts` is the binding itself.
 
 Nothing has to be typed as a command. **A plain sentence starts the first pass** — "démarre
-l'onboarding Galy", "start the Galy onboarding", "où en sont nos pratiques ?", "fais le point" — and
+l'onboarding Castalie", "start the Castalie onboarding", "où en sont nos pratiques ?", "fais le point" — and
 the `audit` skill takes it from there.
 
 ## The first pass is a conversation, not a script
@@ -298,7 +298,7 @@ What comes out of it is not a report but a **pull request**, opened by `adapt`:
 
 Name collisions are the common case, not the edge case: a team already working this way has skills
 called `feature-spec` and `feature-implement` too. `adapt` never overwrites one. It either skips
-yours — saying what Galy would have added — or ships its own under a `galy-` prefix, and tells you
+yours — saying what Castalie would have added — or ships its own under a `galy-` prefix, and tells you
 how to tell them apart.
 
 No workflow is edited, no command renamed, no `.mcp.json` touched, and **the pull request is never
@@ -312,11 +312,11 @@ or does it stop and ask you?
 
 Two layers decide, and the top one wins: your **administrator's policy** for the whole workspace —
 `allow`, `deny`, or `user_choice`, set per skill and per option — and, under `user_choice`, **your
-own preference**. Both live on your Galy account, so they follow you from one checkout to the next;
+own preference**. Both live on your Castalie account, so they follow you from one checkout to the next;
 a local `.cs/workflow-defaults.json` mirrors the user layer for headless runs, and is never
 committed.
 
-Ask "quels réglages Galy sont actifs ?" and the `workflows` skill shows the table, says who decided
+Ask "quels réglages Castalie sont actifs ?" and the `workflows` skill shows the table, says who decided
 each line, and links the page on your account. `ask` is always a real answer, never a fallback: a
 developer who wants the question every time has decided to stay in the loop.
 
@@ -333,13 +333,13 @@ questions it could not answer, your suggestions — about the onboarding process
 written to your own instance and nothing is asked, because writing in your own workspace asks
 nobody's permission.
 
-Whether that instance forwards anything to Galy is an **instance setting your administrator holds**,
+Whether that instance forwards anything to Castalie is an **instance setting your administrator holds**,
 disabled by default. It is not a question put to the developer at the terminal, and no skill
 pretends otherwise.
 
 ## What you get
 
-Eighteen skills that take a need from idea to shipped, each driven by the Galy objects you manage:
+Eighteen skills that take a need from idea to shipped, each driven by the Castalie objects you manage:
 
 | Skill | What it does |
 |---|---|
@@ -521,4 +521,4 @@ scripts/check-where.mjs           # the pane's rows, replayed on both workspaces
 
 ## License
 
-Proprietary — see [LICENSE](LICENSE). Use is tied to a valid Galy account.
+Proprietary — see [LICENSE](LICENSE). Use is tied to a valid Castalie account.

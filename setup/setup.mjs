@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// galy-setup — one-command onboarding for the Galy Agent Kit.
+// galy-setup — one-command onboarding for the Castalie Agent Kit.
 //
-//   npx -y github:b-galy/agent-kit <token> --endpoint https://<your-workspace>.galy.cloud
+//   npx -y github:b-galy/agent-kit <token> --endpoint https://<your-workspace>.castalie.app
 //
 // Does four things, in order, each best-effort with a clear message on failure:
 //   a) installs the plugin via the Claude CLI (marketplace add + install) — removing first a
@@ -18,7 +18,7 @@
 //      in hand, keeping any status line already configured — `--no-statusline` skips it.
 //
 // Why the local scope and not an env var. The kit used to ship a .mcp.json holding one
-// hardcoded address and `Bearer ${GALY_TOKEN}`. Galy is multi-tenant: every workspace
+// hardcoded address and `Bearer ${GALY_TOKEN}`. Castalie is multi-tenant: every workspace
 // answers on its own host, so a single baked-in address authenticates nobody, and the
 // env var left the token to be persisted by hand — on Windows that meant `setx`, which
 // writes it in clear into the user's registry. `claude mcp add --scope local` stores both
@@ -65,7 +65,7 @@ const FORMER_CONFIG_DIRS = [".bg", ".galy"];
 
 // The whole directory, not just config.json. `.cs/` also holds workflow-defaults.json, which
 // now carries a consent decision — whether the end of an onboarding sends a retrospective back
-// to Galy. A per-file ignore left that one tracked, so one developer's answer would have been
+// to Castalie. A per-file ignore left that one tracked, so one developer's answer would have been
 // committed and applied to everyone who cloned. Ignoring the directory is the only version of
 // this that stays correct as the directory grows.
 const GITIGNORE_LINE = `${CONFIG_DIR}/`;
@@ -121,21 +121,21 @@ function step(msg) { console.log(`\n• ${msg}`); }
 function ok(msg) { console.log(`  ✓ ${msg}`); }
 function warn(msg) { console.log(`  ! ${msg}`); }
 
-const HELP = `galy-setup — connect your agent to your Galy workspace
+const HELP = `galy-setup — connect your agent to your Castalie workspace
 
-  npx -y github:b-galy/agent-kit <token> --endpoint https://<your-workspace>.galy.cloud
+  npx -y github:b-galy/agent-kit <token> --endpoint https://<your-workspace>.castalie.app
 
-  <token>       your Galy API token
+  <token>       your Castalie API token
   --endpoint    the address of your workspace
   --no-statusline  do not touch the status line under your prompt
   --no-pane        do not enable the pane beside the transcript (/where)
   --enable-pane    enable that pane and do nothing else (no token needed)
 
-Both are on one page in Galy: Settings → Connect your assistant. It prints this exact
+Both are on one page in Castalie: Settings → Connect your assistant. It prints this exact
 command, address already filled in — copy it from there rather than typing it.
 
-Galy never sees your code. This connects your assistant to your Galy workspace —
-it does not give Galy access to your repository.`;
+Castalie never sees your code. This connects your assistant to your Castalie workspace —
+it does not give Castalie access to your repository.`;
 
 /**
  * True when a marketplace named `galy` is known on this workstation AND points at this repository.
@@ -308,7 +308,7 @@ function writeConfig(endpoint, token) {
 //   /health   anonymous, outside the rate limiter. It answers when the ADDRESS is right.
 //             Network error -> unreachable address. 404 -> the address answers, but no
 //             workspace lives there.
-//   /mcp      with the token. 401/403 -> the token. 404 -> the address serves Galy but not
+//   /mcp      with the token. 401/403 -> the token. 404 -> the address serves Castalie but not
 //             the MCP route, on an image older than the profile fix.
 //
 // And it is /mcp we prove, not /api/pm. Those are two different doors: the REST one is what the
@@ -329,7 +329,7 @@ async function smoke(endpoint, token) {
 
   if (health.status === 404) {
     fail(`no workspace at ${endpoint}.
-  Something answers there, but it serves no Galy workspace: the subdomain is probably not
+  Something answers there, but it serves no Castalie workspace: the subdomain is probably not
   yours. The exact address is printed on your own "Connect my agent" screen.`);
   }
   // A 5xx is the instance saying it is unwell, not the address saying it is wrong — and the
@@ -344,9 +344,9 @@ async function smoke(endpoint, token) {
   If it persists, whoever operates the instance needs to look; the address is not the problem.`);
   }
   if (!health.ok) {
-    fail(`${endpoint} answered HTTP ${health.status} on /health — that address does not serve a Galy instance.`);
+    fail(`${endpoint} answered HTTP ${health.status} on /health — that address does not serve a Castalie instance.`);
   }
-  ok("address reachable, a Galy workspace answers there.");
+  ok("address reachable, a Castalie workspace answers there.");
 
   // The MCP handshake, with the token: exactly what the assistant does on its first call.
   let mcp;
@@ -373,7 +373,7 @@ async function smoke(endpoint, token) {
   workspace. Mint a fresh one on ${endpoint}/account/assistant`);
   }
   if (mcp.status === 404) {
-    fail(`${endpoint} serves a Galy workspace but no MCP endpoint (404 on /mcp).
+    fail(`${endpoint} serves a Castalie workspace but no MCP endpoint (404 on /mcp).
   That instance predates the fix that serves /mcp on the delivered profile — ask whoever
   operates it to move it up a version.`);
   }
@@ -459,7 +459,7 @@ async function main() {
 
   // The pane on its own: no token, no address, no network.
   if (args.paneOnly) {
-    console.log("Galy Agent Kit — enabling the pane beside the transcript");
+    console.log("Castalie Agent Kit — enabling the pane beside the transcript");
     const outcome = installFunctionHooksFlag();
     if (outcome === "written") console.log("\n✅ Restart Claude Code, then type /where.\n");
     else if (outcome === "already") console.log("\n✅ Already enabled — type /where in a session.\n");
@@ -468,14 +468,14 @@ async function main() {
 
   const token = args._[0];
   if (!token) fail("missing token.\n" + HELP);
-  // No default address on purpose: Galy is multi-tenant, and a guessed host fails as a 401
+  // No default address on purpose: Castalie is multi-tenant, and a guessed host fails as a 401
   // that reads like a bad token — sending the user after the wrong problem.
   if (!args.endpoint) fail("missing --endpoint.\n" + HELP);
   const endpoint = args.endpoint.replace(/\/+$/, "").replace(/\/mcp$/i, "");
   if (!/^https?:\/\//i.test(endpoint)) fail(`--endpoint must be a full url, got "${args.endpoint}".`);
   if (!/^[0-9a-f]{64}$/i.test(token)) warn("token doesn't look like a 64-hex string — continuing anyway.");
 
-  console.log("Galy Claude Kit — setup");
+  console.log("Castalie Agent Kit — setup");
   const haveClaude = claudeCli() !== null;
   installPlugin(haveClaude);
   registerMcp(haveClaude, endpoint, token);
@@ -491,7 +491,7 @@ async function main() {
   // Nothing contradicts it until the agent that, a quarter of an hour later, finds no tool at
   // all. The success line is the one that gets read — so it is the one that has to carry what
   // shows the mistake at the moment it is made.
-  console.log(`\n✅ Assistant connected in ${process.cwd()} — Galy never sees your code.`);
+  console.log(`\n✅ Assistant connected in ${process.cwd()} — Castalie never sees your code.`);
   console.log("   Reopen Claude Code THERE: a server declared while it was running is only seen");
   console.log("   at the next start. It will then tell you where your practices stand.");
   if (pane === "written") {

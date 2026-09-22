@@ -1,9 +1,9 @@
 {
   "contract": "galy-pm-v1",
-  "description": "The project-management verbs the Galy MCP server exposes to your agent. Strictly outward: your assistant reads strategy, briefs and specs and writes back statuses, plans and follow-ups. No verb accepts source code, a diff, or file content — Galy never sees your repository. And no verb sends anything out of your tenant: everything written here stays in your own instance. Support is blind by construction — nothing in this contract can change that, and no skill asks a user to.",
+  "description": "The project-management verbs the Castalie MCP server exposes to your agent. Strictly outward: your assistant reads strategy, briefs and specs and writes back statuses, plans and follow-ups. No verb accepts source code, a diff, or file content — Castalie never sees your repository. And no verb sends anything out of your tenant: everything written here stays in your own instance. Support is blind by construction — nothing in this contract can change that, and no skill asks a user to.",
   "transport": {
     "type": "http",
-    "url": "https://<your-workspace>.galy.cloud/mcp (every workspace answers on its own host; registered per project by galy-setup, never hardcoded)",
+    "url": "https://<your-workspace>.castalie.app/mcp (every workspace answers on its own host; registered per project by galy-setup, never hardcoded)",
     "auth": "Bearer token in the Authorization header (posted by galy-setup); token is looked up by its SHA-256, so it never travels or is stored in clear on the server"
   },
   "workflow_options": {
@@ -11,7 +11,7 @@
     "server_owned_skills": [
       "intake"
     ],
-    "server_owned_note": "Namespaces in the vocabulary below that NO skill of this kit owns: the Galy instance itself honours them, and the agent's only business with them is setting them. They are listed so that the 'declared but never read' check does not cry ghost over an option the product really does read - and a name here that IS one of this kit's skills is refused, so the exemption cannot be used to silence a real ghost.",
+    "server_owned_note": "Namespaces in the vocabulary below that NO skill of this kit owns: the Castalie instance itself honours them, and the agent's only business with them is setting them. They are listed so that the 'declared but never read' check does not cry ghost over an option the product really does read - and a name here that IS one of this kit's skills is refused, so the exemption cannot be used to silence a real ghost.",
     "options": {
       "feature-implement": {
         "merge_mode": [
@@ -89,7 +89,7 @@
   },
   "rest_api": {
     "description": "The REST surface the `cs` CLI uses (galy PmContentController), same Bearer auth. Read side only + the markdown body round-trip. Content bodies are raw markdown whose sections are delimited by <!-- @field <name> --> and composed/parsed server-side.",
-    "base": "https://<your-workspace>.galy.cloud",
+    "base": "https://<your-workspace>.castalie.app",
     "routes": [
       {
         "method": "GET",
@@ -129,7 +129,7 @@
     {
       "name": "whoami",
       "kind": "read",
-      "description": "Identify the authenticated Galy user and workspace for this session (resolved from the token, no parameter). Use it for the user_id that feature_spec_pick and other per-user tools expect — and for the workspace mark, which callers outside a browser have no other way to learn: logo_url and accent_color are null when the workspace has declared none, meaning \"use the product's own mark\", never \"use none\".",
+      "description": "Identify the authenticated Castalie user and workspace for this session (resolved from the token, no parameter). Use it for the user_id that feature_spec_pick and other per-user tools expect — and for the workspace mark, which callers outside a browser have no other way to learn: logo_url and accent_color are null when the workspace has declared none, meaning \"use the product's own mark\", never \"use none\".",
       "params": [],
       "returns": {
         "success": "bool",
@@ -1160,7 +1160,7 @@
         "decided_by": "admin | user | default",
         "admin_policy": "allow | deny | user_choice | null",
         "user_value": "string | null",
-        "settings_url": "string (the page on the user's Galy account where both layers are visible)"
+        "settings_url": "string (the page on the user's Castalie account where both layers are visible)"
       }
     },
     {
@@ -1646,7 +1646,7 @@
     {
       "name": "onboarding_retro_record",
       "kind": "write",
-      "description": "Record the retrospective of an onboarding pass - what worked, what rubbed, the open questions, the suggestions - about the PROCESS, not about the team's work. It is written to the client's own tenant and stays there; no policy guards it, because writing in your own workspace asks nobody's permission. The four fields carry process feedback only: never code, file excerpts, paths, host names, command output, secrets, customer or product names, nor any recorded observation. The server redacts as a net and says so; a redaction that fires means something was written that should not have been. STAYS IN YOUR WORKSPACE, like every verb in this contract. Whether the instance forwards anything to Galy is an instance setting the client's administrator holds, disabled by default - no verb here decides it, and no user is asked.",
+      "description": "Record the retrospective of an onboarding pass - what worked, what rubbed, the open questions, the suggestions - about the PROCESS, not about the team's work. It is written to the client's own tenant and stays there; no policy guards it, because writing in your own workspace asks nobody's permission. The four fields carry process feedback only: never code, file excerpts, paths, host names, command output, secrets, customer or product names, nor any recorded observation. The server redacts as a net and says so; a redaction that fires means something was written that should not have been. STAYS IN YOUR WORKSPACE, like every verb in this contract. Whether the instance forwards anything to Castalie is an instance setting the client's administrator holds, disabled by default - no verb here decides it, and no user is asked.",
       "params": [
         {
           "name": "run_id",

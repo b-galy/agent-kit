@@ -1,13 +1,13 @@
 ---
 name: feature-followup
-description: Run the post-delivery checks a spec or brief scheduled — replay the acceptance criteria in production, measure the outcome against the pass/fail thresholds, report the verdict, and reschedule the next horizon. Reads the checks from Galy; verification happens against your running app.
+description: Run the post-delivery checks a spec or brief scheduled — replay the acceptance criteria in production, measure the outcome against the pass/fail thresholds, report the verdict, and reschedule the next horizon. Reads the checks from Castalie; verification happens against your running app.
 ---
 
 # feature-followup — post-delivery verification
 
 Weeks after a change ships, replay the follow-up checks that `feature-spec`/`feature-brief` scheduled:
 does the feature actually work in production, and did it move the metric it promised? Reads the checks
-from Galy, verifies against the running app, reports a verdict, and reschedules.
+from Castalie, verifies against the running app, reports a verdict, and reschedules.
 
 ## Arguments
 

@@ -1,6 +1,6 @@
 ---
 name: workflows
-description: See and change what Galy's skills do on their own and what they stop to ask you — commit and open the pull request unattended, or pause for your check first. Fires on "quels réglages Galy sont actifs ?", "arrête de committer tout seul", "demande-moi avant d'ouvrir la PR", "galy settings". Shows what your administrator decided for the whole workspace and what is left to you, and points at the page on your Galy account.
+description: See and change what Castalie's skills do on their own and what they stop to ask you — commit and open the pull request unattended, or pause for your check first. Fires on "quels réglages Castalie sont actifs ?", "arrête de committer tout seul", "demande-moi avant d'ouvrir la PR", "castalie settings". Shows what your administrator decided for the whole workspace and what is left to you, and points at the page on your Castalie account.
 ---
 
 # workflows — act, or stop and ask
@@ -10,7 +10,7 @@ own, does it take it, or does it stop and ask you?** Committing a reviewed chang
 request, moving to the next phase — each is a point where a developer wants a different answer on a
 Friday afternoon than on a first day in a new repository.
 
-They are stored on your Galy account, not in this repository, so they follow you from one checkout
+They are stored on your Castalie account, not in this repository, so they follow you from one checkout
 to the next.
 
 ## Two layers, and the top one wins

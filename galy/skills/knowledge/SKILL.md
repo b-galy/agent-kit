@@ -1,12 +1,12 @@
 ---
 name: knowledge
-description: Read, capture, review and publish workspace knowledge through B.Galy's durable source, citation and article contract; never keep a client wiki or local memory as the canonical store.
+description: Read, capture, review and publish workspace knowledge through Castalie's durable source, citation and article contract; never keep a client wiki or local memory as the canonical store.
 ---
 
-# knowledge — workspace knowledge in B.Galy
+# knowledge — workspace knowledge in Castalie
 
 Use this skill when a user wants to capture a source, prepare a knowledge article, find reviewed
-workspace knowledge, refresh evidence, or configure optional generation. B.Galy is the durable
+workspace knowledge, refresh evidence, or configure optional generation. Castalie is the durable
 system of record: source snapshots, versions, hashes, linked briefs/specs/tickets, article drafts
 and publications, citations, dependencies, review issues, history, settings and maintenance jobs
 all live behind the workspace MCP service. A checkout, a local wiki, an agent memory file and a
@@ -24,12 +24,12 @@ same access rules apply to the browser and MCP.
 
 ## Capture evidence
 
-Use `knowledge_source_create` for pasted text or Markdown and for snapshots linked to a B.Galy
-brief, spec or bug. Give linked records their B.Galy type and id; do not paste a mutable external
+Use `knowledge_source_create` for pasted text or Markdown and for snapshots linked to a Castalie
+brief, spec or bug. Give linked records their Castalie type and id; do not paste a mutable external
 record into an unlinked local file. Add a new immutable snapshot with `knowledge_source_add_version`
 when the upstream revision changes. Use the supplied idempotency key when a retry could repeat a
 write, and pass the expected concurrency token when editing an existing record. `knowledge_source_link`
-changes provenance only after the target is checked in B.Galy.
+changes provenance only after the target is checked in Castalie.
 
 ## Propose and publish
 
@@ -52,7 +52,7 @@ dependent articles; keep the review state visible until a new version is verifie
 
 ## Optional generation
 
-Generation is tenant opt-in and runs as bounded background work in the B.Galy product. Inspect or
+Generation is tenant opt-in and runs as bounded background work in the Castalie product. Inspect or
 change the provider, model, approved credential, call limits and output budget with
 `knowledge_settings_get` and `knowledge_settings_update`; the secret value never belongs in a
 tool argument, article, source or local file. Select only credentials explicitly authorized by the

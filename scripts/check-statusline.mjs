@@ -35,9 +35,9 @@ mkdirSync(SCRATCH, { recursive: true });
 mkdirSync(CONFIG_DIR, { recursive: true });
 const ENV = { ...process.env, TEMP: SCRATCH, TMP: SCRATCH, TMPDIR: SCRATCH, CLAUDE_CONFIG_DIR: CONFIG_DIR };
 
-// The workspace every copy on the bench speaks to: a Galy address, found the way the CLI
+// The workspace every copy on the bench speaks to: a Castalie address, found the way the CLI
 // finds it, in a config file above the copies.
-const BASE = "https://example.galy.cloud";
+const BASE = "https://example.castalie.app";
 mkdirSync(join(BENCH, ".cs"), { recursive: true });
 writeFileSync(join(BENCH, ".cs", "config.json"), JSON.stringify({ endpoint: BASE, token: "not-used-here" }));
 

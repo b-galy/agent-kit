@@ -1,7 +1,7 @@
 {
   "name": "galy-setup",
   "version": "1.0.0",
-  "description": "One-command onboarding for the Galy Agent Kit — installs the plugin, writes your local config, and connects your assistant. Galy never sees your code.",
+  "description": "One-command onboarding for the Castalie Agent Kit — installs the plugin, writes your local config, and connects your assistant. Castalie never sees your code.",
   "type": "module",
   "bin": {
     "galy-setup": "./setup.mjs"

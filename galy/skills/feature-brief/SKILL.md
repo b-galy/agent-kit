@@ -1,11 +1,11 @@
 ---
 name: feature-brief
-description: Frame a business need into a Galy brief — problem, vision, user stories, success criteria — attached to an objective. Interactive discovery with targeted questions; writes the brief via the Galy MCP and its body via the cs CLI. This is the WHAT and WHY, never the HOW (that is feature-spec).
+description: Frame a business need into a Castalie brief — problem, vision, user stories, success criteria — attached to an objective. Interactive discovery with targeted questions; writes the brief via the Castalie MCP and its body via the cs CLI. This is the WHAT and WHY, never the HOW (that is feature-spec).
 ---
 
 # feature-brief — frame a business need
 
-Turn a fuzzy intention into a `feature_brief` in Galy: the problem, the vision, the user stories and the
+Turn a fuzzy intention into a `feature_brief` in Castalie: the problem, the vision, the user stories and the
 business success criteria — attached to the objective it serves. No code, no implementation detail —
 that belongs to `feature-spec`.
 
@@ -24,7 +24,7 @@ confirming each. Body edits go through the CLI (see below).
 ## Model
 
 The user arrives with a fuzzy need. Lead a **targeted discovery** — a few sharp questions, not a
-questionnaire — then create the brief and its children via the Galy MCP. The body lives in a local
+questionnaire — then create the brief and its children via the Castalie MCP. The body lives in a local
 buffer synced by the CLI, never passed as a tool argument.
 
 ## Steps
@@ -66,8 +66,8 @@ buffer synced by the CLI, never passed as a tool argument.
 
 ## Confirmation
 
-Print the brief title and a clickable Galy link, and point to `feature-spec` as the next step. Close on
-`👁️ <Galy brief link>`.
+Print the brief title and a clickable Castalie link, and point to `feature-spec` as the next step. Close on
+`👁️ <Castalie brief link>`.
 
 ## Discipline
 

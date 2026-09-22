@@ -1,6 +1,6 @@
 ---
 name: okr-checkin
-description: The check-in ritual — go through the key results you own in one pass, record where each one really stands (value, confidence, one sentence), and say what changed and what has just tipped into risk. Writes to Galy through the MCP; every figure comes from the user, never from you.
+description: The check-in ritual — go through the key results you own in one pass, record where each one really stands (value, confidence, one sentence), and say what changed and what has just tipped into risk. Writes to Castalie through the MCP; every figure comes from the user, never from you.
 ---
 
 # okr-checkin — record where the key results stand
@@ -66,6 +66,6 @@ A check-in without all three is not worth recording:
 - **You are not the author of the judgement.** The confidence is the owner's reading, not yours. You
   may point out that a pace no longer adds up; you do not change `on_track` into `at_risk` yourself.
 - **One pass, then stop.** Do not chain into replanning, into creating key results, or into
-  rewriting targets. Creating a key result is a strategic decision, made by the user in Galy.
+  rewriting targets. Creating a key result is a strategic decision, made by the user in Castalie.
 - **Name things, never ids** — titles and clickable links (`/strategie/resultat/<id>` on the
   workspace host), so the user can open what you just wrote to.

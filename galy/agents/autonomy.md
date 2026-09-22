@@ -28,7 +28,7 @@ Look for an MCP server, a typed API, a command surface. Then apply the guard, wh
 criterion: **a contract that only exposes "run this query" is not tooling, it is generic access
 in disguise.** Count the verbs, say what they operate on — business entities, or rows?
 
-If the team reaches this repository's own Galy through the MCP you are speaking to right now,
+If the team reaches this repository's own Castalie through the MCP you are speaking to right now,
 that counts, and you may say so.
 
 Users have a door when the domain is reachable through a typed action their agent can perform.

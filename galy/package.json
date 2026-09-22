@@ -1,6 +1,6 @@
 {
   "name": "@b-galy/agent-kit",
-  "description": "Galy project-management kit for your coding agent — strategy, briefs and specs driven by your own assistant. Galy never sees your code.",
+  "description": "Castalie project-management kit for your coding agent — strategy, briefs and specs driven by your own assistant. Castalie never sees your code.",
   "type": "module",
   "private": true,
   "bin": {

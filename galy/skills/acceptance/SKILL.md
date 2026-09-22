@@ -1,6 +1,6 @@
 ---
 name: acceptance
-description: Run an acceptance pass on a running feature — you fire remarks in rapid succession while you click through the product, each one is written to a local queue the instant it lands and then pushed to Galy, then coded one at a time in the order received, one commit per remark, a single PR. Trivia is decided on the spot; a real product decision parks without stopping the queue. Ends by invoking the environment's release step on the drained pass; it merges nothing directly.
+description: Run an acceptance pass on a running feature — you fire remarks in rapid succession while you click through the product, each one is written to a local queue the instant it lands and then pushed to Castalie, then coded one at a time in the order received, one commit per remark, a single PR. Trivia is decided on the spot; a real product decision parks without stopping the queue. Ends by invoking the environment's release step on the drained pass; it merges nothing directly.
 allowed-tools: Bash, Read, Edit, Write, Glob, Grep, Skill, mcp__cs__whoami, mcp__cs__acceptance_open, mcp__cs__acceptance_add_remark, mcp__cs__acceptance_list, mcp__cs__acceptance_claim_next, mcp__cs__acceptance_resolve, mcp__cs__acceptance_park, mcp__cs__acceptance_answer, mcp__cs__acceptance_set_pr, mcp__cs__acceptance_close
 ---
 
@@ -23,10 +23,10 @@ Each remark is then implemented **in the order received**: one commit per item, 
 | `stop` | stop taking remarks, drain what is left, hand the PR to `ship` |
 | anything else, while a pass is open | a **remark** — it goes to the queue |
 
-## The queue: the file first, then Galy
+## The queue: the file first, then Castalie
 
 One file, `.cs/acceptance/<session>.json`, in the repo you are working in. `.cs/` is gitignored
-(`connect` makes sure of it). The pass and its remarks also live in Galy, where anyone can read them
+(`connect` makes sure of it). The pass and its remarks also live in Castalie, where anyone can read them
 back months later — but **the file is written first, always**.
 
 ```json
@@ -47,7 +47,7 @@ back months later — but **the file is written first, always**.
 
 `status` is one of `pending`, `in_progress`, `done`, `wont_fix`, `failed`, `awaiting_user`.
 
-**THE ORDER IS THE RULE, NOT A STEP: file, THEN Galy.** A network call is a worse first move than a
+**THE ORDER IS THE RULE, NOT A STEP: file, THEN Castalie.** A network call is a worse first move than a
 file write — it can be slow, it can fail, and a lost remark is the one defect this skill cannot
 afford. So:
 
@@ -59,7 +59,7 @@ afford. So:
 **The catch-up rides on the next push.** Before sending a new remark, send any that are still
 `pushed: false`, oldest first. No timer, no background task — the next gesture carries the backlog.
 
-**And an unreachable Galy never stops a pass.** If `acceptance_open` fails at start, open the pass
+**And an unreachable Castalie never stops a pass.** If `acceptance_open` fails at start, open the pass
 locally with `galy_session: null` and keep going; the first push that succeeds opens it and adopts
 the backlog. Refusing to start an acceptance pass because a server did not answer would be exactly
 backwards.
@@ -82,12 +82,12 @@ backwards.
 you say most often. This skill is written in English because the kit is; the person facing the product
 did not ask for English, and a French session that answers `#3 queued` has just told them the tool was
 not built for them. The state names — `pending`, `done`, `wont_fix` — are data and stay as they are in
-the file and in Galy; what you PRINT is theirs.
+the file and in Castalie; what you PRINT is theirs.
 
 ## Taking the remarks
 
 Every line the person types that is not a mode is a remark. **Write it to the file first**, push it to
-Galy second, then acknowledge in a single short line — the number, the remark's first words, and one
+Castalie second, then acknowledge in a single short line — the number, the remark's first words, and one
 word saying it is recorded, in their language — and nothing else. No restating it back in your own words, no plan, no estimate, and
 no mention of the push either way.
 
@@ -96,12 +96,12 @@ no mention of the push either way.
 Pick the **oldest** `pending` item. Not the last one typed: a fresh remark joins the back of the queue.
 
 1. Mark it `in_progress` in the file. `acceptance_claim_next(galy_session, claimed_by=<hostname>)`
-   keeps Galy in step and, if you die mid-item, lets the next session pick it up when the lease runs out.
+   keeps Castalie in step and, if you die mid-item, lets the next session pick it up when the lease runs out.
 2. Fix the cause, following the `bug-fix` discipline. **Decide trivia on the spot** — naming, which file,
    which format, anything you can settle from the code in under a minute.
 3. **Only what a commit cannot undo parks**: write the question into the item, set it `awaiting_user`,
    `acceptance_park(galy_id, question_md)`, and move to the next item. Never wait, never end the turn on
-   it. The person can also answer it from the Galy screen, and the queue picks that up.
+   it. The person can also answer it from the Castalie screen, and the queue picks that up.
 4. Verify it on the surface the person was looking at, in the running product.
 5. One commit, referencing the item, pushed to the session branch.
 6. Mark it `done` with the commit sha and one line of what changed; then
@@ -137,12 +137,12 @@ person gave still holds.
 
 1. Close the intake in the file — the field is `intake`, and it stays that word.
 2. **Push whatever is still `pushed: false`.** If any of them will not go, say which, and stop there.
-   Closing a pass whose remarks never reached Galy is closing a pass nobody can read back — the exact
+   Closing a pass whose remarks never reached Castalie is closing a pass nobody can read back — the exact
    thing this skill exists to prevent.
 3. Drain what is left. If items are still `awaiting_user`, surface them and stop there: they are the only
    other thing that legitimately blocks.
 4. Hand the single PR to `ship` — the review panel runs on the whole session's diff at once.
-5. `acceptance_close(galy_session, status="merged")`, and print the Galy link to the pass.
+5. `acceptance_close(galy_session, status="merged")`, and print the Castalie link to the pass.
 6. Invoke the environment's release step. The kit merges nothing **directly** — that step does, on
    its own gate. Having one is not a reason to stop: not invoking it is stopping.
 
@@ -150,7 +150,7 @@ person gave still holds.
 
 - **You speak the person's language, always.** The skill is in English, the states are in English, the
   person is not. What appears on their screen is theirs.
-- **The file is written before anything else happens, and Galy right after.** A remark that exists only
+- **The file is written before anything else happens, and Castalie right after.** A remark that exists only
   in context is a remark you will lose, and nobody will know which one.
 - **A failed push is not an event.** It costs the person nothing and it costs you one line at `status`.
   Never interrupt a pass to report one.

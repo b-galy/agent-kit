@@ -1,9 +1,9 @@
 // Reading the workspace through the session's own MCP connection.
 //
 // Two workspaces speak the `pm-v1` contract with two spellings, at the outward end as at
-// the inward one. Arguments: Galy expects `id` and `feature_brief_id`; the Green Acres
+// the inward one. Arguments: Castalie expects `id` and `feature_brief_id`; the Green Acres
 // back office expects `specId`, `briefId`, `objectiveId` — the contract's own spelling.
-// Answers: Galy writes `snake_case` everywhere, the back office writes PascalCase on its
+// Answers: Castalie writes `snake_case` everywhere, the back office writes PascalCase on its
 // feature verbs and `snake_case` on its strategy verbs.
 //
 // So a field is read BY NAME, every spelling of the field it means and never one that
@@ -127,7 +127,7 @@ const urlOf = (node) => textOf(fieldOf(node, "url", "Url"));
 /**
  * The mark an objective is drawn with, where the workspace gave it one. The contract has
  * carried `icon` on objectives from the start; the back office fills it with an emoji and
- * Galy answers null, so the pane falls back on its own mark rather than on a blank.
+ * Castalie answers null, so the pane falls back on its own mark rather than on a blank.
  *
  * @param {any} node
  * @returns {string | null}
@@ -144,7 +144,7 @@ const namedOf = (node) => ({
 
 /**
  * One scheduled post-delivery check of a spec, from either shape: the back office lists
- * them inside the spec, PascalCase, with the verdict of the latest run; Galy lists them on
+ * them inside the spec, PascalCase, with the verdict of the latest run; Castalie lists them on
  * their own verb, snake_case, and knows no run yet.
  *
  * @param {any} node
@@ -162,7 +162,7 @@ const followupOf = (node) => ({
 /**
  * A spec, from either workspace's `feature_spec_get`.
  *
- * `followups` is null where the answer carries no such field at all — Galy's does not, and
+ * `followups` is null where the answer carries no such field at all — Castalie's does not, and
  * they are read on their own verb — and the list, empty or not, where it does.
  *
  * @param {any} answer
@@ -182,7 +182,7 @@ export function specOf(answer) {
 
 /**
  * The checks of one spec, from `followup_check_list`: `checks` in the contract's spelling,
- * `followup_checks` in Galy's.
+ * `followup_checks` in Castalie's.
  *
  * @param {any} answer
  * @returns {Followup[]}
@@ -194,7 +194,7 @@ export function followupsOf(answer) {
 
 /**
  * A brief, from either workspace's `feature_brief_get`. `specs` is null where the answer
- * carries no children at all — Galy's does not, and they are listed separately.
+ * carries no children at all — Castalie's does not, and they are listed separately.
  *
  * @param {any} answer
  * @returns {BriefRecord}
@@ -308,7 +308,7 @@ export const keyResultsOf = (answer, objectiveId) => objectiveOf(answer, objecti
 // ── The two argument spellings ────────────────────────────────────────────
 
 /**
- * Every read the pane makes, in the contract's spelling then Galy's. The order matters:
+ * Every read the pane makes, in the contract's spelling then Castalie's. The order matters:
  * the contract's is tried first, and a server that refuses it is asked again the other
  * way, once, and remembered.
  */

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Galy — PreToolUse hook: a substantial addition to a CLAUDE.md is shown before it is written.
+// Castalie — PreToolUse hook: a substantial addition to a CLAUDE.md is shown before it is written.
 //
 // WHY THIS IS A HOOK AND NOT A LINE IN A SKILL. The discipline already existed, written down
 // and well written, in `skills/analyse`: present the edit, keep the diff minimal, announce the

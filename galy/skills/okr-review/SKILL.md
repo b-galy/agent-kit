@@ -1,6 +1,6 @@
 ---
 name: okr-review
-description: The state of play of your objectives, read-only — the tree with its progress, and the key results that are off track or that nobody has reported on in a fortnight, at the top. Use it before a review, at the start of a quarter check, or whenever someone asks how the period is going. Reads via the Galy MCP; writes nothing.
+description: The state of play of your objectives, read-only — the tree with its progress, and the key results that are off track or that nobody has reported on in a fortnight, at the top. Use it before a review, at the start of a quarter check, or whenever someone asks how the period is going. Reads via the Castalie MCP; writes nothing.
 ---
 
 # okr-review — where the objectives really stand

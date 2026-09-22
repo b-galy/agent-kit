@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// Portable local runner for B.Galy bug evaluations.
+// Portable local runner for Castalie bug evaluations.
 //
-// The runner owns source, patches, prompts and reports. B.Galy receives only the typed MCP
+// The runner owns source, patches, prompts and reports. Castalie receives only the typed MCP
 // contract and opaque artifact hashes. Every command is an allow-listed operation; provider
 // adapters use a named, documented API schema with bounded JSON, never a shell or arbitrary CLI.
 
@@ -1153,7 +1153,11 @@ class McpClient {
   constructor(endpoint, token, { allowProduction = false } = {}) {
     if (!endpoint || !token) die("mcp_configuration_required: set endpoint and GALY_TOKEN in the process environment");
     const url = new URL(endpoint.endsWith("/mcp") ? endpoint : `${endpoint.replace(/\/+$/, "")}/mcp`);
-    const production = url.hostname.endsWith(".galy.cloud") || url.hostname === "galy.cloud";
+    // Both estates, and the older one stays: this guard is what stops a local run billing against a
+    // real workspace, and an instance still answering on `*.galy.cloud` is exactly as production as
+    // one on `*.castalie.app`. Dropping the former name here would disarm the guard in silence.
+    const PRODUCTION_HOSTS = ["castalie.app", "galy.cloud"];
+    const production = PRODUCTION_HOSTS.some((host) => url.hostname === host || url.hostname.endsWith(`.${host}`));
     if (production && !allowProduction && process.env.BUG_EVALUATION_ALLOW_PRODUCTION !== "1")
       die("production_requires_explicit_opt_in: pass --allow-production only after the approved budget and worker are ready");
     this.url = url.toString(); this.token = token; this.id = 0; this.initialized = false;
@@ -1873,7 +1877,7 @@ const HELP = `cs bug-evaluation — local, isolated runner
   cs bug-evaluation rejudge --approve-only prepare a protocol without executing its judge
 
 Limits: snapshot 2 GiB, patch 20 MiB, log 50 MiB. Secrets, histories, caches, instructions and links are excluded.
-Production Galy endpoints require explicit --allow-production after the approved budget and worker are ready.
+Production Castalie endpoints require explicit --allow-production after the approved budget and worker are ready.
 Every published run requires a frozen IsolationProfileHash plus --profile-file and --profile-root; the profile is re-qualified before work.
 Oracle descriptors use one immutable script mounted against /input for baseline, reference and candidate; independent scripts are refused.
 Supported provider adapters: openai (Responses API, openai-responses-v1) and anthropic (Messages API, anthropic-messages-v1).

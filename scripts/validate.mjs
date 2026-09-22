@@ -9,7 +9,7 @@
 //      already run. A skill that drifts out of the format does not fail loudly: it is simply
 //      never picked up, in exactly one of those agents, and nobody finds out.
 //
-//   2. NO INSTANCE ADDRESS. Galy is multi-tenant and every workspace answers on its own host;
+//   2. NO INSTANCE ADDRESS. Castalie is multi-tenant and every workspace answers on its own host;
 //      a dedicated instance does not even answer on ours. The published artefact therefore says
 //      WHAT to do and never WHERE: the address travels with the token, on the developer's own
 //      machine. A hardcoded host does not fail loudly either — it authenticates nobody and
@@ -114,7 +114,7 @@ for (const skill of skills) {
 const FORBIDDEN = [
   {
     pattern: /azurewebsites\.net/i,
-    why: "an instance address hardcoded in a published artefact. Galy is multi-tenant: the address travels with the token, never in the repository.",
+    why: "an instance address hardcoded in a published artefact. Castalie is multi-tenant: the address travels with the token, never in the repository.",
   },
   {
     pattern: /(galy-io|b-galy)\/claude-kit/,

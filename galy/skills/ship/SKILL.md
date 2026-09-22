@@ -1,6 +1,6 @@
 ---
 name: ship
-description: Commit your work, open a PR, and run a self-review panel (correctness / security / conventions / perf sub-agents over the diff), fix the blockers, and end at "PR ready". It does NOT merge — the merge is your own CI/process (extension point). The diff stays in your repo; nothing is sent to Galy.
+description: Commit your work, open a PR, and run a self-review panel (correctness / security / conventions / perf sub-agents over the diff), fix the blockers, and end at "PR ready". It does NOT merge — the merge is your own CI/process (extension point). The diff stays in your repo; nothing is sent to Castalie.
 ---
 
 # ship — commit, PR, self-review panel, PR ready
@@ -23,7 +23,7 @@ reconciliation in QA/PR evidence and update the linked phase's coverage cells.
 1. **Stage + commit.** Review the diff; write a clear commit message in the repo's convention. Branch if
    you are on the default branch.
 2. **Open the PR** (draft) against the base branch, with a concise body: what changed, why, how it was
-   verified. Link the Galy spec if this ships one.
+   verified. Link the Castalie spec if this ships one.
 3. **Run the review panel** per `${CLAUDE_PLUGIN_ROOT}/instructions/review-lenses.md`:
    - Detect mode (light for docs-only, panel of 4 lenses otherwise) — and, on a visual diff, the
      **design** lens joins the panel: the `design-reviewer` agent, given the repository's design system.
@@ -53,7 +53,7 @@ remote and locally, and the copy on the default branch. A merge that stops at th
 leaves a copy nobody reclaims; a `Stop` hook of the kit says so, once per session.
 
 **What happens on the other side of that handoff is described, not performed, by three settings**
-stored on your Galy account beside `ship`/`auto_ship` — they say what YOUR pipeline does, so that
+stored on your Castalie account beside `ship`/`auto_ship` — they say what YOUR pipeline does, so that
 a skill written for your repository never has to guess:
 
 | Option | What it says |
@@ -82,6 +82,6 @@ any of them is set to.
 ## Discipline
 
 - **Never merge.** "PR ready" is the terminal state of this skill.
-- **The diff stays local.** The review runs on your machine; no code is sent to Galy.
+- **The diff stays local.** The review runs on your machine; no code is sent to Castalie.
 - **You are not the last reviewer.** The panel + your CI are behind you — shipping compiling,
   panel-clean code is the correct mode.

@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-// Galy PM contract conformance runner.
+// Castalie PM contract conformance runner.
 //
 // Two layers:
 //   1. STATIC — always runs, no network. Loads ../pm-v1.json and asserts the
 //      outward-only invariant: no verb declares a code/diff/patch/file_content
-//      parameter. This is the product guarantee "Galy never sees your code".
+//      parameter. This is the product guarantee "Castalie never sees your code".
 //   2. LIVE — runs when GALY_MCP_URL (or GALY_ENDPOINT) and GALY_TOKEN are set.
 //      Connects to the MCP endpoint, lists the real tool schemas, re-checks the
 //      forbidden-field invariant against the LIVE schemas, then exercises every
@@ -493,7 +493,7 @@ function scanWorkflowOptions() {
   record("workflow options: every option is both declared and read", ok, detail);
 }
 
-// Every Galy verb a skill names is a verb the contract declares.
+// Every Castalie verb a skill names is a verb the contract declares.
 //
 // A skill that instructs the agent to call a tool nobody serves is a fiction, and it fails in the
 // worst possible way: not with an error at install time, but in front of a user, mid-ritual, once
@@ -532,7 +532,7 @@ function scanCitedVerbs() {
   }
 
   const ok = phantoms.size === 0;
-  record("skills: every Galy verb named is one the contract declares", ok,
+  record("skills: every Castalie verb named is one the contract declares", ok,
     ok ? `${citations} citations across ${sources.length} files`
        : [...phantoms].map(([verb, where]) => `${verb} named by ${[...where].join(", ")}`).join("; "));
 }

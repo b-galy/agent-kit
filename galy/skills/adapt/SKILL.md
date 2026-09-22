@@ -1,18 +1,18 @@
 ---
 name: adapt
-description: Turn the kit's generic skills into skills bound to this team's own environment — including a merge skill and a release skill written against the pipeline the delivery pass actually read — and propose them as a pull request together with an added CLAUDE.md section. Runs right after the project-management and delivery audits of the first pass, or on its own with "adapte les skills Galy à notre environnement". It opens a branch and a pull request; it never merges, never deploys, never rewrites an existing skill, and never changes an existing process.
+description: Turn the kit's generic skills into skills bound to this team's own environment — including a merge skill and a release skill written against the pipeline the delivery pass actually read — and propose them as a pull request together with an added CLAUDE.md section. Runs right after the project-management and delivery audits of the first pass, or on its own with "adapte les skills Castalie à notre environnement". It opens a branch and a pull request; it never merges, never deploys, never rewrites an existing skill, and never changes an existing process.
 ---
 
 # adapt — make the kit fit this repository, as a pull request
 
-The kit's skills are written against Galy's verbs and nobody else's. This step rewrites them
+The kit's skills are written against Castalie's verbs and nobody else's. This step rewrites them
 against **what this team actually has**, and hands the result over as a pull request: a branch,
 an added section in the root instruction file, and adapted skills beside their existing ones —
 plus, where the delivery pass actually read their chain, a merge skill and a release skill that
 describe the way they already ship.
 
 **Nothing existing changes.** Not one command, not one workflow, not one convention. If the only
-way to use Galy were to move their work items, they would keep the work items and drop Galy.
+way to use Castalie were to move their work items, they would keep the work items and drop Castalie.
 
 ## The pull request is the judge, and there is no gate before it
 
@@ -64,7 +64,7 @@ is the one that works**. Read `delivery_commands` before you choose a name, not 
 On a collision, you have two honest options and you pick per skill, not globally:
 
 - **Skip it.** Their version already does the job, and it drives a system that already holds
-  their work. Say so, and say what Galy adds that theirs does not: usually the strategy link and
+  their work. Say so, and say what Castalie adds that theirs does not: usually the strategy link and
   the follow-up horizon.
 - **Ship it under a prefixed name** — `galy-feature-spec` — when the two genuinely do different
   things, and say in one line how a reader tells them apart.
@@ -93,8 +93,8 @@ committed, not that it is any particular file.
 The block itself:
 
 ```markdown
-<!-- galy:begin — géré par la prise en main Galy, modifiable -->
-## Galy, à côté de ce qui existe
+<!-- galy:begin — géré par la prise en main Castalie, modifiable -->
+## Castalie, à côté de ce qui existe
 
 <qui possède quoi — une ligne par système, tirée de la proposition de liaison>
 <la phrase qui dit que rien d'existant ne change>
@@ -135,14 +135,14 @@ Three properties, each load-bearing:
   orphan every one of them.
 - **Short.** It joins a file every session reads in full; anything long gets skipped, and a
   doctrine nobody finishes is a doctrine nobody applies.
-- **It names their system first**, Galy second. The reader must see their own world described
+- **It names their system first**, Castalie second. The reader must see their own world described
   correctly before being told what is added to it.
 
 #### It routes. It does not inventory.
 
 **This is the part that decides whether the block does anything at all.** A section that says
-"Galy holds the briefs and the specs" is a description: a session reads it, learns a fact, and
-carries on writing code without ever opening Galy. The block has to say what a session must **do**,
+"Castalie holds the briefs and the specs" is a description: a session reads it, learns a fact, and
+carries on writing code without ever opening Castalie. The block has to say what a session must **do**,
 and **when the rule fires**.
 
 The shape below is proven on a repository of a hundred-odd skills. Take its structure; the names
@@ -207,7 +207,7 @@ The contract the skills follow is `${CLAUDE_PLUGIN_ROOT}/instructions/host-instr
 block written before this line existed keeps working untouched: no line simply means no file, which
 is what every one of them already says.
 
-If the file does not exist, propose one — and then it is a doctrine, not a Galy section: cover
+If the file does not exist, propose one — and then it is a doctrine, not a Castalie section: cover
 the stack, how to build and test, the conventions read from their history, and above all the
 rules whose violation costs real data.
 
@@ -267,7 +267,7 @@ That is not a caveat to soften a sentence: it *is* the sentence. A skill that li
 chain is read in their first hour, is wrong, and nobody comes back to it — and it does not look
 like a broken thing, it looks like a working one.
 
-Two things that must never appear in what you write: the word **Galy**, or the name of this
+Two things that must never appear in what you write: the word **Castalie**, or the name of this
 kit's own repository, anywhere in a command; and a command that is not in their repository.
 The skills are theirs and speak only of theirs.
 

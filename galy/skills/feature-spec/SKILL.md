@@ -1,13 +1,13 @@
 ---
 name: feature-spec
-description: Turn a Galy brief into a technical spec — explore your own codebase, weigh design options, then write phases, risks and acceptance tests. Writes the spec via the Galy MCP and its body via the cs CLI. Your code stays local; only the plan and its metadata go to Galy.
+description: Turn a Castalie brief into a technical spec — explore your own codebase, weigh design options, then write phases, risks and acceptance tests. Writes the spec via the Castalie MCP and its body via the cs CLI. Your code stays local; only the plan and its metadata go to Castalie.
 ---
 
 # feature-spec — write the technical spec for a brief
 
 Turn a `feature_brief` into a `feature_spec`: the technical approach, cut into phases, with risks and
 acceptance tests. You explore the client's codebase **locally** to ground the plan; only the plan text
-and metadata are written to Galy.
+and metadata are written to Castalie.
 
 ## Arguments
 
@@ -27,7 +27,7 @@ synced by the CLI.
    `mcp__cs__strategy_get_objective_breadcrumb`.
 2. **Explore the codebase — locally.** Use Read/Grep/Glob over the client's repository to find where the
    change lands, the existing patterns to follow, the seams to cut phases along. This never leaves the
-   machine — Galy sees none of it.
+   machine — Castalie sees none of it.
    **Read the host's own rules first**, following `${CLAUDE_PLUGIN_ROOT}/instructions/host-instructions.md`:
    the lines carrying `<!-- galy:instructions -->` in the root instruction file name the files a skill
    must open, and a marker naming `feature-spec` is addressed to you — their conventions, the writes
@@ -83,12 +83,12 @@ synced by the CLI.
 
 ## Confirmation
 
-Print the spec title, its phases, and a clickable Galy link; point to `feature-implement <spec_id>` as
+Print the spec title, its phases, and a clickable Castalie link; point to `feature-implement <spec_id>` as
 the next step.
 
 ## Discipline
 
-- **Body and code stay local.** Only plan text and metadata reach Galy — never a file's contents or a diff.
+- **Body and code stay local.** Only plan text and metadata reach Castalie — never a file's contents or a diff.
 - **Empty phases = unfinished spec.** Never hand an implementer a spec with no phases.
 - **Check case completeness before handoff.** Each phase has concrete expected outcomes, suitable
   verification and existing tests considered; a green CI alone is never its completion criterion.

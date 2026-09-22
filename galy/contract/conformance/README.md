@@ -1,6 +1,6 @@
 # Contract conformance
 
-Verifies that a Galy MCP endpoint honours the `galy-pm-v1` contract — and, above all, the outward-only
+Verifies that a Castalie MCP endpoint honours the `galy-pm-v1` contract — and, above all, the outward-only
 guarantee: **no verb ever accepts source code, a diff, or file content.**
 
 ## Run
@@ -15,7 +15,7 @@ Against a live endpoint — set `GALY_ENDPOINT` (the host) and `GALY_TOKEN`. The
 url (`<endpoint>/mcp`) and the REST base from it, and exercises both surfaces:
 
 ```
-GALY_ENDPOINT=https://<your-workspace>.galy.cloud GALY_TOKEN=<token> node runner.mjs
+GALY_ENDPOINT=https://<your-workspace>.castalie.app GALY_TOKEN=<token> node runner.mjs
 ```
 
 (You can pin the MCP url separately with `GALY_MCP_URL` if it differs.) Exit code `0` = all checks pass,

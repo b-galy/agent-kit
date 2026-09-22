@@ -76,7 +76,7 @@ export const backOfficeObjective = {
   },
 };
 
-/** Galy — `feature_spec_get { id: 54 }`: phases beside the spec, everything snake_case. */
+/** Castalie — `feature_spec_get { id: 54 }`: phases beside the spec, everything snake_case. */
 export const galySpec = {
   success: true,
   spec: {
@@ -95,7 +95,7 @@ export const galySpec = {
   acceptance_tests: [],
 };
 
-/** Galy — `feature_brief_get { id: 61 }`: a brief that serves no objective. */
+/** Castalie — `feature_brief_get { id: 61 }`: a brief that serves no objective. */
 export const galyBrief = {
   success: true,
   brief: {
@@ -109,7 +109,7 @@ export const galyBrief = {
   user_stories: [],
 };
 
-/** Galy — `feature_spec_list { feature_brief_id: 61 }`: a brief's specs, listed apart. */
+/** Castalie — `feature_spec_list { feature_brief_id: 61 }`: a brief's specs, listed apart. */
 export const galySpecList = {
   success: true,
   specs: [
@@ -117,7 +117,7 @@ export const galySpecList = {
   ],
 };
 
-/** Galy — `strategy_get_objective_breadcrumb { objective_id: 8 }`: `breadcrumb`, not `chain`. */
+/** Castalie — `strategy_get_objective_breadcrumb { objective_id: 8 }`: `breadcrumb`, not `chain`. */
 export const galyChain = {
   success: true,
   breadcrumb: [
@@ -125,7 +125,7 @@ export const galyChain = {
   ],
 };
 
-/** Galy — `strategy_navigate_children {}`: the objective nested under its row, with its key results. */
+/** Castalie — `strategy_navigate_children {}`: the objective nested under its row, with its key results. */
 export const galyChildren = {
   success: true,
   objectives: [
@@ -147,7 +147,7 @@ export const galyChildren = {
 };
 
 /**
- * The back office's own answers, written the way Galy writes them — same work, same ids,
+ * The back office's own answers, written the way Castalie writes them — same work, same ids,
  * the other spelling. What the tree builds from both must be the same tree, or the pane
  * draws one workspace and an empty frame for the other.
  */

@@ -1,6 +1,6 @@
 ---
 name: audit-organisation
-description: Audit this team's engineering practices against Galy's twenty recommended criteria, one criterion at a time, one line each. The same skill runs the first pass and every one after it. Fires on a plain sentence such as "audite mon projet", "démarre l'onboarding Galy", "commence la prise en main", "fais le point", "start the Galy audit", "où en sont nos pratiques ?", or whenever a session finds that nothing has ever been observed. Also fires on a question about a past audit — "où en sont les recommandations ?", "montre-moi l'audit", "what did the audit find?" — which it answers from the recorded state and ends on the address of the page, without opening a pass. It says what it is about to check, checks it, reports one line, and stops to have anything that is not green confirmed before writing it. It observes and proposes; it applies nothing, merges nothing, and triggers nothing.
+description: Audit this team's engineering practices against Castalie's twenty recommended criteria, one criterion at a time, one line each. The same skill runs the first pass and every one after it. Fires on a plain sentence such as "audite mon projet", "démarre l'onboarding Castalie", "commence la prise en main", "fais le point", "start the Castalie audit", "où en sont nos pratiques ?", or whenever a session finds that nothing has ever been observed. Also fires on a question about a past audit — "où en sont les recommandations ?", "montre-moi l'audit", "what did the audit find?" — which it answers from the recorded state and ends on the address of the page, without opening a pass. It says what it is about to check, checks it, reports one line, and stops to have anything that is not green confirmed before writing it. It observes and proposes; it applies nothing, merges nothing, and triggers nothing.
 ---
 
 # audit-organisation — observe the practices, trigger nothing
@@ -96,7 +96,7 @@ page.** Three moments are reports, and only the first one used to be treated as 
 
 The address is `page_url`, and `mcp__cs__maturity_challenge` returns it on every call — so a
 report has no excuse for lacking one. **Give the address the tool returned and never build one:**
-a Galy instance is not guessable — every workspace answers on its own host, and a dedicated
+a Castalie instance is not guessable — every workspace answers on its own host, and a dedicated
 instance lives under the client's own name — so an address you assembled yourself lands on a 404
 or, worse, on somebody else's instance. If no call gave you one, say the page exists and say you
 do not have its address; that is a bug to report, not a gap to paper over.
@@ -258,7 +258,7 @@ procedure.
 Open with one sentence, in the user's language, naming the workspace the observations go into —
 `mcp__cs__whoami` gives you the name:
 
-> Je vais auditer ton projet avec les bonnes pratiques recommandées par Galy, un critère à la
+> Je vais auditer ton projet avec les bonnes pratiques recommandées par Castalie, un critère à la
 > fois. Les constats iront dans l'espace « <nom> ».
 
 **Then go straight to the first criterion.** Say which one you are looking at and why, look, give
@@ -384,12 +384,12 @@ something concrete to hang on it. A pass that hangs under nothing is a report; h
 objective, it is work someone answers for — and the twentieth criterion, the one about measuring
 effect, is exactly the claim that intent goes down to execution and measurement comes back up.
 
-Look for an objective meaning **« Améliorer l'organisation grâce à Galy »**, and under it a
+Look for an objective meaning **« Améliorer l'organisation grâce à Castalie »**, and under it a
 sub-objective meaning **« Ajuster l'organisation de la tech »** — in the user's language.
 
 The objective is named after **this product**, not after the technology. « grâce à l'I.A. » is a
 slogan: it names a field, it commits to nothing, and in a year nobody can say whether it was met.
-« grâce à Galy » names the thing that is supposed to produce the change — so the objective has an
+« grâce à Castalie » names the thing that is supposed to produce the change — so the objective has an
 owner, and the twentieth criterion, `effect_measured`, has something to measure.
 
 `mcp__cs__strategy_search_objectives` finds it; `mcp__cs__strategy_navigate_children` shows what
@@ -420,8 +420,8 @@ weigh, and weighing it out loud is how a first pass becomes the last.
 So: **say what is there, then what you propose.** Never a count, never « rien en dessous », never
 a word on how their tree is built.
 
-> Tu es bien branché sur Galy, et il y a déjà des objectifs — mais aucun où rattacher un travail
-> sur l'organisation. Je te propose d'ajouter « Améliorer l'organisation grâce à Galy », avec
+> Tu es bien branché sur Castalie, et il y a déjà des objectifs — mais aucun où rattacher un travail
+> sur l'organisation. Je te propose d'ajouter « Améliorer l'organisation grâce à Castalie », avec
 > « Ajuster l'organisation de la tech » dessous, pour que ce que je trouve ici y soit rattaché.
 
 **Follow their register.** They wrote to you first: if they say « tu », answer « tu ». An assistant
@@ -477,7 +477,7 @@ department, and it belongs here rather than in an opening paragraph.
 `mcp__cs__onboarding_retro_record(run_id, worked_md, friction_md, questions_md, suggestions_md)`.
 
 It is written to their own instance and stays there. Writing in your own workspace asks nobody's
-permission, and whether that instance forwards anything to Galy is a setting their administrator
+permission, and whether that instance forwards anything to Castalie is a setting their administrator
 holds — not a question for the person in front of you.
 
 Each field carries only what its name says, **about the process**: what helped, where the pass
@@ -487,7 +487,7 @@ themselves — those belong to the workspace.
 
 Then one line, and do not turn it into a choice:
 
-> Rétrospective de cette prise en main écrite dans votre instance : qu'elle remonte ou non à Galy
+> Rétrospective de cette prise en main écrite dans votre instance : qu'elle remonte ou non à Castalie
 > est un réglage d'instance que votre administrateur tient, désactivé par défaut.
 
 ## The tone

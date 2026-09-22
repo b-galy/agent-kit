@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// cs — cross-platform CLI for the Galy project-management API.
+// cs — cross-platform CLI for the Castalie project-management API.
 //
-// Talks REST to /api/pm/* on your Galy endpoint. Mirrors the read side of the MCP
+// Talks REST to /api/pm/* on your Castalie endpoint. Mirrors the read side of the MCP
 // verbs your agent uses, but is shell-friendly: search work items, read
 // compact JSON cards, and pull/push the large markdown body of a brief or spec as
 // a local file so you never shove a whole body through a tool argument.
@@ -71,7 +71,7 @@ function loadConfig() {
   let endpoint = process.env.GALY_ENDPOINT || fromFile.endpoint;
   const token = process.env.GALY_TOKEN || fromFile.token;
   if (!endpoint) die("No endpoint. Set GALY_ENDPOINT or .cs/config.json { \"endpoint\": ... }.");
-  if (!token) die("No token. Set GALY_TOKEN or .cs/config.json { \"token\": ... }. Get one from galy.io → Settings → Connect your assistant.");
+  if (!token) die("No token. Set GALY_TOKEN or .cs/config.json { \"token\": ... }. Get one from castalie.app → Settings → Connect your assistant.");
   endpoint = endpoint.replace(/\/+$/, "").replace(/\/mcp$/i, ""); // tolerate a pasted MCP url
   return { endpoint, token };
 }
@@ -92,7 +92,7 @@ async function request(method, path, { json, raw } = {}) {
   if (!res.ok) {
     let msg = text.slice(0, 300);
     try { msg = JSON.parse(text).error || msg; } catch { /* keep raw */ }
-    if (res.status === 401) msg = "unauthorized — check your token (galy.io → Settings → Connect your assistant)";
+    if (res.status === 401) msg = "unauthorized — check your token (castalie.app → Settings → Connect your assistant)";
     die(`${method} ${path} → HTTP ${res.status}: ${msg}`);
   }
   return raw ? text : (text ? JSON.parse(text) : {});
@@ -163,7 +163,7 @@ function parseArgs(argv) {
 function print(obj) { console.log(JSON.stringify(obj, null, 2)); }
 function die(msg) { console.error(`cs: ${msg}`); process.exit(1); }
 
-const HELP = `cs — Galy project-management CLI
+const HELP = `cs — Castalie project-management CLI
 
   cs search <query>                 # briefs + specs matching the query
   cs brief <id>                     # a brief with its user stories
@@ -175,7 +175,7 @@ const HELP = `cs — Galy project-management CLI
   cs bug-evaluation help              # local isolated bug-evaluation runner
 
 Config: env GALY_ENDPOINT / GALY_TOKEN, or .cs/config.json { "endpoint", "token" }.
-Galy never sees your code — this CLI only carries work items and their text.`;
+Castalie never sees your code — this CLI only carries work items and their text.`;
 
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2);

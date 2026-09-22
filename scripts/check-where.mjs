@@ -680,7 +680,7 @@ let backOfficeRows;
 
 // ── 20. An address the engine would refuse is drawn as text (P3/T1) ───────
 {
-  const GALY = "https://benoit.galy.cloud/specs/56";
+  const GALY = "https://benoit.castalie.app/specs/56";
   check("an https address is kept as the engine spells it", hrefOf(GALY) === GALY, String(hrefOf(GALY)));
   check("and so is the back office's",
     hrefOf("https://back.green-acres.com/fr/Product/FeatureSpec/Detail/1109") ===
@@ -690,16 +690,16 @@ let backOfficeRows;
   check("no address at all is no link", hrefOf(undefined) === null && hrefOf("") === null && hrefOf(12) === null);
   check("plain http elsewhere is refused", hrefOf("http://back.green-acres.com/specs/56") === null);
   check("and so is a scheme that is not the web", hrefOf("javascript:alert(1)") === null);
-  check("a host with a user in front of it is refused", hrefOf("https://user@galy.cloud/specs/56") === null);
-  check("a raw @ anywhere is refused", hrefOf("https://galy.cloud/specs/@56") === null);
+  check("a host with a user in front of it is refused", hrefOf("https://user@castalie.app/specs/56") === null);
+  check("a raw @ anywhere is refused", hrefOf("https://castalie.app/specs/@56") === null);
   check("something that is not an address at all is refused", hrefOf("back.green-acres.com/specs/56") === null);
-  check("past 2048 characters it is refused", hrefOf(`https://galy.cloud/${"a".repeat(2100)}`) === null);
+  check("past 2048 characters it is refused", hrefOf(`https://castalie.app/${"a".repeat(2100)}`) === null);
   // The engine's own declaration says to encode a space and a non-ASCII letter rather than
   // refuse them, and `new URL(href).href` is the spelling it asks for: so they become an
   // address a person can click, not a row that lost its link on the way.
   check("an accent is encoded rather than dropped",
-    hrefOf("https://galy.cloud/specs/été") === "https://galy.cloud/specs/%C3%A9t%C3%A9", String(hrefOf("https://galy.cloud/specs/été")));
-  check("and so is a space", hrefOf("https://galy.cloud/specs/56 bis") === "https://galy.cloud/specs/56%20bis");
+    hrefOf("https://castalie.app/specs/été") === "https://castalie.app/specs/%C3%A9t%C3%A9", String(hrefOf("https://castalie.app/specs/été")));
+  check("and so is a space", hrefOf("https://castalie.app/specs/56 bis") === "https://castalie.app/specs/56%20bis");
 }
 
 // ── 21. The rows of a workspace that serves its addresses (P3/T2) ─────────
@@ -939,7 +939,7 @@ let backOfficeRows;
         success: true,
         breadcrumb: [{ id: args.objective_id, title: `Objectif ${args.objective_id}`, period_name: "T3 2026" }],
       }),
-      // Key result 7 under objective 7, key result 8 under objective 8, as Galy answers them.
+      // Key result 7 under objective 7, key result 8 under objective 8, as Castalie answers them.
       strategy_get_objective: (args) => ({
         success: true,
         objective: {
@@ -1221,7 +1221,7 @@ let backOfficeRows;
 // ── 29. A held spec's scheduled checks, under its phases (P9/T1) ──────────
 {
   // The back office answers them inside the spec, PascalCase, with the verdict of the
-  // latest run; Galy answers them on their own verb, snake_case, and knows no run. Both
+  // latest run; Castalie answers them on their own verb, snake_case, and knows no run. Both
   // draw the same block under the phases of the spec in hand: a heading, then one row per
   // check — the mark of its latest run where one is known, its title, the day it is due.
   const withInline = workspace({
@@ -1269,8 +1269,8 @@ let backOfficeRows;
   check("the day it is due is dim, the title is not",
     checks.every((row) => row.segments[1].dim === true && row.segments[0].dim === undefined));
 
-  // Galy: the spec answers no such field, so the checks are read on their own verb, once
-  // per spec in hand, in Galy's spelling.
+  // Castalie: the spec answers no such field, so the checks are read on their own verb, once
+  // per spec in hand, in Castalie's spelling.
   const galyChecks = workspace({
     spelling: "galy",
     answers: {
@@ -1291,7 +1291,7 @@ let backOfficeRows;
     listCalls.length === 1 && listCalls[0].args.feature_spec_id === 54, JSON.stringify(listCalls));
   const galyRows = dockRows(galyModel, { columns: 96 });
   const galyCheckRows = galyRows.filter((row) => row.key.includes("-spec-54-followup-"));
-  check("a check Galy answers is drawn without a mark, since no run is known",
+  check("a check Castalie answers is drawn without a mark, since no run is known",
     plainOf(galyCheckRows).join("|") === "      ↻ Le panneau survit à la mise à jour suivante de Claude Code · J+7" &&
       galyRows.some((row) => row.key.endsWith("-spec-54-followups")), plainOf(galyRows).join("\n"));
   await modelOf(galyChecks, { specs: [{ id: 54, at: NOW, server: "cs" }], briefs: [] });

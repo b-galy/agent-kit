@@ -2,7 +2,7 @@
 
 Loaded by `ship` (and reusable by `analyse`) to run an adversarial review of the working diff before a
 PR is marked ready. Independent sub-agents (fresh context) review the diff so they carry no author bias.
-Everything stays inside your repository — the diff is never sent to Galy.
+Everything stays inside your repository — the diff is never sent to Castalie.
 
 ## When it runs
 
