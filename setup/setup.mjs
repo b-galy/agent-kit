@@ -40,21 +40,26 @@ import { fileURLToPath } from "node:url";
  * THE GITHUB ADDRESS OF THIS REPOSITORY — written once in this file, and read by every line that
  * prints it.
  *
- * It still reads `b-galy` while everything else the kit publishes reads Castalie, and that is not
- * an oversight: a GitHub organisation is renamed from the web interface by its owner, never from
- * an API, so this value follows a gesture no branch can make.
+ * The organisation became `castalie-app` on 22 September 2026, from `b-galy`, which had come from
+ * `galy-io`. `castalie` on its own was held by an account dormant since 2016; `castalie-app` is
+ * the domain, which is the better half of the trade.
  *
- * WHAT THE DAY OF THAT RENAME COSTS, exactly, so that it is a gesture and not a hunt: this
- * constant, and the five lines of prose that spell the address out for a reader — four in the
- * README, one in the `connect` skill. `git grep 'b-galy/agent-kit'` finds those six, plus this
- * comment and the messages validate.mjs prints; nothing else in the repository holds it. GitHub
- * redirects the old path meanwhile, which is precisely what makes it easy to forget — validate.mjs
- * invariant 3 exists because that redirection already went stale once.
+ * WHAT THAT RENAME COST, since the last version of this comment promised it: this constant, and
+ * the five lines of prose that spell the address out for a reader — four in the README, one in the
+ * `connect` skill. The promise held; the grep found six and there was no sixth place. Whoever
+ * renames next should expect the same and be told if it is not.
  *
- * Everything else that carries a name has already moved: the marketplace is `castalie`, the plugin
- * `cs`, the packages `@castalie/*`.
+ * GitHub redirects the old path, which is exactly what makes a stale one easy to keep: everything
+ * goes on working, so nothing gets aligned, and the redirect breaks the day someone creates a
+ * repository under the freed name. validate.mjs invariant 3 refuses every former address for that
+ * reason, and it now has two to refuse.
+ *
+ * The MARKETPLACE is `castalie`, not `castalie-app`, and that is not a leftover: a marketplace is
+ * named by this repository's own manifest, never by its owner, so the organisation's rename does
+ * not touch it. An installed workstation keys its cache by that name, and moving it again would
+ * cost every one of them a second migration for a spelling nobody types.
  */
-const REPOSITORY = "b-galy/agent-kit";
+const REPOSITORY = "castalie-app/agent-kit";
 
 // What Claude Code reads before it loads a single hooks module — the pane beside the
 // transcript among them. Absent, nothing of the module loads, the classic hooks and the
