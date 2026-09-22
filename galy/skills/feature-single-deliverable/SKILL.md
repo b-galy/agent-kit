@@ -121,3 +121,8 @@ went green, and never because a setting sounded like permission to do it yoursel
 
 The **ship — spec** variant of `${CLAUDE_PLUGIN_ROOT}/instructions/delivery-report.md`, with the
 brief's link beside the spec's: this is the one journey where a reader has never seen either.
+
+## Hand back
+
+Close the turn on the state table and the lettered questions of
+`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.

@@ -5,6 +5,10 @@ spec, follow-up, ship. Each skill renders the variant for its entity instead of 
 inline. Applies to any report that work is finished, including outside `feature-implement`,
 `feature-followup`, `ship`, `end`.
 
+**The report is not the last block of the turn.** It comes first and keeps the form below; the
+turn then closes on the state table and the lettered questions of
+`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.
+
 Reports are **written in the user's language**, in full sentences readable by a non-specialist,
 **printed to the terminal** — never to a file unless the user explicitly asks.
 

@@ -72,3 +72,8 @@ somebody's production is the one failure this whole design exists to prevent.
 **Decide on somebody's behalf.** If an action turns out to be wrong, or more expensive than it
 said, stop and say so — do not turn it down yourself. Turning it down is a decision, it wants a
 reason, and the reason is theirs.
+
+## Hand back
+
+Close the turn on the state table and the lettered questions of
+`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.

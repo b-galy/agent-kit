@@ -92,3 +92,8 @@ belongs to group 1 — say the silence on its line rather than listing it twice.
   means nothing to the person reading.
 - **No advice on strategy.** Setting a target or dropping an objective is the user's call. You show
   where things stand and what pace remains; you do not propose to lower the bar.
+
+## Hand back
+
+Close the turn on the state table and the lettered questions of
+`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.

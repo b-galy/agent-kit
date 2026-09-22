@@ -93,3 +93,8 @@ the next step.
 - **Check case completeness before handoff.** Each phase has concrete expected outcomes, suitable
   verification and existing tests considered; a green CI alone is never its completion criterion.
 - **Acceptance tests describe *how to check*, not code.** URLs, commands, queries.
+
+## Hand back
+
+Close the turn on the state table and the lettered questions of
+`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.

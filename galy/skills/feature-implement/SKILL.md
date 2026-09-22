@@ -80,3 +80,8 @@ silently changing a required outcome or treating an unverified case as complete.
 ## Report
 
 Deliver the **ship — spec** variant from `${CLAUDE_PLUGIN_ROOT}/instructions/delivery-report.md`.
+
+## Hand back
+
+Close the turn on the state table and the lettered questions of
+`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.
