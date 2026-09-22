@@ -87,7 +87,7 @@ jobs:
       - name: La projection tourne depuis un depot hote, sur la disposition installee
         run: |
           set -e
-          kit="$(mktemp -d)/bg"
+          kit="$(mktemp -d)/cs"
           host="$(mktemp -d)"
           mkdir -p "$kit"
           cp -r galy/. "$kit/"
@@ -110,17 +110,17 @@ jobs:
       # out of reach, and every check above was green the whole time.
       #
       # The two roots are therefore supplied by NOTHING: `--plugin-root` defaults to the installed
-      # kit `bin/bg.mjs` sits in, `--repo-root` to the working directory. A flag passed here would
+      # kit `bin/cs.mjs` sits in, `--repo-root` to the working directory. A flag passed here would
       # test the flag and leave the defaults — which is all a client types — unexercised.
       - name: Un client lance la projection depuis le kit installe, sans aucun drapeau
         run: |
           set -e
-          kit="$(mktemp -d)/bg"
+          kit="$(mktemp -d)/cs"
           host="$(mktemp -d)"
           mkdir -p "$kit"
           cp -r galy/. "$kit/"
           cd "$host"
-          node "$kit/bin/bg.mjs" codex --quiet
+          node "$kit/bin/cs.mjs" codex --quiet
           # Read the produced tree, never the summary.
           test -f .agents/skills/feature-implement/SKILL.md
           test -f .agents/instructions/acceptance-criteria.md
@@ -135,7 +135,7 @@ jobs:
           done
           echo "$spelled" | wc -l
           # The banner names the command a client can actually type, not a file they do not have.
-          grep -q 're-run bg codex' .agents/skills/ship/SKILL.md
+          grep -q 're-run cs codex' .agents/skills/ship/SKILL.md
           # And nothing was written back into the kit.
           test ! -e "$kit/.agents"
           test ! -e "$kit/.codex"
@@ -149,11 +149,11 @@ jobs:
       - name: Ecrire dans le kit installe est refuse
         run: |
           set -e
-          kit="$(mktemp -d)/bg"
+          kit="$(mktemp -d)/cs"
           mkdir -p "$kit"
           cp -r galy/. "$kit/"
           cd "$kit"
-          if node "$kit/bin/bg.mjs" codex --quiet; then echo "the guard let it through"; exit 1; fi
+          if node "$kit/bin/cs.mjs" codex --quiet; then echo "the guard let it through"; exit 1; fi
           test ! -e "$kit/.agents"
           test ! -e "$kit/.codex"
 

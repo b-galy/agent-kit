@@ -1,8 +1,10 @@
-# Local credentials — never committed. `.galy/` is the folder's former name, still read as a fallback.
+# Local credentials — never committed. `.bg/` and `.galy/` are the folder's former names, still
+# read as fallbacks.
+.cs/
 .bg/
 .galy/
 
-# Ephemeral content buffers pulled/pushed by the bg CLI
+# Ephemeral content buffers pulled/pushed by the cs CLI
 .tmp/
 
 # Node

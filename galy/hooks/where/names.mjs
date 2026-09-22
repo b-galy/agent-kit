@@ -10,7 +10,7 @@ export const PANE_TITLE = "Où j'en suis";
 /**
  * The slash command that opens and closes it.
  *
- * The plugin serves it as a skill, so the person runs `/bg:okr-panel` and the name sits in the
+ * The plugin serves it as a skill, so the person runs `/cs:okr-panel` and the name sits in the
  * plugin's namespace beside `okr-checkin` and `okr-review`. `$.command.register` cannot carry
  * that prefix — a registered name takes letters, digits, `_` and `-` only — so the bare name is
  * also registered as a door of last resort, for a session whose skills did not load.
@@ -22,7 +22,7 @@ export const COMMAND_NAME = "okr-panel";
  * slash). While it is listed, the bare name is not registered: the engine refuses a name that is
  * already the plugin's skill, and asking first keeps that expected refusal off the screen.
  */
-export const SKILL_COMMAND = `bg:${COMMAND_NAME}`;
+export const SKILL_COMMAND = `cs:${COMMAND_NAME}`;
 
 /**
  * Every key `command.run` may hand the hook for this command: the plugin's namespaced skill, and

@@ -4,7 +4,7 @@
   "type": "module",
   "private": true,
   "bin": {
-    "bg": "./bin/bg.mjs"
+    "cs": "./bin/cs.mjs"
   },
   "scripts": {
     "conformance": "node contract/conformance/runner.mjs",

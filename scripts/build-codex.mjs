@@ -23,7 +23,7 @@
 //   node scripts/build-codex.mjs --check    # --verify, plus drift against the projection on disk
 //   node scripts/build-codex.mjs --quiet    # only the summary line
 //
-// Every flag is the module's; this file interprets none of them. A client types `bg codex`, which
+// Every flag is the module's; this file interprets none of them. A client types `cs codex`, which
 // runs the same code with the installed kit and their working directory as the two roots.
 
 import { dirname, join } from "node:path";

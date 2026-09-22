@@ -109,7 +109,7 @@ it**: it writes on the machine, and only the main session can ask.
 
 ## The named facts the next step quotes
 
-Five verdicts are not what the next step needs. `bg:adapt` writes delivery skills **into this
+Five verdicts are not what the next step needs. `cs:adapt` writes delivery skills **into this
 team's own repository**, and every sentence in them has to be true of *their* pipeline. A skill
 that says « votre chaîne se déclenche sur X » when it does not is read in their first hour, is
 wrong, and nobody comes back to it. So beside the criteria, return a block of **named facts**.
@@ -156,7 +156,7 @@ what stops the next step from inventing.
 
 **Return the block once, at the end, and never as a verdict.** None of it is a criterion: nothing
 here is recorded, nothing here goes through the checkpoint, and none of it is a state. The main
-session hands it to `bg:adapt`, which is the only reason it exists.
+session hands it to `cs:adapt`, which is the only reason it exists.
 
 ## Recording
 

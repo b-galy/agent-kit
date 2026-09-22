@@ -15,7 +15,7 @@
 //
 // So the implementation ships, as a subcommand of the CLI that already ships:
 //
-//   bg codex                              # from the client's own repository
+//   cs codex                              # from the client's own repository
 //   node scripts/build-codex.mjs          # from a checkout of this repository, unchanged
 //
 // There is ONE implementation. `scripts/build-codex.mjs` is a caller that supplies this
@@ -26,7 +26,7 @@
 // both hung off the script's own location: the sources were `<script>/../galy`, the output
 // `<script>/..`, and the projection could therefore only ever be built inside this repository. That
 // is the wrong place for it. The kit is INSTALLED into a client's machine and their code lives
-// somewhere else entirely, so a Codex tab in their repository saw no `bg:*` skill and never had —
+// somewhere else entirely, so a Codex tab in their repository saw no `cs:*` skill and never had —
 // their own generator projects their `.claude/` and knows nothing of the kit. The two flags below
 // say where to read and where to write, and they are separate because those are separate machines'
 // worth of distance.
@@ -34,13 +34,13 @@
 //   --plugin-root <dir>   the installed kit — the folder holding `skills/`, `instructions/` and
 //                         `agents/`. It is exactly what `${CLAUDE_PLUGIN_ROOT}` names, so inside a
 //                         skill it is `"$CLAUDE_PLUGIN_ROOT"` verbatim, and outside one it is
-//                         `~/.claude/plugins/cache/b-galy/bg/<version>`.
+//                         `~/.claude/plugins/cache/b-galy/cs/<version>`.
 //                         Default: this file's own plugin root — `bin/..`, which is the installed
 //                         kit when the CLI runs from the cache, and `galy/` in a checkout of this
 //                         repository. So the flag changes nothing when it is absent.
 //   --repo-root <dir>     the repository the projection is written into: `.agents/` and `.codex/`
 //                         appear at its root, beside that team's code. Default: the working
-//                         directory, which is the client's repository when they type `bg codex`.
+//                         directory, which is the client's repository when they type `cs codex`.
 //
 // `scripts/build-codex.mjs` overrides both defaults with this repository's own, so the bare
 // `node scripts/build-codex.mjs` is unchanged, here and only here.
@@ -79,11 +79,11 @@
 // side the client actually installs.
 //
 // Usage:
-//   bg codex                                # write the projection into the working directory
-//   bg codex --verify                       # build into a temp tree, assert every reference resolves
-//   bg codex --check                        # --verify, plus drift against the projection on disk
-//   bg codex --quiet                        # only the summary line
-//   bg codex --repo-root <dir>              # write somewhere other than the working directory
+//   cs codex                                # write the projection into the working directory
+//   cs codex --verify                       # build into a temp tree, assert every reference resolves
+//   cs codex --check                        # --verify, plus drift against the projection on disk
+//   cs codex --quiet                        # only the summary line
+//   cs codex --repo-root <dir>              # write somewhere other than the working directory
 //
 // `--check` presumes a built projection on disk and is therefore a DEVELOPER's check, not CI's: the
 // output is gitignored, so a fresh checkout has none and every file reads as drift. CI runs
@@ -95,8 +95,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
 
-// This file sits in `<plugin-root>/bin/`, beside `bg.mjs` — verified against the installed cache,
-// where `~/.claude/plugins/cache/b-galy/bg/<version>/` holds `bin/`, `skills/`, `instructions/`
+// This file sits in `<plugin-root>/bin/`, beside `cs.mjs` — verified against the installed cache,
+// where `~/.claude/plugins/cache/b-galy/cs/<version>/` holds `bin/`, `skills/`, `instructions/`
 // and `agents/` side by side. So the plugin root is one folder up, never this folder.
 const KIT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -116,10 +116,10 @@ const DEGRADATIONS = [
       "continuing. Do NOT assume a default: the point of the question is that the user decides.",
   },
   {
-    id: "the `bg:` namespace",
-    pattern: /`bg:[a-z-]+`/,
-    advice: "Codex has one flat namespace: drop the `bg:` prefix. A `bg:<agent>` is a Codex " +
-      "subagent - prefer the matching profile in `.codex/agents/` - and a `bg:<skill>` is a " +
+    id: "the `cs:` namespace",
+    pattern: /`cs:[a-z-]+`/,
+    advice: "Codex has one flat namespace: drop the `cs:` prefix. A `cs:<agent>` is a Codex " +
+      "subagent - prefer the matching profile in `.codex/agents/` - and a `cs:<skill>` is a " +
       "Codex skill invoked by name.",
   },
   {
@@ -295,7 +295,7 @@ export function runCli(argv = [], options = {}) {
   // The command as a user types it, and the same command as the generated banner names it. One
   // string, two spellings: the banner points at the file to re-run rather than at a command line,
   // which is what it has always said and what a reader of a generated file is looking for.
-  const INVOCATION = options.invocation ?? "bg codex";
+  const INVOCATION = options.invocation ?? "cs codex";
   const RERUN = INVOCATION.replace(/^node /, "");
 
   /** `--name <value>` or `--name=<value>`, resolved against the caller's working directory. */
@@ -328,7 +328,7 @@ export function runCli(argv = [], options = {}) {
       `\n✗ no skills under ${PLUGIN_ROOT}\n\n` +
       "  --plugin-root wants the folder that HOLDS `skills/`, `instructions/` and `agents/` — the\n" +
       "  installed plugin's own root, which is what `${CLAUDE_PLUGIN_ROOT}` names:\n" +
-      "    ~/.claude/plugins/cache/b-galy/bg/<version>\n" +
+      "    ~/.claude/plugins/cache/b-galy/cs/<version>\n" +
       "  In a checkout of this repository that folder is `galy/`, not the repository root.\n",
     );
     process.exit(1);
@@ -559,6 +559,6 @@ export function runCli(argv = [], options = {}) {
   return { ok, report };
 }
 
-// Runnable on its own — `node <kit>/bin/build-codex.mjs` — with the same defaults the `bg codex`
+// Runnable on its own — `node <kit>/bin/build-codex.mjs` — with the same defaults the `cs codex`
 // subcommand uses, since both resolve from this file's own location.
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) runCli(process.argv.slice(2));

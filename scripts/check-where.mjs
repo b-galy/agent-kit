@@ -191,7 +191,7 @@ const held1109 = { specs: [{ id: 1109, at: NOW - 60_000, server: "back-office" }
   const file = JSON.stringify({
     specs: [
       { id: 11, at: justNow(30), server: "back-office", session: "a1b2c3" },
-      { id: 9, at: justNow(5), server: "bg" },
+      { id: 9, at: justNow(5), server: "cs" },
       { id: 7, at: new Date(NOW - HORIZON_MS - 1000).toISOString() },
     ],
     briefs: [{ id: 32, at: justNow(2) }],
@@ -199,7 +199,7 @@ const held1109 = { specs: [{ id: 1109, at: NOW - 60_000, server: "back-office" }
   const held = heldOf(file, NOW);
   check("the newest claim comes first", held.specs.map((entry) => entry.id).join() === "9,11");
   check("work older than the horizon is no longer in hand", !held.specs.some((entry) => entry.id === 7));
-  check("the server a claim went through is read back", held.specs[0].server === "bg");
+  check("the server a claim went through is read back", held.specs[0].server === "cs");
   check("an entry written without one reads as no server", held.briefs[0].server === null);
   // The session that took a claim up is the hook's business, sorted at the start of a session:
   // the pane reads what is in the file and never the field.
@@ -222,7 +222,7 @@ const held1109 = { specs: [{ id: 1109, at: NOW - 60_000, server: "back-office" }
   check("the climb stops at the drive rather than spinning",
     parentOf("C:\\") === null || parentOf("C:\\") === "C:\\");
   check("a path is joined in the separator it already uses",
-    joinPath("C:\\wt", ".bg", "work.json") === "C:\\wt\\.bg\\work.json");
+    joinPath("C:\\wt", ".cs", "work.json") === "C:\\wt\\.cs\\work.json");
 }
 
 // ── 3. An MCP answer, and a refusal that says why ─────────────────────────
@@ -339,7 +339,7 @@ let backOfficeRows;
       strategy_navigate_children: galyChildren,
     },
   });
-  const model = await modelOf(galyReal, { specs: [{ id: 54, at: NOW, server: "bg" }], briefs: [] });
+  const model = await modelOf(galyReal, { specs: [{ id: 54, at: NOW, server: "cs" }], briefs: [] });
   const rows = plainOf(dockRows(model, { columns: 96 }));
   check("a brief outside the strategy says so rather than drawing a chain",
     rows.includes("brief hors stratégie"), rows.join("\n"));
@@ -443,8 +443,8 @@ let backOfficeRows;
   });
   const held = {
     specs: [
-      { id: 56, at: NOW - 1000, server: "bg" },
-      { id: 54, at: NOW - 900_000, server: "bg" },
+      { id: 56, at: NOW - 1000, server: "cs" },
+      { id: 54, at: NOW - 900_000, server: "cs" },
     ],
     briefs: [],
   };
@@ -618,7 +618,7 @@ let backOfficeRows;
     { name: "mcp__back-office__feature_spec_get", mcp: true },
     { name: "mcp__back-office__feature_brief_get", mcp: true },
   ];
-  check("a claim that names its server is asked of that one", serverOf("bg", tools) === "bg");
+  check("a claim that names its server is asked of that one", serverOf("cs", tools) === "cs");
   check("one that names none falls back on the workspace that serves the contract",
     serverOf(null, tools) === "back-office");
   check("and where nothing serves it, on nothing at all", serverOf(null, [{ name: "Read", mcp: false }]) === null);
@@ -640,7 +640,7 @@ let backOfficeRows;
     strategy_navigate_children: galyChildren,
   };
   const bench = workspace({ spelling: "galy", answers });
-  const held = { specs: [{ id: 54, at: NOW, server: "bg" }], briefs: [] };
+  const held = { specs: [{ id: 54, at: NOW, server: "cs" }], briefs: [] };
   const clock = clockOf();
   const session = sessionOf(bench, held, clock);
   session.model = await modelOf(bench, held);
@@ -657,7 +657,7 @@ let backOfficeRows;
 
   const readsBefore = bench.calls.length;
   check("the write is one the pane follows",
-    session.burst.wrote("mcp__bg__feature_brief_update", { id: 61, objective_id: 8 }) === true);
+    session.burst.wrote("mcp__cs__feature_brief_update", { id: 61, objective_id: 8 }) === true);
   await session.burst.settled();
   clock.tick(REFRESH_AFTER_WRITE_MS - 1);
   await settle();
@@ -870,8 +870,8 @@ let backOfficeRows;
     forgotten("mcp__back-office__feature_spec_update", { specId: 1109, title: "x" }) === "spec/1109,followups/1109",
     forgotten("mcp__back-office__feature_spec_update", { specId: 1109 }));
   check("a write on its brief forgets the brief and the list of its specs",
-    forgotten("mcp__bg__feature_brief_update", { id: 135, objective_id: 9 }) === "brief/135,briefSpecs/135",
-    forgotten("mcp__bg__feature_brief_update", { id: 135, objective_id: 9 }));
+    forgotten("mcp__cs__feature_brief_update", { id: 135, objective_id: 9 }) === "brief/135,briefSpecs/135",
+    forgotten("mcp__cs__feature_brief_update", { id: 135, objective_id: 9 }));
   // The chain is read under its leaf, so a node halfway up forgets the leaf's chain.
   check("a write on an objective of the chain forgets the chain it sits in, itself and its key results",
     forgotten("mcp__back-office__strategy_update_objective", { objectiveId: 14 }) === "chain/178,objective/14,children/14",
@@ -880,8 +880,8 @@ let backOfficeRows;
     forgotten("mcp__back-office__feature_spec_set_phase_status", { phaseId: 2492, status: "Done" }) === "spec/1109",
     forgotten("mcp__back-office__feature_spec_set_phase_status", { phaseId: 2492 }));
   check("a sibling is drawn too, so a write on it is forgotten",
-    forgotten("mcp__bg__feature_spec_update", { id: 1105 }) === "spec/1105",
-    forgotten("mcp__bg__feature_spec_update", { id: 1105 }));
+    forgotten("mcp__cs__feature_spec_update", { id: 1105 }) === "spec/1105",
+    forgotten("mcp__cs__feature_spec_update", { id: 1105 }));
 
   check("a write on something this copy is not drawing forgets nothing",
     forgotten("mcp__back-office__feature_spec_update", { specId: 4242 }) === "" &&
@@ -889,38 +889,38 @@ let backOfficeRows;
 
   // A child nobody drew still has a parent, and the only ones worth a read are in hand.
   check("a phase of a spec whose phases were never read costs the held specs, never a spec of its number",
-    forgotten("mcp__bg__feature_spec_set_phase_status", { id: 4242, status: "Done" }) === "spec/1109",
-    forgotten("mcp__bg__feature_spec_set_phase_status", { id: 4242 }));
+    forgotten("mcp__cs__feature_spec_set_phase_status", { id: 4242, status: "Done" }) === "spec/1109",
+    forgotten("mcp__cs__feature_spec_set_phase_status", { id: 4242 }));
   check("a risk or an acceptance test names the held specs, and is never read as a spec",
     forgotten("mcp__back-office__feature_spec_update_risk", { riskId: 12 }) === "spec/1109" &&
-      forgotten("mcp__bg__feature_spec_update_acceptance_test", { id: 12 }) === "spec/1109" &&
+      forgotten("mcp__cs__feature_spec_update_acceptance_test", { id: 12 }) === "spec/1109" &&
       forgotten("mcp__back-office__feature_spec_set_acceptance_test_status", { acceptanceTestId: 12, status: "Pass" }) === "spec/1109",
     forgotten("mcp__back-office__feature_spec_update_risk", { riskId: 12 }));
   check("a user story names its brief",
-    touchedBy("mcp__bg__feature_brief_update_user_story", { id: 12 }) === null &&
-      forgotten("mcp__bg__feature_brief_add_user_story", { feature_brief_id: 135 }) === "brief/135,briefSpecs/135");
+    touchedBy("mcp__cs__feature_brief_update_user_story", { id: 12 }) === null &&
+      forgotten("mcp__cs__feature_brief_add_user_story", { feature_brief_id: 135 }) === "brief/135,briefSpecs/135");
   check("a read touches nothing, and is not a write",
-    touchedBy("mcp__bg__feature_spec_get", { id: 1109 }) === null && writeVerbOf("mcp__bg__feature_spec_get") === null);
+    touchedBy("mcp__cs__feature_spec_get", { id: 1109 }) === null && writeVerbOf("mcp__cs__feature_spec_get") === null);
   check("a creation is a write that names nothing yet",
-    writeVerbOf("mcp__bg__feature_brief_create") === "feature_brief_create" &&
-      touchedBy("mcp__bg__feature_brief_create", { title: "x" }) === null);
+    writeVerbOf("mcp__cs__feature_brief_create") === "feature_brief_create" &&
+      touchedBy("mcp__cs__feature_brief_create", { title: "x" }) === null);
   check("a spec created under a brief moves that brief's list",
     forgotten("mcp__back-office__feature_spec_create", { featureBriefId: 135, title: "x" }) === "brief/135,briefSpecs/135");
   check("the server a write went through is the one whose names are forgotten",
-    touchedBy("mcp__bg__feature_spec_update", { id: 1 })?.server === "bg" &&
+    touchedBy("mcp__cs__feature_spec_update", { id: 1 })?.server === "cs" &&
       touchedBy("feature_spec_update", { id: 1 })?.server === null);
 
   // A key result is drawn under its objective: the write names the key result, the tree
   // finds the objective. Its `id` is never read as an objective's.
   check("a check-in names the objective its key result is drawn under",
     forgotten("mcp__back-office__strategy_create_check_in", { keyResultId: 11, newValue: 150 }) === "objective/178,children/178" &&
-      forgotten("mcp__bg__strategy_update_key_result", { key_result_id: 93, target_value: 8 }) === "objective/178,children/178",
+      forgotten("mcp__cs__strategy_update_key_result", { key_result_id: 93, target_value: 8 }) === "objective/178,children/178",
     forgotten("mcp__back-office__strategy_create_check_in", { keyResultId: 11, newValue: 150 }));
   check("a key result nobody drew costs every leaf objective, never an objective of its number",
-    forgotten("mcp__bg__strategy_create_check_in", { key_result_id: 5, new_value: 1 }) === "objective/178,children/178" &&
-      !forgotten("mcp__bg__strategy_create_check_in", { key_result_id: 5, new_value: 1 }).includes("objective/5"));
+    forgotten("mcp__cs__strategy_create_check_in", { key_result_id: 5, new_value: 1 }) === "objective/178,children/178" &&
+      !forgotten("mcp__cs__strategy_create_check_in", { key_result_id: 5, new_value: 1 }).includes("objective/5"));
   check("a new key result names its objective",
-    forgotten("mcp__bg__strategy_create_key_result", { objective_id: 178, title: "x" }) === "chain/178,objective/178,children/178");
+    forgotten("mcp__cs__strategy_create_key_result", { objective_id: 178, title: "x" }) === "chain/178,objective/178,children/178");
 
   // Two trees, two leaves: a key result drawn under one of them costs that one alone.
   const twoLeaves = workspace({
@@ -950,17 +950,17 @@ let backOfficeRows;
     },
   });
   const apart = await modelOf(twoLeaves, {
-    specs: [{ id: 56, at: NOW - 1000, server: "bg" }, { id: 54, at: NOW - 2000, server: "bg" }],
+    specs: [{ id: 56, at: NOW - 1000, server: "cs" }, { id: 54, at: NOW - 2000, server: "cs" }],
     briefs: [],
   });
   const apartForgotten = (tool, args) => namesTouched(apart.trees, touchedBy(tool, args), keyOf).join();
   check("two leaves, and a key result drawn under one of them costs that one alone",
-    apartForgotten("mcp__bg__strategy_create_check_in", { key_result_id: 8, new_value: 6 }) === "objective/8,children/8" &&
-      apartForgotten("mcp__bg__strategy_create_check_in", { key_result_id: 7, new_value: 1 }) === "objective/7,children/7",
-    apartForgotten("mcp__bg__strategy_create_check_in", { key_result_id: 8, new_value: 6 }));
+    apartForgotten("mcp__cs__strategy_create_check_in", { key_result_id: 8, new_value: 6 }) === "objective/8,children/8" &&
+      apartForgotten("mcp__cs__strategy_create_check_in", { key_result_id: 7, new_value: 1 }) === "objective/7,children/7",
+    apartForgotten("mcp__cs__strategy_create_check_in", { key_result_id: 8, new_value: 6 }));
   check("and one drawn under neither costs both",
-    apartForgotten("mcp__bg__strategy_create_check_in", { key_result_id: 999, new_value: 1 }) === "objective/7,children/7,objective/8,children/8",
-    apartForgotten("mcp__bg__strategy_create_check_in", { key_result_id: 999, new_value: 1 }));
+    apartForgotten("mcp__cs__strategy_create_check_in", { key_result_id: 999, new_value: 1 }) === "objective/7,children/7,objective/8,children/8",
+    apartForgotten("mcp__cs__strategy_create_check_in", { key_result_id: 999, new_value: 1 }));
 
   // What the button does is unchanged: everything the trees were built from.
   const whole = namesToForget(model.trees, keyOf);
@@ -1040,7 +1040,7 @@ let backOfficeRows;
       feature_spec_list: galySpecList,
     },
   });
-  const model = await modelOf(galyReal, { specs: [{ id: 54, at: NOW, server: "bg" }], briefs: [] });
+  const model = await modelOf(galyReal, { specs: [{ id: 54, at: NOW, server: "cs" }], briefs: [] });
   const rows = dockRows(model, { columns: 96 });
   const specRow = rows.find((row) => row.key.endsWith("-spec-54"));
   const phaseRows = rows.filter((row) => row.key.includes("-spec-54-phase-"));
@@ -1105,7 +1105,7 @@ let backOfficeRows;
     answers: { feature_spec_get: (args) => five(args.id), feature_brief_get: galyBrief, feature_spec_list: galySpecList },
   });
   const both = await modelOf(twoSpecs, {
-    specs: [{ id: 56, at: NOW - 1000, server: "bg" }, { id: 54, at: NOW - 2000, server: "bg" }],
+    specs: [{ id: 56, at: NOW - 1000, server: "cs" }, { id: 54, at: NOW - 2000, server: "cs" }],
     briefs: [],
   });
   const dock = dockRows(both, { columns: 96 });
@@ -1145,7 +1145,7 @@ let backOfficeRows;
   // from it.
   const outside = await modelOf(
     workspace({ spelling: "galy", answers: { feature_spec_get: galySpec, feature_brief_get: galyBrief, feature_spec_list: galySpecList } }),
-    { specs: [{ id: 54, at: NOW, server: "bg" }], briefs: [] },
+    { specs: [{ id: 54, at: NOW, server: "cs" }], briefs: [] },
   );
   const outsideRows = dockRows(outside, { columns: 96 });
   const outsideAt = outsideRows.indexOf(boxedRows(outsideRows)[0]);
@@ -1166,7 +1166,7 @@ let backOfficeRows;
       strategy_navigate_children: galyChildren,
     },
   });
-  const pair = await modelOf(twoBriefs, { specs: [], briefs: [{ id: 62, at: NOW - 1000, server: "bg" }, { id: 61, at: NOW - 2000, server: "bg" }] });
+  const pair = await modelOf(twoBriefs, { specs: [], briefs: [{ id: 62, at: NOW - 1000, server: "cs" }, { id: 61, at: NOW - 2000, server: "cs" }] });
   const pairRows = dockRows(pair, { columns: 96 });
   const frames = boxedRows(pairRows);
   check("two held briefs are two frames, each after its own empty row",
@@ -1285,7 +1285,7 @@ let backOfficeRows;
       }),
     },
   });
-  const galyModel = await modelOf(galyChecks, { specs: [{ id: 54, at: NOW, server: "bg" }], briefs: [] });
+  const galyModel = await modelOf(galyChecks, { specs: [{ id: 54, at: NOW, server: "cs" }], briefs: [] });
   const listCalls = galyChecks.calls.filter((call) => call.tool === "followup_check_list");
   check("a spec answering no checks has them read on their own verb, once, in the workspace's spelling",
     listCalls.length === 1 && listCalls[0].args.feature_spec_id === 54, JSON.stringify(listCalls));
@@ -1294,13 +1294,13 @@ let backOfficeRows;
   check("a check Galy answers is drawn without a mark, since no run is known",
     plainOf(galyCheckRows).join("|") === "      ↻ Le panneau survit à la mise à jour suivante de Claude Code · J+7" &&
       galyRows.some((row) => row.key.endsWith("-spec-54-followups")), plainOf(galyRows).join("\n"));
-  await modelOf(galyChecks, { specs: [{ id: 54, at: NOW, server: "bg" }], briefs: [] });
+  await modelOf(galyChecks, { specs: [{ id: 54, at: NOW, server: "cs" }], briefs: [] });
   check("and the second draw reads them from the cache",
     galyChecks.calls.filter((call) => call.tool === "followup_check_list").length === 1);
 
   // A spec nobody scheduled a check for draws no heading; and where the workspace serves
   // no list verb and the spec carries none, nothing is asked and nothing is drawn.
-  const none = await modelOf(galyChecks, { specs: [{ id: 56, at: NOW, server: "bg" }], briefs: [] });
+  const none = await modelOf(galyChecks, { specs: [{ id: 56, at: NOW, server: "cs" }], briefs: [] });
   const noneRows = dockRows(none, { columns: 96 });
   check("no check, no heading and no row",
     !noneRows.some((row) => row.key.includes("-followup")), plainOf(noneRows).join("\n"));
@@ -1323,10 +1323,10 @@ let backOfficeRows;
     forgotten("mcp__back-office__followup_check_update", { checkId: 824, title: "x" }) === "spec/1109,followups/1109",
     forgotten("mcp__back-office__followup_check_update", { checkId: 824, title: "x" }));
   check("a check nobody drew costs every spec in hand, never a spec of its number",
-    forgotten("mcp__bg__followup_check_update", { check_id: 4242, title: "x" }) === "spec/1109,followups/1109");
+    forgotten("mcp__cs__followup_check_update", { check_id: 4242, title: "x" }) === "spec/1109,followups/1109");
   check("a check scheduled on the spec in hand names that spec",
     forgotten("mcp__back-office__followup_check_add", { featureSpecId: 1109, checkType: "technical", title: "x" }) === "spec/1109,followups/1109" &&
-      forgotten("mcp__bg__followup_check_add", { feature_brief_id: 135, check_type: "business", title: "x" }) === "");
+      forgotten("mcp__cs__followup_check_add", { feature_brief_id: 135, check_type: "business", title: "x" }) === "");
   check("the button forgets the checks with the spec",
     namesToForget(inlineModel.trees, keyOf).includes("followups/1109"));
 }

@@ -3,7 +3,7 @@
 //
 // WHY THIS IS A HOOK AND NOT A LINE IN A SKILL. The discipline already existed, written down
 // and well written, in `skills/analyse`: present the edit, keep the diff minimal, announce the
-// word delta, wait for the go. It fires only when someone types `/bg:analyse`. The request
+// word delta, wait for the go. It fires only when someone types `/cs:analyse`. The request
 // that produces the damage never arrives that way — it arrives as "note this in claude.md",
 // in plain prose, down the one path that has no guard at all. A rule that lives in a skill
 // nobody invoked is a rule that does not exist.
@@ -44,9 +44,10 @@ const WORDS_THAT_DESERVE_A_LOOK = 40;
 // longer: a stamp that outlived the conversation would let an unrelated edit through tomorrow.
 const STAMP_TTL_MS = 6 * 60 * 60 * 1000;
 
-// Under `bg`, the kit's one name on the agent side. It was `galy/stamps` before the brand became
-// B.Galy; a stamp lives six hours at most, so the ones left there cost one extra refusal, once.
-const STAMPS = join(homedir(), ".claude", "bg", "stamps");
+// Under `cs`, the kit's one name on the agent side. It was `galy/stamps`, then `bg/stamps`, under
+// the names that came before; a stamp lives six hours at most, so the ones left there cost one
+// extra refusal, once.
+const STAMPS = join(homedir(), ".claude", "cs", "stamps");
 
 function quit() { process.exit(0); }
 

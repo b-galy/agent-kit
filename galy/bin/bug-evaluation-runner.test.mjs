@@ -10,13 +10,13 @@ import { AnthropicMessagesAdapter, OpenAIResponsesAdapter, createProviderAdapter
 
 const root = mkdtempSync(join(tmpdir(), "galy-bug-evaluation-"));
 const source = join(root, "source"); const archive = join(root, "archive");
-mkdirSync(join(source, ".git"), { recursive: true }); mkdirSync(join(source, ".bg"), { recursive: true });
+mkdirSync(join(source, ".git"), { recursive: true }); mkdirSync(join(source, ".cs"), { recursive: true });
 mkdirSync(join(source, ".galy"), { recursive: true }); mkdirSync(join(source, "src"), { recursive: true });
 writeFileSync(join(source, "main.txt"), "baseline\n");
 writeFileSync(join(source, "secret.txt"), "must stay local\n");
 writeFileSync(join(source, "AGENTS.md"), "instructions stay local\n");
 writeFileSync(join(source, ".git", "config"), "history stays local\n");
-writeFileSync(join(source, ".bg", "config.json"), '{"token":"must stay local"}\n');
+writeFileSync(join(source, ".cs", "config.json"), '{"token":"must stay local"}\n');
 writeFileSync(join(source, ".galy", "config.json"), '{"token":"must stay local"}\n');
 writeFileSync(join(source, ".mcp.json"), '{"env":{"GALY_TOKEN":"must stay local"}}\n');
 writeFileSync(join(source, "src", "app.js"), "export default 1;\n");
@@ -140,7 +140,7 @@ assert.equal(projection.preSolutionNeed.description, "need");
 assert.doesNotMatch(JSON.stringify(projection), /ANALYST_TRAJECTORY_MODEL_CANARY/);
 await assert.rejects(() => runCli(["run", "execute", "--adapter", "fixture"]), /fixture_adapter_only_for_controlled_self_test/);
 
-// The public bg entry point accepts both `inspect <run-id>` and `--run-id`.
+// The public cs entry point accepts both `inspect <run-id>` and `--run-id`.
 // The command token must never be passed to inspectRun as a positional id.
 const inspectCliArchive = join(root, "inspect-cli-archive");
 const inspectCliPath = join(inspectCliArchive, "123");

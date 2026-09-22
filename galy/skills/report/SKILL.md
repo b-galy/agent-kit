@@ -1,13 +1,13 @@
 ---
 name: report
-description: Receive a bug report or improvement request from an agent and route it to the right ticket or brief. Triggered by "ça ne marche pas", "j'ai un bug", "il faudrait", "ce serait mieux si", "report a bug", "request an improvement", or "bg:report <text>".
+description: Receive a bug report or improvement request from an agent and route it to the right ticket or brief. Triggered by "ça ne marche pas", "j'ai un bug", "il faudrait", "ce serait mieux si", "report a bug", "request an improvement", or "cs:report <text>".
 ---
 
 # report — give a problem a door
 
 This skill receives a problem from the person using the agent. It records a defect or an
 improvement request in the connected workspace, or hands a larger improvement to
-`bg:feature-brief`. It does not fix the problem, invent a solution, or send a message outside the
+`cs:feature-brief`. It does not fix the problem, invent a solution, or send a message outside the
 workspace.
 
 ## Where the report lands
@@ -136,7 +136,7 @@ sentence, punctuation, or a second ticket link after this line.
 ## Too big for a ticket → feature-brief
 
 An improvement that spans several screens, introduces a new concept, or requires an integration
-is bigger than one ticket. Say so in one sentence, then invoke `bg:feature-brief` with the text
+is bigger than one ticket. Say so in one sentence, then invoke `cs:feature-brief` with the text
 already collected. Do not create a feature ticket first and do not ask the person to repeat the
 context. Let `feature-brief` own the brief, its objective, and its follow-up.
 

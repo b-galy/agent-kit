@@ -1,6 +1,6 @@
 ---
 name: feature-brief
-description: Frame a business need into a Galy brief — problem, vision, user stories, success criteria — attached to an objective. Interactive discovery with targeted questions; writes the brief via the Galy MCP and its body via the bg CLI. This is the WHAT and WHY, never the HOW (that is feature-spec).
+description: Frame a business need into a Galy brief — problem, vision, user stories, success criteria — attached to an objective. Interactive discovery with targeted questions; writes the brief via the Galy MCP and its body via the cs CLI. This is the WHAT and WHY, never the HOW (that is feature-spec).
 ---
 
 # feature-brief — frame a business need
@@ -29,8 +29,8 @@ buffer synced by the CLI, never passed as a tool argument.
 
 ## Steps
 
-1. **Identity + objective.** `mcp__bg__whoami` for the userId. Pick the objective the need serves —
-   invoke the `strategy` skill or `mcp__bg__strategy_navigate_children` to find it. A brief with no
+1. **Identity + objective.** `mcp__cs__whoami` for the userId. Pick the objective the need serves —
+   invoke the `strategy` skill or `mcp__cs__strategy_navigate_children` to find it. A brief with no
    objective has no reason to exist: refuse to create one without it.
 2. **Read who this repository already writes for**, following
    `${CLAUDE_PLUGIN_ROOT}/instructions/host-instructions.md`: the lines carrying
@@ -47,21 +47,21 @@ buffer synced by the CLI, never passed as a tool argument.
    done, and it is answered with a shrug or with whatever is shortest to type — which you then write
    down as their intent.
 4. **Look for the brief before you create one.**
-   `mcp__bg__feature_brief_list(ownerUserId=<userId>, statusFilter="Draft", query=<a distinctive word
-   of the title>)`. One that is plainly this need is the one you continue: `mcp__bg__feature_brief_get`
+   `mcp__cs__feature_brief_list(ownerUserId=<userId>, statusFilter="Draft", query=<a distinctive word
+   of the title>)`. One that is plainly this need is the one you continue: `mcp__cs__feature_brief_get`
    it, say in one line what it already carries, and pick up at the first step it is missing.
    **A session that died between the create and the body leaves a brief with a title and nothing else**
    — invisible to whoever relaunches, so they frame it again, and the workspace ends with two records
    of one need and a spec hanging off whichever the second run remembered.
-   Nothing matches → `mcp__bg__feature_brief_create(title, domain, objectiveId, ownerUserId=<userId>,
+   Nothing matches → `mcp__cs__feature_brief_create(title, domain, objectiveId, ownerUserId=<userId>,
    nextFollowupDate?)` → capture `brief_id`. Never pass the body as an argument.
-5. **Write the body via the CLI.** `bg content pull feature-brief <brief_id>` to seed the buffer,
+5. **Write the body via the CLI.** `cs content pull feature-brief <brief_id>` to seed the buffer,
    edit `.tmp/galy-content/feature-brief/<brief_id>.md` (fields `problem`, `vision`, `executive` —
-   executive ≤ 375 words, readable without internal jargon), then `bg content push feature-brief <brief_id>`.
-6. **User stories** (P0 first): `mcp__bg__feature_brief_add_user_story(briefId, persona, action, benefit, priority)`.
+   executive ≤ 375 words, readable without internal jargon), then `cs content push feature-brief <brief_id>`.
+6. **User stories** (P0 first): `mcp__cs__feature_brief_add_user_story(briefId, persona, action, benefit, priority)`.
 7. **Business success criteria:** a brief carries no acceptance test of its own — that verb belongs
    to specs. Capture measurable outcomes as **business follow-up checks** instead —
-   `mcp__bg__followup_check_add(featureBriefId=<brief_id>, checkType="business", title, followupPromptMd=<outcome + pass/fail threshold>, scheduleOffsetDays=<J+N>, onFailAction="create_spec")`.
+   `mcp__cs__followup_check_add(featureBriefId=<brief_id>, checkType="business", title, followupPromptMd=<outcome + pass/fail threshold>, scheduleOffsetDays=<J+N>, onFailAction="create_spec")`.
    See `${CLAUDE_PLUGIN_ROOT}/instructions/followup-conventions.md`.
 
 ## Confirmation

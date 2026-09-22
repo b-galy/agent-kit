@@ -38,8 +38,8 @@ const ENV = { ...process.env, TEMP: SCRATCH, TMP: SCRATCH, TMPDIR: SCRATCH, CLAU
 // The workspace every copy on the bench speaks to: a Galy address, found the way the CLI
 // finds it, in a config file above the copies.
 const BASE = "https://example.galy.cloud";
-mkdirSync(join(BENCH, ".bg"), { recursive: true });
-writeFileSync(join(BENCH, ".bg", "config.json"), JSON.stringify({ endpoint: BASE, token: "not-used-here" }));
+mkdirSync(join(BENCH, ".cs"), { recursive: true });
+writeFileSync(join(BENCH, ".cs", "config.json"), JSON.stringify({ endpoint: BASE, token: "not-used-here" }));
 
 const CACHE_DIR = join(SCRATCH, "bg-statusline");
 mkdirSync(CACHE_DIR, { recursive: true });
@@ -57,7 +57,7 @@ holdStamp();
 // from. A check that goes green only because a stale cache happened to be missing has
 // proved nothing: with these files here, a row that names the workspace's queue is
 // caught by the first assertion below instead of slipping past it.
-writeFileSync(join(CACHE_DIR, "work"), "bg spec Profil · Le vocal  |  brief La porte d'un locataire");
+writeFileSync(join(CACHE_DIR, "work"), "cs spec Profil · Le vocal  |  brief La porte d'un locataire");
 writeFileSync(join(CACHE_DIR, "catalog.json"), JSON.stringify({ base: BASE, specs: { 11: "Profil" }, briefs: {} }));
 
 function copy(name) {
@@ -81,7 +81,7 @@ const wrote = (cwd, tool_name, tool_input, answer = { success: true }, session_i
 });
 const ended = (cwd, session_id = SESSION_A) => hook(cwd, { session_id, hook_event_name: "SessionEnd", reason: "other" });
 const started = (cwd, session_id = SESSION_A, source = "startup") => hook(cwd, { session_id, hook_event_name: "SessionStart", source });
-const held = (dir) => { try { return JSON.parse(readFileSync(join(dir, ".bg", "work.json"), "utf8")); } catch { return {}; } };
+const held = (dir) => { try { return JSON.parse(readFileSync(join(dir, ".cs", "work.json"), "utf8")); } catch { return {}; } };
 const specs = (dir) => (held(dir).specs || []).map((e) => e.id).join();
 
 let failed = 0;
@@ -102,8 +102,8 @@ check("so does the one beside it", bare(row(b)) === "");
 //    it belongs to and the objective that brief serves. The names are cut the way the row
 //    cuts them: a title is written for a page, and what fits here is the name at the head
 //    of it.
-wrote(a, "mcp__bg__feature_spec_pick", { id: 11 });
-wrote(b, "mcp__bg__feature_brief_create", { title: "x" }, { success: true, feature_brief_id: 32 });
+wrote(a, "mcp__cs__feature_spec_pick", { id: 11 });
+wrote(b, "mcp__cs__feature_brief_create", { title: "x" }, { success: true, feature_brief_id: 32 });
 holdStamp();
 check("the copy that picked spec 11 reads objective > brief > spec",
   bare(row(a)) === "Croissance > La porte d'un locataire s'o… > Profil");
@@ -115,22 +115,22 @@ check("the spec clicks through to its page", links.includes(`${BASE}/specs/11`))
 check("the brief clicks through to its page", links.includes(`${BASE}/briefs/32`));
 
 // 3. `id` means a phase here, and a phase is not a spec.
-wrote(a, "mcp__bg__feature_spec_set_phase_status", { id: 3, status: "Done" });
+wrote(a, "mcp__cs__feature_spec_set_phase_status", { id: 3, status: "Done" });
 check("a phase id never lands on the specs held", specs(a) === "11");
 
 // 4. A write the workspace refused holds nothing.
-wrote(a, "mcp__bg__feature_spec_pick", { id: 9 }, { success: false });
+wrote(a, "mcp__cs__feature_spec_pick", { id: 9 }, { success: false });
 check("a refused claim is not recorded", specs(a) === "11");
 
 // 5. One spec at a time: the newest claim is the row, the others are a count.
-wrote(a, "mcp__bg__feature_spec_pick", { id: 9 });
+wrote(a, "mcp__cs__feature_spec_pick", { id: 9 });
 holdStamp();
 check("the newest claim is named first", specs(a) === "9,11");
 check("the row names the newest spec and counts the other",
   bare(row(a)) === "Croissance > La porte d'un locataire s'o… > Le vocal passe sous pavillo… +1");
 
 // 6. Completing lets go.
-wrote(a, "mcp__bg__feature_spec_complete", { id: 9 });
+wrote(a, "mcp__cs__feature_spec_complete", { id: 9 });
 check("a completed spec is let go", specs(a) === "11");
 
 // 7. A workspace that spells the field `specId` is heard the same — and a brief named on
@@ -145,14 +145,14 @@ wrote(c, "mcp__back-office__feature_spec_complete", { specId: 11 });
 check("a completion spelt `specId` lets go", specs(c) === "");
 
 // 8. Work put down and never picked up again stops being in hand.
-writeFileSync(join(a, ".bg", "work.json"), JSON.stringify({
+writeFileSync(join(a, ".cs", "work.json"), JSON.stringify({
   specs: [{ id: 9, at: new Date(Date.now() - 2 * 86_400_000).toISOString() }],
 }));
 holdStamp();
 check("a claim older than the horizon is no longer in hand", bare(row(a)) === "");
 
 // 9. A spec the catalog has never heard of is still named, and still clicks through.
-writeFileSync(join(b, ".bg", "work.json"), JSON.stringify({ specs: [{ id: 41, at: new Date().toISOString() }] }));
+writeFileSync(join(b, ".cs", "work.json"), JSON.stringify({ specs: [{ id: 41, at: new Date().toISOString() }] }));
 holdStamp();
 const unknown = row(b);
 check("an unnamed spec falls back on its number", bare(unknown) === "#41");
@@ -162,7 +162,7 @@ check("and keeps its link", unknown.includes(`${BASE}/specs/41`));
 const repo = join(BENCH, "repo");
 mkdirSync(repo, { recursive: true });
 execFileSync("git", ["init", "-q", repo], { encoding: "utf8" });
-wrote(repo, "mcp__bg__feature_spec_pick", { id: 11 });
+wrote(repo, "mcp__cs__feature_spec_pick", { id: 11 });
 const untracked = execFileSync("git", ["-C", repo, "status", "--porcelain", "--untracked-files=all"], { encoding: "utf8" });
 check("the held work is not listed by git", specs(repo) === "11" && !untracked.includes("work.json"));
 
@@ -174,7 +174,7 @@ check("the held work is not listed by git", specs(repo) === "11" && !untracked.i
 //     it, because a row cached elsewhere is redrawn when this file becomes newer than it,
 //     never when it disappears.
 const d = copy("wt-d");
-wrote(d, "mcp__bg__feature_spec_pick", { id: 11 });
+wrote(d, "mcp__cs__feature_spec_pick", { id: 11 });
 holdStamp();
 check("a copy that has just picked a spec has a row", bare(row(d)) !== "");
 check("and the claim carries the session that took it up", (held(d).specs[0] || {}).session === SESSION_A);
@@ -192,35 +192,35 @@ check("so the resumed session has its row back", bare(row(d)) === "Croissance > 
 started(d, SESSION_B);
 holdStamp();
 check("a new conversation on the same copy starts on an empty row", specs(d) === "" && bare(row(d)) === "");
-check("and the file stays, so a row cached elsewhere is redrawn", existsSync(join(d, ".bg", "work.json")));
+check("and the file stays, so a row cached elsewhere is redrawn", existsSync(join(d, ".cs", "work.json")));
 check("the copy beside it keeps what it holds", specs(b) === "41");
 
-wrote(d, "mcp__bg__feature_spec_pick", { id: 9 }, { success: true }, SESSION_B);
+wrote(d, "mcp__cs__feature_spec_pick", { id: 9 }, { success: true }, SESSION_B);
 started(d, SESSION_B, "clear");
 check("`/clear` empties everything, the session's own work included", specs(d) === "");
 
 const e = copy("wt-e");
 ended(e);
 started(e, SESSION_B);
-check("a copy that claimed nothing is left untouched by the end and the start of a session", !existsSync(join(e, ".bg")));
+check("a copy that claimed nothing is left untouched by the end and the start of a session", !existsSync(join(e, ".cs")));
 
 // 11b. The race the rule was written for: the resumed conversation has already claimed when
 //      the old process, still shutting down, says goodbye. Its goodbye must change nothing.
 //      And an entry with no session at all, written before the field existed, is dropped at
 //      the first start: nobody can say whose it is.
 const h = copy("wt-h");
-wrote(h, "mcp__bg__feature_spec_pick", { id: 11 }, { success: true }, SESSION_A);
+wrote(h, "mcp__cs__feature_spec_pick", { id: 11 }, { success: true }, SESSION_A);
 started(h, SESSION_A, "resume");
-wrote(h, "mcp__bg__feature_spec_pick", { id: 9 }, { success: true }, SESSION_A);
+wrote(h, "mcp__cs__feature_spec_pick", { id: 9 }, { success: true }, SESSION_A);
 ended(h, SESSION_A);                                  // the old process of the same conversation, dying late
 check("the live session's claim survives the dying process's goodbye", specs(h) === "9,11");
 ended(h, SESSION_B);                                  // and a stranger's goodbye changes nothing either
 check("and a stranger's goodbye too", specs(h) === "9,11");
 
 const i = copy("wt-i");
-mkdirSync(join(i, ".bg"), { recursive: true });
-writeFileSync(join(i, ".bg", "work.json"), JSON.stringify({
-  specs: [{ id: 11, at: new Date().toISOString(), server: "bg" }, { id: 9, at: new Date().toISOString(), server: "bg", session: SESSION_A }],
+mkdirSync(join(i, ".cs"), { recursive: true });
+writeFileSync(join(i, ".cs", "work.json"), JSON.stringify({
+  specs: [{ id: 11, at: new Date().toISOString(), server: "cs" }, { id: 9, at: new Date().toISOString(), server: "cs", session: SESSION_A }],
   briefs: [{ id: 32, at: new Date().toISOString() }],
 }));
 started(i, SESSION_A);
@@ -235,18 +235,18 @@ check("an entry that names no session is dropped at the first start, the session
 const f = copy("wt-f");
 wrote(f, "mcp__back-office__feature_spec_pick", { specId: 11 });
 check("a claim records the server it went through", (held(f).specs[0] || {}).server === "back-office");
-wrote(f, "mcp__bg__feature_brief_update", { id: 32 });
-check("so does a brief written on another server", (held(f).briefs[0] || {}).server === "bg");
+wrote(f, "mcp__cs__feature_brief_update", { id: 32 });
+check("so does a brief written on another server", (held(f).briefs[0] || {}).server === "cs");
 
 const g = copy("wt-g");
-mkdirSync(join(g, ".bg"), { recursive: true });
-writeFileSync(join(g, ".bg", "work.json"), JSON.stringify({ specs: [{ id: 11, at: new Date().toISOString() }], briefs: [] }));
+mkdirSync(join(g, ".cs"), { recursive: true });
+writeFileSync(join(g, ".cs", "work.json"), JSON.stringify({ specs: [{ id: 11, at: new Date().toISOString() }], briefs: [] }));
 holdStamp();
 check("an entry written before the field existed is still named on the row",
   bare(row(g)) === "Croissance > La porte d'un locataire s'o… > Profil");
-wrote(g, "mcp__bg__feature_spec_pick", { id: 9 });
+wrote(g, "mcp__cs__feature_spec_pick", { id: 9 });
 check("and a claim beside it neither rewrites nor drops it",
-  held(g).specs.map((entry) => `${entry.id}:${entry.server ?? "-"}`).join() === "9:bg,11:-");
+  held(g).specs.map((entry) => `${entry.id}:${entry.server ?? "-"}`).join() === "9:cs,11:-");
 
 rmSync(BENCH, { recursive: true, force: true });
 

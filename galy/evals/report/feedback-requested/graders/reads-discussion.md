@@ -1,6 +1,6 @@
 ---
 type: tool_used
-tool: mcp__bg__discussion_read
+tool: mcp__cs__discussion_read
 min: 1
 max: 2
 weight: 1

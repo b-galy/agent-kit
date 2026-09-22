@@ -1,4 +1,4 @@
-// What this working copy has in hand, read where it is written: `.bg/work.json`, beside
+// What this working copy has in hand, read where it is written: `.cs/work.json`, beside
 // the code, by `hooks/bg-work.mjs`.
 //
 // The pane never asks the workspace "what am I on?" — two worktrees of one repository share
@@ -64,7 +64,7 @@ export async function workingCopyRootOf(cwd, exists) {
  * @param {string} root
  * @returns {string}
  */
-export const workFileOf = (root) => joinPath(root, ".bg", "work.json");
+export const workFileOf = (root) => joinPath(root, ".cs", "work.json");
 
 /**
  * One entry as the pane reads it: the id, when it was taken, and the server it went

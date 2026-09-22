@@ -128,7 +128,7 @@ function parseRpc(text) {
   return last;
 }
 
-// ── Live MCP layer (the mcp__bg__* verbs) ──────────────────────────────────
+// ── Live MCP layer (the mcp__cs__* verbs) ──────────────────────────────────
 async function runMcp(url, token, writeMode) {
   console.log(`\nLive MCP checks against ${url}:`);
   const client = new McpClient(url, token);
@@ -272,7 +272,7 @@ async function scanLiveWorkflowCatalog(client, liveNames) {
   record(CHECK, ok, detail);
 }
 
-// ── Live REST layer (the routes the bg CLI uses) ───────────────────────────
+// ── Live REST layer (the routes the cs CLI uses) ───────────────────────────
 async function runRest(base, token) {
   console.log(`\nLive REST checks against ${base}:`);
   const routes = (CONTRACT.rest_api && CONTRACT.rest_api.routes) || [];
@@ -523,7 +523,7 @@ function scanCitedVerbs() {
   for (const [label, file] of sources) {
     let body;
     try { body = readFileSync(file, "utf8"); } catch { continue; }
-    for (const m of body.matchAll(/mcp__bg__([a-z0-9_]+)/g)) {
+    for (const m of body.matchAll(/mcp__cs__([a-z0-9_]+)/g)) {
       citations++;
       if (declared.has(m[1])) continue;
       if (!phantoms.has(m[1])) phantoms.set(m[1], new Set());

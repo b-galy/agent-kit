@@ -5,7 +5,7 @@
 // repository says which those are, and asking the workspace cannot answer it: two
 // worktrees of the same repository share an account, a token and a queue, and differ
 // only in what each is doing. So the answer is written where the difference lives —
-// in the copy's own `.bg/work.json`, kept out of git, one file per copy.
+// in the copy's own `.cs/work.json`, kept out of git, one file per copy.
 //
 // What it watches is the writes. A copy HOLDS a spec when it claims or creates one, and
 // a brief when it writes into one; it LETS GO of a spec when it completes it. Reading
@@ -111,8 +111,8 @@ function keepOutOfGit(root, file) {
     const exclude = resolve(root, git("rev-parse", "--git-path", "info/exclude"));
     mkdirSync(dirname(exclude), { recursive: true });
     const lines = existsSync(exclude) ? readFileSync(exclude, "utf8") : "";
-    if (!/^\.bg\/work\.json$/m.test(lines)) {
-      appendFileSync(exclude, (lines && !lines.endsWith("\n") ? "\n" : "") + ".bg/work.json\n", "utf8");
+    if (!/^\.cs\/work\.json$/m.test(lines)) {
+      appendFileSync(exclude, (lines && !lines.endsWith("\n") ? "\n" : "") + ".cs/work.json\n", "utf8");
     }
   } catch { /* outside a repository, or no git on the path: the file stays, unlisted */ }
 }
@@ -138,7 +138,7 @@ function sessionOf(event) {
 function keepThisSessionsOnly(event) {
   const root = workingCopyRoot(event.cwd || process.cwd());
   if (!root) return;
-  const file = join(root, ".bg", "work.json");
+  const file = join(root, ".cs", "work.json");
   if (!existsSync(file)) return;                    // a copy that claimed nothing has nothing to sort
   const before = readFileSync(file, "utf8");
   let held = {};
@@ -180,7 +180,7 @@ function main(event) {
   const root = workingCopyRoot(event.cwd || process.cwd());
   if (!root) return;
 
-  const file = join(root, ".bg", "work.json");
+  const file = join(root, ".cs", "work.json");
   let held = {};
   try { held = JSON.parse(readFileSync(file, "utf8")); } catch { /* the first claim writes the first file */ }
   const kept = (Array.isArray(held?.[rule.of]) ? held[rule.of] : [])

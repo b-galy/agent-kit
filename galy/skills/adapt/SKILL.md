@@ -30,12 +30,12 @@ pages in the product. Putting files in a repository has one too, and it is the p
 
 ## What it needs before it starts
 
-The **binding proposal** from `bg:project-management` — which system owns briefs, specs,
+The **binding proposal** from `cs:project-management` — which system owns briefs, specs,
 tickets and strategy; what the id shapes are; which commands already exist. If it was not
 produced in this session, run that agent first. Adapting without it means guessing at their
 method, and a wrong guess lands in a pull request with your name on it.
 
-And, for the delivery half only, the **named facts** from `bg:delivery`: the chain file and
+And, for the delivery half only, the **named facts** from `cs:delivery`: the chain file and
 what triggers it, whether a push to the default branch deploys, whether that branch is
 protected, whether anything stops two releases at once, where going back is written down, how a
 change is actually merged, and the commands that already exist.
@@ -130,7 +130,7 @@ on n'y ajoute rien.
 Three properties, each load-bearing:
 
 - **Delimited**, so a later pass updates it without touching a word the team wrote. The markers
-  keep the name `galy` on purpose, although the plugin is `bg` now: blocks already written in
+  keep the name `galy` on purpose, although the plugin is `cs` now: blocks already written in
   customers' files carry it, and a later pass finds them by that name. Renaming the marker would
   orphan every one of them.
 - **Short.** It joins a file every session reads in full; anything long gets skipped, and a
@@ -166,7 +166,7 @@ in it belong to whoever wrote them:
 
 5. **How a change reaches production here**, in three lines and a two-row routing table — the
    chain file and its trigger quoted from the file, whether merging is enough to ship, and how
-   going back is done. **Every line either carries a fact `bg:delivery` read, or says out loud
+   going back is done. **Every line either carries a fact `cs:delivery` read, or says out loud
    that it did not.** *« Votre chaîne se déclenche sur un push vers `main`, et je n'ai trouvé
    aucun retour arrière écrit »* is a good line. *« Suivez votre procédure de retour arrière »*
    is the failure: it sounds like doctrine and it is a guess.
@@ -216,7 +216,7 @@ rules whose violation costs real data.
 Under `.claude/skills/<name>/SKILL.md`, one directory per skill, each a rewrite of the kit's
 generic version with:
 
-- **their** server name and verbs, not `mcp__bg__*`, wherever the system of record is theirs;
+- **their** server name and verbs, not `mcp__cs__*`, wherever the system of record is theirs;
 - **their** id shapes, so a reference the user pastes is routed to the right system;
 - **their** branch and commit conventions, read from `git log`, not invented;
 - a first line saying which system this skill writes to. A skill that silently writes to the
@@ -228,7 +228,7 @@ twelve that need arguing about.
 ### 3. The two delivery skills, written against their chain
 
 Same rules as above, same collision handling, same directory. What changes is where the words
-come from: **not the kit's generic version, but the named facts `bg:delivery` came back with.**
+come from: **not the kit's generic version, but the named facts `cs:delivery` came back with.**
 There is no generic merge skill to adapt, because there is no generic way to merge.
 
 **Two skills, not one, and the split is the whole lesson.** It is proven on a repository of a
@@ -275,12 +275,12 @@ The skills are theirs and speak only of theirs.
 
 Three of these answers are settings, not facts, and a setting changes without a pull request:
 `ship`/`release_trigger`, `ship`/`release_hold`, `ship`/`rollback_mode`. Write the generated
-skills to **resolve them at run time** — `mcp__bg__workflow_policy_resolve` — instead of
+skills to **resolve them at run time** — `mcp__cs__workflow_policy_resolve` — instead of
 freezing today's answer in their text. A team that changes its mind on the settings page and
 sees nothing change has been given a control that is not one.
 
 **Read the option names and their values from the instance, never from memory:**
-`mcp__bg__workflow_catalog_list` says what *this* instance actually knows. An option it does
+`mcp__cs__workflow_catalog_list` says what *this* instance actually knows. An option it does
 not know is a setting nothing will ever honour, and a value it does not accept is one it will
 refuse to store — so a name typed from memory produces a page that toggles nothing. That has
 already happened twice, in both directions, in one hour.
@@ -297,7 +297,7 @@ invention in the one place inventions cost most.
   back yet**. Recording the hole is the point; it is what stops the next session inventing one.
 
 Ask once, for the three together, in the user's language, and say where the observation came
-from. On a yes, write them with `mcp__bg__workflow_default_set` — canonical values, exactly as
+from. On a yes, write them with `mcp__cs__workflow_default_set` — canonical values, exactly as
 the catalogue spells them, never a label you displayed. On a no, or on silence, write nothing and
 say in one line what stayed unset: an unanswered question is not an answer.
 

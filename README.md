@@ -22,10 +22,10 @@ You are connecting *your assistant* to *your Galy workspace* — not giving Galy
 
 ## Local bug evaluation runner
 
-The plugin ships the portable `bg bug-evaluation` command. It qualifies a Linux bubblewrap profile,
+The plugin ships the portable `cs bug-evaluation` command. It qualifies a Linux bubblewrap profile,
 creates a content-addressed local snapshot, polls and claims a server run, and keeps reports, patches
 and prompts in the workstation archive. The server receives only the typed run contract and opaque
-hashes. Use `bg bug-evaluation run self-test` for the controlled analyst → solver → oracle → judge
+hashes. Use `cs bug-evaluation run self-test` for the controlled analyst → solver → oracle → judge
 qualification; it makes no model or billing request. Real runs use a named provider adapter
 (`openai` Responses API or `anthropic` Messages API; `--adapter <name>`) whose model, harness and
 effort identity must match the server contract. Unknown providers and harnesses are refused, and
@@ -38,7 +38,7 @@ A remote oracle is available only for explicit adapter qualification with `--all
 Each provider request is journaled before dispatch with a stable workspace/run/role identity and
 idempotency key. A `requesting` or `unknown` journal is reconciled by the adapter before any retry;
 an unresolved billable request stays recoverable and is never dispatched a second time. When a
-provider supplies its receipt later, `bg bug-evaluation run settle` attaches the immutable amount,
+provider supplies its receipt later, `cs bug-evaluation run settle` attaches the immutable amount,
 currency, cost basis and pricing version to that same attempt without another provider request.
 
 Snapshots exclude Git history, caches, instruction files, secrets and links. Archive retention is 180
@@ -47,9 +47,9 @@ days by default, with preflight limits of 2 GiB per snapshot, 20 MiB per patch, 
 `--profile-file` and `--profile-root`; the runner re-runs the qualification probe before any model
 call. Production Galy endpoints require an explicit `--allow-production` after the approved budget
 and worker are ready; otherwise point a qualification at a disposable local or staging endpoint.
-Keep `GALY_TOKEN` in the process environment. `bg bug-evaluation inspect --human` emits a separate
+Keep `GALY_TOKEN` in the process environment. `cs bug-evaluation inspect --human` emits a separate
 opaque reviewer projection without model, configuration, verdict or billing fields, and
-`bg bug-evaluation rejudge` approves (or reuses `--protocol-revision`) and executes one judge-only
+`cs bug-evaluation rejudge` approves (or reuses `--protocol-revision`) and executes one judge-only
 protocol against the existing final archive. It records a new attempt/evaluation revision without
 rerunning analysis or solver work; pass the approved worker and lease generation for publication.
 Use `--approve-only` when preparing a protocol without executing its judge.
@@ -68,7 +68,7 @@ workspace reaches it and mints **their own** token: a borrowed one would attribu
 every access-log line to somebody else.
 
 It installs the plugin, registers the MCP endpoint **for that project only** (address and token stored
-literally in Claude Code's local scope, outside your repository), writes `.bg/config.json` for the
+literally in Claude Code's local scope, outside your repository), writes `.cs/config.json` for the
 CLI, gitignores it, and proves the connection before saying it worked — by shaking hands with `/mcp`,
 the door your assistant will actually use, rather than with the REST surface it will not.
 
@@ -79,7 +79,7 @@ host. A guessed host does not fail loudly — it fails as a `401` that reads lik
 
 ```
 claude plugin marketplace add b-galy/agent-kit
-claude plugin install bg@b-galy
+claude plugin install cs@b-galy
 ```
 
 **Installed while the marketplace was still called `galy`?** A workstation keys the plugin by the
@@ -127,7 +127,7 @@ the file while dying, thirty seconds after the new one had written to it.
 ## The pane beside the transcript
 
 The row under the prompt names what this working copy has in hand. It does not say where
-that work sits. In fullscreen, `/bg:okr-panel` opens a pane docked to the right of the conversation
+that work sits. In fullscreen, `/cs:okr-panel` opens a pane docked to the right of the conversation
 and draws the rest of the answer for this copy alone:
 
 ```
@@ -156,7 +156,7 @@ The chain of objectives is drawn in blue, so it reads apart from the brief and t
 under it; the period above it, the key results, the brief, the specs, their phases and
 their checks keep the terminal's own colour. A linked row of the chain keeps its underline.
 
-It opens by itself the first time a copy takes something up, closes on `/bg:okr-panel`, and
+It opens by itself the first time a copy takes something up, closes on `/cs:okr-panel`, and
 remembers that choice for the next session. Below 110 columns, and outside fullscreen, it
 sits inline above the prompt as an eight-row summary instead. With nothing in hand it does
 not open at all, and opened by hand it says `Pas de travail en cours.`
@@ -226,7 +226,7 @@ entities they touched. « rafraîchir » still forgets everything. Until this, `
 stratégie` stayed on screen for the three minutes a name is kept — and the first answer to
 it, forgetting everything on every call, cost the whole tree on each of them.
 
-What it draws comes from two places and no third: `.bg/work.json`, the file the row already
+What it draws comes from two places and no third: `.cs/work.json`, the file the row already
 reads, for **what** this copy has in hand — never the workspace's queue, which is the same
 in every worktree; the hook that writes it stamps each entry with its session and sorts the
 file at every start, so the pane reads what is there and never the stamp — and the `pm-v1`
@@ -239,7 +239,7 @@ minutes for the whole machine, and speaks both spellings of the contract: `specI
 settings — `--no-pane` skips it, `npx -y github:b-galy/agent-kit --enable-pane` does it
 alone on a workstation installed before this existed — and it takes effect at the next
 start of Claude Code. Without the flag nothing of the module loads: the row under the
-prompt and the classic hooks go on exactly as they did, and `/bg:okr-panel` is simply not there.
+prompt and the classic hooks go on exactly as they did, and `/cs:okr-panel` is simply not there.
 
 One limit is worth knowing before you meet it: Claude Code caps what an MCP call may
 answer, and past the cap it replaces the result with a notice of its own. A spec whose
@@ -313,7 +313,7 @@ or does it stop and ask you?
 Two layers decide, and the top one wins: your **administrator's policy** for the whole workspace —
 `allow`, `deny`, or `user_choice`, set per skill and per option — and, under `user_choice`, **your
 own preference**. Both live on your Galy account, so they follow you from one checkout to the next;
-a local `.bg/workflow-defaults.json` mirrors the user layer for headless runs, and is never
+a local `.cs/workflow-defaults.json` mirrors the user layer for headless runs, and is never
 committed.
 
 Ask "quels réglages Galy sont actifs ?" and the `workflows` skill shows the table, says who decided
@@ -367,21 +367,21 @@ Eighteen skills that take a need from idea to shipped, each driven by the Galy o
 The kit **stops at "PR ready"** on purpose. Merging and deploying stay with your own CI/process — a
 documented extension point, not a gap.
 
-## The `bg` CLI
+## The `cs` CLI
 
 A shell-friendly companion to the MCP tools — search work items, read compact JSON cards, and pull/push
 the large markdown bodies of briefs and specs as local files:
 
 ```
-bg search "seller onboarding"
-bg brief 12
-bg spec 42
-bg content pull feature-spec 42     # → .tmp/galy-content/feature-spec/42.md
-bg content push feature-spec 42     # after you edit the buffer
-bg codex                            # project the kit into .agents/ + .codex/ for a Codex session
+cs search "seller onboarding"
+cs brief 12
+cs spec 42
+cs content pull feature-spec 42     # → .tmp/galy-content/feature-spec/42.md
+cs content push feature-spec 42     # after you edit the buffer
+cs codex                            # project the kit into .agents/ + .codex/ for a Codex session
 ```
 
-It reads its config from `GALY_ENDPOINT` / `GALY_TOKEN` or `.bg/config.json`. Like the tools, it only
+It reads its config from `GALY_ENDPOINT` / `GALY_TOKEN` or `.cs/config.json`. Like the tools, it only
 carries work items and their text — never your source.
 
 ## More than one harness
@@ -396,29 +396,29 @@ them into the layouts Codex reads.
 
 ### From your own repository
 
-The projection ships with the kit, as a subcommand of the `bg` CLI. From the root of your
+The projection ships with the kit, as a subcommand of the `cs` CLI. From the root of your
 repository, with no flag:
 
 ```
-bg codex            # write .agents/ and .codex/agents/ here
-bg codex --verify   # assert every reference resolves, write nothing
-bg codex --check    # --verify, plus drift against the projection already on disk
+cs codex            # write .agents/ and .codex/agents/ here
+cs codex --verify   # assert every reference resolves, write nothing
+cs codex --check    # --verify, plus drift against the projection already on disk
 ```
 
-The two roots it needs both have an answer that needs no typing: the kit is the folder `bg` itself
+The two roots it needs both have an answer that needs no typing: the kit is the folder `cs` itself
 is installed in, and the repository is where you are standing. Should you need to override either —
-`bg codex --plugin-root "$CLAUDE_PLUGIN_ROOT" --repo-root .` from inside a skill, say, where the
+`cs codex --plugin-root "$CLAUDE_PLUGIN_ROOT" --repo-root .` from inside a skill, say, where the
 variable is already there:
 
 - `--plugin-root` is the **installed kit**: the folder holding `skills/`, `instructions/` and
   `agents/`. It is exactly what `${CLAUDE_PLUGIN_ROOT}` names, so inside a skill it is that
-  variable verbatim; outside one it is `~/.claude/plugins/cache/b-galy/bg/<version>`. Left out, it
+  variable verbatim; outside one it is `~/.claude/plugins/cache/b-galy/cs/<version>`. Left out, it
   is the kit the running CLI belongs to.
 - `--repo-root` is the **repository the projection is written into**: `.agents/` and `.codex/`
   appear at its root, beside your code, which is where a Codex tab looks for them. Left out, it is
   the working directory.
 
-If `bg` is not on your `PATH`, it is `node "$CLAUDE_PLUGIN_ROOT/bin/bg.mjs" codex` — the same file.
+If `cs` is not on your `PATH`, it is `node "$CLAUDE_PLUGIN_ROOT/bin/cs.mjs" codex` — the same file.
 
 ### From a checkout of this repository
 
@@ -469,7 +469,7 @@ What the projection currently declares missing:
 
 | Capability | Where | What a Codex session does instead |
 |---|---|---|
-| the `bg:` namespace | 7 skills, `host-instructions`, `autonomy`, `delivery` | One flat namespace: drop the prefix; a `bg:<agent>` is a Codex subagent, a `bg:<skill>` a Codex skill |
+| the `cs:` namespace | 7 skills, `host-instructions`, `autonomy`, `delivery` | One flat namespace: drop the prefix; a `cs:<agent>` is a Codex subagent, a `cs:<skill>` a Codex skill |
 | `${CLAUDE_PLUGIN_ROOT}` | 11 skills, `workflow-defaults`, `design-reviewer` | The plugin root is `.agents/`: `${CLAUDE_PLUGIN_ROOT}/instructions/x.md` is `.agents/instructions/x.md` |
 | `CLAUDE.md` | 4 skills, `host-instructions`, `review-lenses`, `design-reviewer` | The root instruction file, under the name Claude Code gives it: here it is `AGENTS.md` at the repository root |
 | `AskUserQuestion` | `audit-organisation`, `connect` | Ask in plain text with numbered options and wait — never assume a default |
@@ -509,8 +509,8 @@ galy/
   instructions/                   # shared conventions the skills reference, projected to .agents/instructions/
   contract/pm-v1.json             # the project-management tool + REST contract
   contract/conformance/           # the outward-only conformance suite (MCP + REST)
-  bin/bg.mjs                      # the bg CLI
-  bin/build-codex.mjs             # the Codex projection, shipped so a client can run `bg codex`
+  bin/cs.mjs                      # the cs CLI
+  bin/build-codex.mjs             # the Codex projection, shipped so a client can run `cs codex`
 types/claude-code.d.ts            # the function-hooks API, as /plugin-types wrote it; the pane is typed against this
 tsconfig.json                     # what CI recompiles on every push
 package.json                      # makes the repo itself runnable: npx -y github:b-galy/agent-kit

@@ -54,7 +54,7 @@ One line per file, inside the `<!-- galy:begin -->` block of the root instructio
 ```
 
 - **The marker names the skills that read the file**, bare — `bug-fix`, never the namespaced
-  `bg:bug-fix` — so the same line works on a harness whose namespace is flat. A skill the marker
+  `cs:bug-fix` — so the same line works on a harness whose namespace is flat. A skill the marker
   does not name never opens the file.
 - **The path is relative to the repository root.** What follows the dash is for whoever reads the
   block; no skill reads it.

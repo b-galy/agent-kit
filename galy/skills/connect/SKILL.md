@@ -5,7 +5,7 @@ description: Connect this repository to a Galy workspace — opening one first i
 
 # connect — wire this repository to a Galy workspace
 
-The user is here because the `mcp__bg__*` tools answer nothing, or because they have never connected.
+The user is here because the `mcp__cs__*` tools answer nothing, or because they have never connected.
 
 ## First, the question they should never have to answer themselves
 
@@ -61,7 +61,7 @@ Run these before saying anything. They are read-only and cost a second.
 claude mcp list            # the address and the state, for every server
 ```
 
-**Never `claude mcp get bg`.** It prints the `Authorization` header **in full**, so the token
+**Never `claude mcp get cs`.** It prints the `Authorization` header **in full**, so the token
 lands in the transcript — which is uploaded on many setups, and which this very skill tells you a
 token must never enter. `list` gives the address and the state, which answers all four rows below.
 On the rare occasion the scope is genuinely in doubt, ask the user to run `get` themselves with `!`
@@ -71,11 +71,11 @@ Read the answer against these four, which cover nearly every case:
 
 | What you see | What it means | What to do |
 |---|---|---|
-| no server named `bg` | never connected here | ask for the setup command below |
-| a server named `galy`, with or without `bg` beside it | the alias before the brand became B.Galy: a setup run before the rename registered it, and the agent sees every tool twice when both answer | re-run setup, which removes it; or `claude mcp remove galy -s local` |
+| no server named `cs` | never connected here | ask for the setup command below |
+| a server named `bg` or `galy`, with or without `cs` beside it | an alias from before a rename — `galy` until the brand became B.Galy, `bg` until the product became Castalie: a setup run before that rename registered it, and the agent sees every tool twice when both answer | re-run setup, which removes both; or `claude mcp remove bg -s local` / `claude mcp remove galy -s local` |
 | the URL contains `${GALY_MCP_URL}` unexpanded | it is declared through an environment variable nobody set | re-run setup; it registers literal values and stops depending on the shell |
 | `401` / `unauthorized` on any call | the token is revoked, belongs to another workspace, or its bearer's account was closed — the instance refuses a token whose membership is no longer active | a new token on the same page, then setup again; if that also fails, their account itself is closed and only an owner reopens it |
-| `bg` defined in **two** scopes | two definitions, and the local one wins — often the broken one loses silently, or the wrong one wins | keep one: `claude mcp remove bg -s project` or `-s local` |
+| `cs` defined in **two** scopes | two definitions, and the local one wins — often the broken one loses silently, or the wrong one wins | keep one: `claude mcp remove cs -s project` or `-s local` |
 
 ## The command
 
@@ -88,7 +88,7 @@ a developer who has never seen Galy work concludes the product does not exist. T
 public and `npx` runs it as it is. The day the package is published, the short form comes back — here
 and on the screen, together.
 
-It registers the MCP endpoint for **this project only**, writes `.bg/config.json` for the `bg` CLI,
+It registers the MCP endpoint for **this project only**, writes `.cs/config.json` for the `cs` CLI,
 makes sure that file is gitignored, and tests the connection before claiming success.
 
 It also installs the **status line**: one row under the prompt naming the specs and briefs this
@@ -106,7 +106,7 @@ conversation is a token in a log, in a backup, and in whatever the transcript is
 
 Say what changed, in one line, then get out of the way — the user came to work, not to configure.
 
-If this repository has never been observed, offer the `bg:audit-organisation` skill: it tours the ground, says
+If this repository has never been observed, offer the `cs:audit-organisation` skill: it tours the ground, says
 where the practices stand against the twenty criteria, and records what it saw. It reads and proposes;
 it changes nothing on its own.
 

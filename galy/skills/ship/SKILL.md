@@ -65,7 +65,7 @@ a skill written for your repository never has to guess:
 
 **`preview_deploy` is the only one of the four you act on here**, and only on
 `deploy-a-preview`: once the pull request is ready, run the command this team already uses to put
-a branch where it can be seen — the one `bg:adapt` wrote against their pipeline. On
+a branch where it can be seen — the one `cs:adapt` wrote against their pipeline. On
 `skip-the-preview`, do nothing and say nothing: a line announcing what you are not doing, on
 every single run, is noise.
 
@@ -73,9 +73,9 @@ every single run, is noise.
 there is nowhere to put it rather than inventing a command. An invented deploy reads like a
 procedure and is discovered on the day it matters.
 
-Read them with `mcp__bg__workflow_policy_resolve`, never from memory, and read the vocabulary
-this instance actually knows with `mcp__bg__workflow_catalog_list`: an option it does not know
-is a setting nothing will ever honour. `bg:adapt` is what turns their answers into skills that
+Read them with `mcp__cs__workflow_policy_resolve`, never from memory, and read the vocabulary
+this instance actually knows with `mcp__cs__workflow_catalog_list`: an option it does not know
+is a setting nothing will ever honour. `cs:adapt` is what turns their answers into skills that
 merge and ship the way your team already does; **this skill still stops at PR ready**, whatever
 any of them is set to.
 

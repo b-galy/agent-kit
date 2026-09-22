@@ -195,13 +195,13 @@ Two proofs, both required:
 
 ### 6. Record what it would take to see it earlier
 
-Add a follow-up check with `mcp__bg__followup_check_add`, or in their system if that is where
+Add a follow-up check with `mcp__cs__followup_check_add`, or in their system if that is where
 bugs live: what to look at, on what horizon, to know this class of failure has not returned. One
 check, concrete enough to run without you.
 
 ### 7. Hand it over
 
-Use `bg:ship` before reporting completion, including when the fix is already applied locally.
+Use `cs:ship` before reporting completion, including when the fix is already applied locally.
 It commits in the house style, opens the pull request, runs the self-review
 panel and fixes what it finds.
 
@@ -224,7 +224,7 @@ bar, or on `always-manual`, you stop and wait however sure you feel. A fix that 
 bar says so in the pull request rather than slipping through on a good mood.
 
 **The kit itself still merges nothing and deploys nothing.** That is a documented boundary, not a
-gap: `auto-merge` means you hand over to the process they already have — the one `bg:adapt`
+gap: `auto-merge` means you hand over to the process they already have — the one `cs:adapt`
 wrote against their pipeline — and `merge-and-release` means you hand over twice. Never merge
 because the checks went green, never because the user said "vas-y" about an earlier step, and
 never because a setting sounded like permission to do it yourself.

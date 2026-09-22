@@ -5,12 +5,13 @@
   },
   "plugins": [
     {
-      "name": "bg",
+      "name": "cs",
       "source": "./galy",
-      "description": "B.Galy project-management kit: strategy → briefs → specs → code, driven by your own agent. Skills answer to /bg:<skill>."
+      "description": "B.Galy project-management kit: strategy → briefs → specs → code, driven by your own agent. Skills answer to /cs:<skill>."
     }
   ],
   "renames": {
-    "galy": "bg"
+    "galy": "bg",
+    "bg": "cs"
   }
 }
