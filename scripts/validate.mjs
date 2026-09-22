@@ -15,6 +15,14 @@
 //      machine. A hardcoded host does not fail loudly either — it authenticates nobody and
 //      reads as a bad token.
 //
+//   2b. NO EXAMPLE ADDRESS ON A DOMAIN WE ARE GIVING UP. The workspaces moved to `castalie.app`,
+//      and the `galy.cloud` and `galy.io` domains are to be deleted. Until they are, a stale
+//      example redirects and reads as a typo; after, it resolves to nothing and reads as an
+//      instruction — and the costliest place for one is `connect`, whose address is the very
+//      first thing a customer types. Only an address in a URL is matched, so the production-host
+//      guard in the bug-evaluation runner keeps the bare hostname it needs in order to go on
+//      recognising an instance still answering there. That entry comes out with the domains.
+//
 //   3. NO STALE REPOSITORY NAME. The repository was renamed from `claude-kit` to `agent-kit`,
 //      then its organisation from `galy-io` to `b-galy` when the brand became B.Galy. GitHub
 //      still redirects both old names, which is exactly what makes them dangerous: everything
@@ -29,20 +37,28 @@
 //
 //   5. NO STALE NAMESPACE. The plugin was renamed from `galy` to `bg` when the brand became
 //      B.Galy, then from `bg` to `cs` when the product became Castalie, and the rest of the agent
-//      side follows each time, one name for all of it: the marketplace is `b-galy`, so the plugin
-//      installs as `cs@b-galy`; the MCP server is registered as `cs`, so the tools the agent sees
-//      are `mcp__cs__<tool>`; the CLI is `cs` and its folder `.cs/`.
+//      side follows each time, one name for all of it: the marketplace is `castalie`, so the
+//      plugin installs as `cs@castalie`; the MCP server is registered as `cs`, so the tools the
+//      agent sees are `mcp__cs__<tool>`; the CLI is `cs` and its folder `.cs/`; the packages are
+//      `@castalie/*`.
 //      None of the old names fails loudly. A skill that still says `galy:adapt` or `bg:adapt`
 //      gets `plugin-not-found`, which reads as a broken installation rather than a stale line; a
 //      skill that names `mcp__galy__whoami` or `mcp__bg__whoami` sends the agent after a tool
-//      nobody serves, in front of a user, mid-ritual; `bg@b-galy` names a plugin a fresh
-//      workstation does not have, and `bg@galy` a marketplace entry that on an old workstation
-//      reinstalls from a cache that no longer follows this repository. What does NOT move, and is
-//      therefore not matched: the plugin's source folder `./galy`, the marketplace `b-galy` and
-//      the repository `b-galy/agent-kit`, the `renames` mapping that carries the plugin renames,
-//      the config folder's former names `.bg/` and `.galy/` — read as fallbacks so nobody loses a
-//      token — the product's name and addresses, and the `<!-- galy:begin -->` markers already
-//      written into customers' files.
+//      nobody serves, in front of a user, mid-ritual; `cs@b-galy` names a marketplace a fresh
+//      workstation does not have, and on an old one reinstalls from a cache that no longer
+//      follows this repository.
+//
+//      What does NOT move, and is therefore not matched: the plugin's source folder `./galy`, the
+//      `renames` mapping that carries the plugin renames, the config folder's former names `.bg/`
+//      and `.galy/` — read as fallbacks so nobody loses a token — the identifiers that carry the
+//      code name (`GALY_ENDPOINT`, `GALY_TOKEN`, `galy-pm-v1`, `galy-setup`), the
+//      `<!-- galy:begin -->` markers already written into customers' files, and the REMOVAL of a
+//      former marketplace, which is exactly what setup and the README tell a workstation to do.
+//
+//      And the repository `b-galy/agent-kit`, which is the one name here that is not ours to
+//      change: a GitHub organisation is renamed from the web interface by its owner. It is
+//      written once, as `REPOSITORY` in setup/setup.mjs, so the day it moves is one line rather
+//      than a hunt.
 //
 // Exit code 0 = every invariant holds, 1 = at least one does not.
 
@@ -117,6 +133,13 @@ const FORBIDDEN = [
     why: "an instance address hardcoded in a published artefact. Castalie is multi-tenant: the address travels with the token, never in the repository.",
   },
   {
+    // An address shown to a reader, on a domain we are giving up. Anchored on the scheme so that
+    // the bare hostname the production-host guard matches on is not caught: that list has to keep
+    // recognising an instance still answering on the old estate, and it comes out with the domains.
+    pattern: /https?:\/\/[^\s`'"()]*galy\.(cloud|io)/,
+    why: "an example workspace address on a domain that is being deleted. Workspaces answer on `castalie.app`: write `https://<your-workspace>.castalie.app`. While `galy.cloud` still redirects this reads as a typo; once it is gone it reads as an instruction that leads nowhere — and the reader who pays for it is the one typing their very first command, in `connect`.",
+  },
+  {
     pattern: /(galy-io|b-galy)\/claude-kit/,
     why: "the repository's former name. GitHub still redirects it, and that redirection is a silent dependency: it breaks the day anyone creates a repository under that name. Publish `b-galy/agent-kit`.",
   },
@@ -148,11 +171,19 @@ const FORBIDDEN = [
     why: "a former MCP alias in a tool name. The server is registered as `cs`, so the tools your agent sees are `mcp__cs__<tool>`; a skill that names `mcp__bg__<tool>` sends it after a tool nobody serves — in front of a user, mid-ritual.",
   },
   {
-    // The install identifier is `<plugin>@<marketplace>`, and the marketplace is `b-galy`. Every
-    // stale half is refused: `galy@galy` predates the plugin rename, `bg@galy` the marketplace's,
-    // `bg@b-galy` the rename to Castalie.
-    pattern: /\b((cs|bg|galy)@galy|(bg|galy)@b-galy)\b/,
-    why: "a former name in an install identifier. The plugin is `cs` and the marketplace `b-galy`: install `cs@b-galy`. On a fresh workstation the old spelling names an entry that does not exist; on an old one it reinstalls from a cache that no longer follows this repository.",
+    // The install identifier is `<plugin>@<marketplace>`, and both halves have moved twice. Every
+    // stale spelling is refused, whichever half is out of date.
+    pattern: /\b(cs|bg|galy)@(galy|b-galy)\b/,
+    why: "a former name in an install identifier. The plugin is `cs` and the marketplace `castalie`: install `cs@castalie`. On a fresh workstation an old spelling names an entry that does not exist; on an old one it reinstalls from a cache that no longer follows this repository.",
+  },
+  {
+    // The marketplace itself, named bare on the command line. `add` and `update` are the two that
+    // act on the entry the kit now publishes, and both are wrong under a former name. `remove` is
+    // NOT matched: removing the former entry is precisely what setup and the README say to do —
+    // and neither is `marketplace add b-galy/agent-kit`, which is the repository's address and
+    // carries a slash where this pattern requires a word boundary.
+    pattern: /claude\s+plugin\s+marketplace\s+(add|update)\s+(b-galy|galy)(\s|$)/m,
+    why: "a former marketplace name in a command that acts on the current entry. The marketplace is `castalie`. Adding or updating under the old name reaches an entry a fresh workstation does not have, and on an old one refreshes a cache that no longer follows this repository.",
   },
   {
     // `claude mcp add … bg` registers the server under an alias the kit stopped using; the skills
@@ -174,6 +205,43 @@ for (const file of walk(ROOT)) {
   }
   for (const { pattern, why } of FORBIDDEN) {
     if (pattern.test(text)) fail(relative(ROOT, file), why);
+  }
+}
+
+// ------------------------------------------------- 5b. the alias in a PATH, not only in a file
+//
+// A mock is addressed by the name of its folder: `evals/<case>/mocks/<mcp server>/<tool>.md` is
+// what the harness serves when the agent calls `mcp__<mcp server>__<tool>`. So the ALIAS is
+// spelled by a directory name, and nothing above would ever see it — every check up to here reads
+// the CONTENTS of files.
+//
+// That is not a hypothesis. The rename to `cs` on 22 September 2026 converted all 137 written
+// occurrences of the former alias and left four directories called `mocks/bg/` exactly where they
+// were, with every check green. The evals would have run against a server nobody mocks: no error,
+// no missing file, just an agent improvising answers the case was written to hand it — and a
+// verdict about behaviour that was never exercised.
+//
+// The lesson is the one the check is named after: a stale name survives longest where it is not
+// written down but spelled out by a path.
+const mocksRoot = join(ROOT, "galy", "evals");
+const ALIAS = "cs";
+
+function mockServerDirs(dir) {
+  const out = [];
+  for (const entry of readdirSync(dir)) {
+    const full = join(dir, entry);
+    if (!statSync(full).isDirectory()) continue;
+    if (entry === "mocks") out.push(...readdirSync(full).filter((e) => statSync(join(full, e)).isDirectory()).map((e) => ({ path: join(full, e), name: e })));
+    else out.push(...mockServerDirs(full));
+  }
+  return out;
+}
+
+if (existsSync(mocksRoot)) {
+  for (const { path, name } of mockServerDirs(mocksRoot)) {
+    if (name !== ALIAS) {
+      fail(relative(ROOT, path), `is a mock folder named after the server \`${name}\`, but this kit registers its MCP server as \`${ALIAS}\` — so the graders call \`mcp__${ALIAS}__<tool>\` and nothing here answers them. The eval still runs, against an agent left to improvise, and reports on behaviour it never exercised. Rename the folder to \`${ALIAS}\`.`);
+    }
   }
 }
 

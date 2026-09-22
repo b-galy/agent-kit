@@ -34,7 +34,7 @@
 //   --plugin-root <dir>   the installed kit — the folder holding `skills/`, `instructions/` and
 //                         `agents/`. It is exactly what `${CLAUDE_PLUGIN_ROOT}` names, so inside a
 //                         skill it is `"$CLAUDE_PLUGIN_ROOT"` verbatim, and outside one it is
-//                         `~/.claude/plugins/cache/b-galy/cs/<version>`.
+//                         `~/.claude/plugins/cache/castalie/cs/<version>`.
 //                         Default: this file's own plugin root — `bin/..`, which is the installed
 //                         kit when the CLI runs from the cache, and `galy/` in a checkout of this
 //                         repository. So the flag changes nothing when it is absent.
@@ -96,7 +96,7 @@ import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
 
 // This file sits in `<plugin-root>/bin/`, beside `cs.mjs` — verified against the installed cache,
-// where `~/.claude/plugins/cache/b-galy/cs/<version>/` holds `bin/`, `skills/`, `instructions/`
+// where `~/.claude/plugins/cache/castalie/cs/<version>/` holds `bin/`, `skills/`, `instructions/`
 // and `agents/` side by side. So the plugin root is one folder up, never this folder.
 const KIT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -328,7 +328,7 @@ export function runCli(argv = [], options = {}) {
       `\n✗ no skills under ${PLUGIN_ROOT}\n\n` +
       "  --plugin-root wants the folder that HOLDS `skills/`, `instructions/` and `agents/` — the\n" +
       "  installed plugin's own root, which is what `${CLAUDE_PLUGIN_ROOT}` names:\n" +
-      "    ~/.claude/plugins/cache/b-galy/cs/<version>\n" +
+      "    ~/.claude/plugins/cache/castalie/cs/<version>\n" +
       "  In a checkout of this repository that folder is `galy/`, not the repository root.\n",
     );
     process.exit(1);

@@ -1156,6 +1156,8 @@ class McpClient {
     // Both estates, and the older one stays: this guard is what stops a local run billing against a
     // real workspace, and an instance still answering on `*.galy.cloud` is exactly as production as
     // one on `*.castalie.app`. Dropping the former name here would disarm the guard in silence.
+    // `galy.cloud` comes out of this list the day the domain is deleted, and not before: while it
+    // resolves, an instance can still be reached there and must still be guarded.
     const PRODUCTION_HOSTS = ["castalie.app", "galy.cloud"];
     const production = PRODUCTION_HOSTS.some((host) => url.hostname === host || url.hostname.endsWith(`.${host}`));
     if (production && !allowProduction && process.env.BUG_EVALUATION_ALLOW_PRODUCTION !== "1")

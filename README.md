@@ -79,12 +79,13 @@ host. A guessed host does not fail loudly — it fails as a `401` that reads lik
 
 ```
 claude plugin marketplace add b-galy/agent-kit
-claude plugin install cs@b-galy
+claude plugin install cs@castalie
 ```
 
-**Installed while the marketplace was still called `galy`?** A workstation keys the plugin by the
-marketplace's name, so the old entry stays and keeps serving its cached copy. Re-run the setup command
-above, or by hand: `claude plugin marketplace remove galy`, then the two lines of option B.
+**Installed while the marketplace was still called `b-galy` — or `galy` before that?** A workstation
+keys the plugin by the marketplace's name, so an old entry stays and keeps serving its cached copy.
+Re-run the setup command above, which removes both, or by hand: `claude plugin marketplace remove
+b-galy` and `claude plugin marketplace remove galy`, then the two lines of option B.
 
 The plugin declares no MCP server of its own, so it has nothing to connect to yet. Open your agent in
 your repository and it will say so and point you at the `connect` skill — or run the `galy-setup`
@@ -100,7 +101,7 @@ copy per client. What it does not do is arrive the same second: your agent refre
 cache on its own schedule. To pull the current state right now:
 
 ```
-claude plugin marketplace update b-galy
+claude plugin marketplace update castalie
 ```
 
 ## It says nothing until you ask
@@ -412,7 +413,7 @@ variable is already there:
 
 - `--plugin-root` is the **installed kit**: the folder holding `skills/`, `instructions/` and
   `agents/`. It is exactly what `${CLAUDE_PLUGIN_ROOT}` names, so inside a skill it is that
-  variable verbatim; outside one it is `~/.claude/plugins/cache/b-galy/cs/<version>`. Left out, it
+  variable verbatim; outside one it is `~/.claude/plugins/cache/castalie/cs/<version>`. Left out, it
   is the kit the running CLI belongs to.
 - `--repo-root` is the **repository the projection is written into**: `.agents/` and `.codex/`
   appear at its root, beside your code, which is where a Codex tab looks for them. Left out, it is
