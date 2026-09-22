@@ -15,6 +15,14 @@
 //      machine. A hardcoded host does not fail loudly either — it authenticates nobody and
 //      reads as a bad token.
 //
+//   2b. NO EXAMPLE ADDRESS ON A DOMAIN WE ARE GIVING UP. The workspaces moved to `castalie.app`,
+//      and the `galy.cloud` and `galy.io` domains are to be deleted. Until they are, a stale
+//      example redirects and reads as a typo; after, it resolves to nothing and reads as an
+//      instruction — and the costliest place for one is `connect`, whose address is the very
+//      first thing a customer types. Only an address in a URL is matched, so the production-host
+//      guard in the bug-evaluation runner keeps the bare hostname it needs in order to go on
+//      recognising an instance still answering there. That entry comes out with the domains.
+//
 //   3. NO STALE REPOSITORY NAME. The repository was renamed from `claude-kit` to `agent-kit`,
 //      then its organisation from `galy-io` to `b-galy` when the brand became B.Galy. GitHub
 //      still redirects both old names, which is exactly what makes them dangerous: everything
@@ -123,6 +131,13 @@ const FORBIDDEN = [
   {
     pattern: /azurewebsites\.net/i,
     why: "an instance address hardcoded in a published artefact. Castalie is multi-tenant: the address travels with the token, never in the repository.",
+  },
+  {
+    // An address shown to a reader, on a domain we are giving up. Anchored on the scheme so that
+    // the bare hostname the production-host guard matches on is not caught: that list has to keep
+    // recognising an instance still answering on the old estate, and it comes out with the domains.
+    pattern: /https?:\/\/[^\s`'"()]*galy\.(cloud|io)/,
+    why: "an example workspace address on a domain that is being deleted. Workspaces answer on `castalie.app`: write `https://<your-workspace>.castalie.app`. While `galy.cloud` still redirects this reads as a typo; once it is gone it reads as an instruction that leads nowhere — and the reader who pays for it is the one typing their very first command, in `connect`.",
   },
   {
     pattern: /(galy-io|b-galy)\/claude-kit/,
