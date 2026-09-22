@@ -37,6 +37,7 @@
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const TYPES = new Set(["feature-brief", "feature-spec"]);
 
@@ -214,6 +215,13 @@ async function main() {
 /// worked around it by testing for `bin/build-codex.mjs` on disk instead of trusting the pin,
 /// which is a fine remedy for them and one nobody else should have to invent. A subcommand added
 /// after a pin will keep happening; naming the version turns the next occurrence into one line.
+///
+/// And it answered `an unknown version` from the day it shipped: `fileURLToPath` was never
+/// imported, so the first line threw a `ReferenceError` that the `catch` below swallowed whole.
+/// The sentence was written, reviewed and merged, and the only thing missing was the import —
+/// which nothing could say, because a fallback is indistinguishable from a manifest that genuinely
+/// cannot be read. A `catch` that returns a plausible value is how a defect gets to look like a
+/// feature.
 function installedVersion() {
   try {
     const manifest = join(dirname(fileURLToPath(import.meta.url)), "..", ".claude-plugin", "plugin.json");
