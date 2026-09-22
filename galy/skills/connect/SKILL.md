@@ -5,7 +5,7 @@ description: Connect this repository to a Castalie workspace — opening one fir
 
 # connect — wire this repository to a Castalie workspace
 
-The user is here because the `mcp__cs__*` tools answer nothing, or because they have never connected.
+The user is here because the `mcp__castalie__*` tools answer nothing, or because they have never connected.
 
 ## First, the question they should never have to answer themselves
 
@@ -61,7 +61,7 @@ Run these before saying anything. They are read-only and cost a second.
 claude mcp list            # the address and the state, for every server
 ```
 
-**Never `claude mcp get cs`.** It prints the `Authorization` header **in full**, so the token
+**Never `claude mcp get castalie`.** It prints the `Authorization` header **in full**, so the token
 lands in the transcript — which is uploaded on many setups, and which this very skill tells you a
 token must never enter. `list` gives the address and the state, which answers all four rows below.
 On the rare occasion the scope is genuinely in doubt, ask the user to run `get` themselves with `!`
@@ -71,11 +71,11 @@ Read the answer against these four, which cover nearly every case:
 
 | What you see | What it means | What to do |
 |---|---|---|
-| no server named `cs` | never connected here | ask for the setup command below |
-| a server named `bg` or `galy`, with or without `cs` beside it | an alias from before a rename — `galy` until the brand became B.Galy, `bg` until the product became Castalie: a setup run before that rename registered it, and the agent sees every tool twice when both answer | re-run setup, which removes both; or `claude mcp remove bg -s local` / `claude mcp remove galy -s local` |
+| no server named `castalie` | never connected here | ask for the setup command below |
+| a server named `cs`, `bg` or `galy`, with or without `castalie` beside it | an alias from before a rename — `galy` until the brand became B.Galy, then `bg`, then `cs` until the server took the product's own name on 22 September 2026: a setup run before that rename registered it, and the agent sees every tool twice when both answer. Note that `cs` is still the PLUGIN's name and still correct in `/cs:<skill>` — it is only the SERVER that moved | re-run setup, which removes all three; or `claude mcp remove cs -s local` |
 | the URL contains `${GALY_MCP_URL}` unexpanded | it is declared through an environment variable nobody set | re-run setup; it registers literal values and stops depending on the shell |
 | `401` / `unauthorized` on any call | the token is revoked, belongs to another workspace, or its bearer's account was closed — the instance refuses a token whose membership is no longer active | a new token on the same page, then setup again; if that also fails, their account itself is closed and only an owner reopens it |
-| `cs` defined in **two** scopes | two definitions, and the local one wins — often the broken one loses silently, or the wrong one wins | keep one: `claude mcp remove cs -s project` or `-s local` |
+| `castalie` defined in **two** scopes | two definitions, and the local one wins — often the broken one loses silently, or the wrong one wins | keep one: `claude mcp remove castalie -s project` or `-s local` |
 
 ## The command
 

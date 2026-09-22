@@ -16,7 +16,7 @@ from Castalie, verifies against the running app, reports a verdict, and reschedu
 
 ## Steps
 
-1. **Load the checks.** `mcp__cs__followup_check_list(featureSpecId=<id>)` (or `featureBriefId`). Each
+1. **Load the checks.** `mcp__castalie__followup_check_list(featureSpecId=<id>)` (or `featureBriefId`). Each
    check carries `followupPromptMd` — the executable instructions + explicit pass/fail thresholds — and
    an `onFailAction`.
 2. **Run each check against production.** Technical checks: open the page / call the endpoint / run the
@@ -29,7 +29,7 @@ from Castalie, verifies against the running app, reports a verdict, and reschedu
    `implement_spec` → note the follow-up work. Record what you decided.
 5. **Reschedule.** Per `${CLAUDE_PLUGIN_ROOT}/instructions/followup-conventions.md`: green + stable →
    close the loop; green first cycle of a cascade → next horizon; minor anomaly → J+7 re-check; hard
-   regression → stop + flag. Apply via `mcp__cs__followup_check_update(checkId, scheduleOffsetDays=…,
+   regression → stop + flag. Apply via `mcp__castalie__followup_check_update(checkId, scheduleOffsetDays=…,
    chainOffsetDays=…, isActive=…)`.
 
 ## Report

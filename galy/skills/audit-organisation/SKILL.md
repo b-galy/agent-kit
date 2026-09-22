@@ -66,7 +66,7 @@ Four things this shape buys, and each of them is a failure mode of the version i
 
 ### The order
 
-`mcp__cs__maturity_challenge` decides it, and you do not second-guess it:
+`mcp__castalie__maturity_challenge` decides it, and you do not second-guess it:
 
 1. `next_step` — the server names the single criterion that unlocks the most. Start there.
 2. `at_risk` — a power whose guard nobody saw. These matter more than a green one nearby.
@@ -94,7 +94,7 @@ page.** Three moments are reports, and only the first one used to be treated as 
   "what did the audit find?". This is the one that gets missed, and it is the most common of the
   three: passes are rare, and the state gets asked about for months afterwards.
 
-The address is `page_url`, and `mcp__cs__maturity_challenge` returns it on every call — so a
+The address is `page_url`, and `mcp__castalie__maturity_challenge` returns it on every call — so a
 report has no excuse for lacking one. **Give the address the tool returned and never build one:**
 a Castalie instance is not guessable — every workspace answers on its own host, and a dedicated
 instance lives under the client's own name — so an address you assembled yourself lands on a 404
@@ -102,7 +102,7 @@ or, worse, on somebody else's instance. If no call gave you one, say the page ex
 do not have its address; that is a bug to report, not a gap to paper over.
 
 **Asking about the state is not asking for a pass.** "Où en sont les recommandations ?" is
-answered by one `mcp__cs__maturity_challenge` call and three lines: what is at risk or how many
+answered by one `mcp__castalie__maturity_challenge` call and three lines: what is at risk or how many
 practices are observed, the single next step in plain words, and the address. Then stop. Opening
 a pass because someone asked a question spends an afternoon of their attention on something they
 did not ask for — offer it in half a sentence if the state is stale, and let them say yes.
@@ -248,15 +248,15 @@ procedure.
 
 ## Opening the pass
 
-- `mcp__cs__maturity_challenge` — which pass is this, and where is the work.
-- `mcp__cs__maturity_start_run` with the `kind` that answer implies: `onboarding` when nothing
+- `mcp__castalie__maturity_challenge` — which pass is this, and where is the work.
+- `mcp__castalie__maturity_start_run` with the `kind` that answer implies: `onboarding` when nothing
   was ever observed, `scheduled` when refreshing what went stale, `manual` when a user asked.
   **Keep the `run_id`** — every recording needs it.
-- `mcp__cs__maturity_run_probes` with that same `run_id` — what the instance can measure by
+- `mcp__castalie__maturity_run_probes` with that same `run_id` — what the instance can measure by
   itself, it measures. Do not spend anyone's judgement on what a probe already answered.
 
 Open with one sentence, in the user's language, naming the workspace the observations go into —
-`mcp__cs__whoami` gives you the name:
+`mcp__castalie__whoami` gives you the name:
 
 > Je vais auditer ton projet avec les bonnes pratiques recommandées par Castalie, un critère à la
 > fois. Les constats iront dans l'espace « <nom> ».
@@ -312,7 +312,7 @@ On screen, one line, and it answers what a human actually wants to know:
   If a verb's absence really is the finding — a genuine gap in the tooling — that belongs in
   `evidence_md`, and the line says the consequence in plain words: « rien ne permet d'y rattacher
   une mesure automatique ».
-- **the state you recorded**, read back from what `mcp__cs__maturity_record` returned rather than
+- **the state you recorded**, read back from what `mcp__castalie__maturity_record` returned rather than
   the one you asked for: an unguarded power is stored lower, and the user must hear what was stored.
 - **no advice on the line.** The one next step is chosen once, at the close, by the server. Twenty
   pieces of advice is not twenty times as useful as one; it is a list nobody acts on.
@@ -344,7 +344,7 @@ thing of the pass they can actually use.
 **There is no skill per criterion, and there never will be.** Twenty criteria would be twenty
 entries in a menu nobody reads, for a product whose whole promise is not to spend the reader's
 attention. The procedure for putting a criterion in place lives with the criterion:
-`mcp__cs__maturity_remediation_get(criterion_id)` returns it.
+`mcp__castalie__maturity_remediation_get(criterion_id)` returns it.
 
 Three rules, and they are the same for all twenty:
 
@@ -392,7 +392,7 @@ slogan: it names a field, it commits to nothing, and in a year nobody can say wh
 « grâce à Castalie » names the thing that is supposed to produce the change — so the objective has an
 owner, and the twentieth criterion, `effect_measured`, has something to measure.
 
-`mcp__cs__strategy_search_objectives` finds it; `mcp__cs__strategy_navigate_children` shows what
+`mcp__castalie__strategy_search_objectives` finds it; `mcp__castalie__strategy_navigate_children` shows what
 hangs under it.
 
 **Search on meaning, not on bytes.** A team that already wrote "Améliorer l'organisation avec l'IA"
@@ -438,7 +438,7 @@ internal vocabulary**; a person reading them for the first time learns nothing a
 > — **Sous l'objectif existant** — juste « Ajuster l'organisation de la tech », là où tu es déjà
 > — **Non** — je continue, et je ne rattache rien
 
-`mcp__cs__strategy_create_objective` takes a `parent_objective_id`, so the sub-objective is one
+`mcp__castalie__strategy_create_objective` takes a `parent_objective_id`, so the sub-objective is one
 call, not two.
 
 **Why this one asks, like the non-green findings do.** An objective is **their strategy** — the
@@ -449,7 +449,7 @@ A refusal costs nothing: record the criteria anyway and close without hanging th
 
 ## Closing
 
-When the criteria are done, or when the user stops you, call `mcp__cs__maturity_challenge` once
+When the criteria are done, or when the user stops you, call `mcp__castalie__maturity_challenge` once
 more and close on **what it returns**, not on what you remember. Four lines, and then stop:
 
 1. **The count**, with its full denominator: "6 observés sur 20, dont 9 non vérifiables". Never a
@@ -474,7 +474,7 @@ department, and it belongs here rather than in an opening paragraph.
 
 **After** the report — never before, never as a condition of it:
 
-`mcp__cs__onboarding_retro_record(run_id, worked_md, friction_md, questions_md, suggestions_md)`.
+`mcp__castalie__onboarding_retro_record(run_id, worked_md, friction_md, questions_md, suggestions_md)`.
 
 It is written to their own instance and stays there. Writing in your own workspace asks nobody's
 permission, and whether that instance forwards anything to Castalie is a setting their administrator

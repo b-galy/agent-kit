@@ -1,6 +1,6 @@
 ---
 type: tool_used
-tool: mcp__cs__bug_create
+tool: mcp__castalie__bug_create
 min: 0
 max: 0
 arm: both

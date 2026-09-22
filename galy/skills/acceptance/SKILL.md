@@ -1,7 +1,7 @@
 ---
 name: acceptance
 description: Run an acceptance pass on a running feature — you fire remarks in rapid succession while you click through the product, each one is written to a local queue the instant it lands and then pushed to Castalie, then coded one at a time in the order received, one commit per remark, a single PR. Trivia is decided on the spot; a real product decision parks without stopping the queue. Ends by invoking the environment's release step on the drained pass; it merges nothing directly.
-allowed-tools: Bash, Read, Edit, Write, Glob, Grep, Skill, mcp__cs__whoami, mcp__cs__acceptance_open, mcp__cs__acceptance_add_remark, mcp__cs__acceptance_list, mcp__cs__acceptance_claim_next, mcp__cs__acceptance_resolve, mcp__cs__acceptance_park, mcp__cs__acceptance_answer, mcp__cs__acceptance_set_pr, mcp__cs__acceptance_close
+allowed-tools: Bash, Read, Edit, Write, Glob, Grep, Skill, mcp__castalie__whoami, mcp__castalie__acceptance_open, mcp__castalie__acceptance_add_remark, mcp__castalie__acceptance_list, mcp__castalie__acceptance_claim_next, mcp__castalie__acceptance_resolve, mcp__castalie__acceptance_park, mcp__castalie__acceptance_answer, mcp__castalie__acceptance_set_pr, mcp__castalie__acceptance_close
 ---
 
 # acceptance — fire remarks, drain them one at a time, one PR

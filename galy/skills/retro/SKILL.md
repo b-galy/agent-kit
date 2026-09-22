@@ -28,7 +28,7 @@ Ignore anything specific to this one task — a retro captures the *rule*, not t
 
 1. Review the run: where did friction, rework, or a user correction happen?
 2. For each durable learning, post one suggestion:
-   `mcp__cs__retro_suggestion_add(source="<origin skill>", target_kind="instruction|skill|command|doc",
+   `mcp__castalie__retro_suggestion_add(source="<origin skill>", target_kind="instruction|skill|command|doc",
    target_file="<path where the rule should live>", title, summary)`.
    The `summary` is the lesson **plus** the rule to encode — a reviewer should be able to act on it
    without more context. `target_file` is a pointer, never the file's content.

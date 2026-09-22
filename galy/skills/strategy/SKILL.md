@@ -15,11 +15,11 @@ objectives or key results. The output is your analysis, in the user's language.
 
 ## Tools (read-only, Castalie MCP)
 
-- `mcp__cs__strategy_list_periods` — the annual/quarterly periods.
-- `mcp__cs__strategy_navigate_children` — drill down one level from a period (its root objectives) or
+- `mcp__castalie__strategy_list_periods` — the annual/quarterly periods.
+- `mcp__castalie__strategy_navigate_children` — drill down one level from a period (its root objectives) or
   an objective (its children); `depth` up to 3, `includeKrs` for key results. Prefer this over loading
   everything — the payload is far smaller.
-- `mcp__cs__strategy_get_objective_breadcrumb` — the parent chain of an objective, root → leaf, to
+- `mcp__castalie__strategy_get_objective_breadcrumb` — the parent chain of an objective, root → leaf, to
   build an "objective header" for a brief or spec.
 
 ## How to work

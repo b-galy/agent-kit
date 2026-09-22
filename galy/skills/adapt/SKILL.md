@@ -216,7 +216,7 @@ rules whose violation costs real data.
 Under `.claude/skills/<name>/SKILL.md`, one directory per skill, each a rewrite of the kit's
 generic version with:
 
-- **their** server name and verbs, not `mcp__cs__*`, wherever the system of record is theirs;
+- **their** server name and verbs, not `mcp__castalie__*`, wherever the system of record is theirs;
 - **their** id shapes, so a reference the user pastes is routed to the right system;
 - **their** branch and commit conventions, read from `git log`, not invented;
 - a first line saying which system this skill writes to. A skill that silently writes to the
@@ -275,12 +275,12 @@ The skills are theirs and speak only of theirs.
 
 Three of these answers are settings, not facts, and a setting changes without a pull request:
 `ship`/`release_trigger`, `ship`/`release_hold`, `ship`/`rollback_mode`. Write the generated
-skills to **resolve them at run time** — `mcp__cs__workflow_policy_resolve` — instead of
+skills to **resolve them at run time** — `mcp__castalie__workflow_policy_resolve` — instead of
 freezing today's answer in their text. A team that changes its mind on the settings page and
 sees nothing change has been given a control that is not one.
 
 **Read the option names and their values from the instance, never from memory:**
-`mcp__cs__workflow_catalog_list` says what *this* instance actually knows. An option it does
+`mcp__castalie__workflow_catalog_list` says what *this* instance actually knows. An option it does
 not know is a setting nothing will ever honour, and a value it does not accept is one it will
 refuse to store — so a name typed from memory produces a page that toggles nothing. That has
 already happened twice, in both directions, in one hour.
@@ -297,7 +297,7 @@ invention in the one place inventions cost most.
   back yet**. Recording the hole is the point; it is what stops the next session inventing one.
 
 Ask once, for the three together, in the user's language, and say where the observation came
-from. On a yes, write them with `mcp__cs__workflow_default_set` — canonical values, exactly as
+from. On a yes, write them with `mcp__castalie__workflow_default_set` — canonical values, exactly as
 the catalogue spells them, never a label you displayed. On a no, or on silence, write nothing and
 say in one line what stayed unset: an unanswered question is not an answer.
 

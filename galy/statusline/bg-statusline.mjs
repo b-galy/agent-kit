@@ -146,7 +146,7 @@ function fromHarness(dirs) {
   if (!root) return {};
   const pick = (servers) => {
     if (!servers) return null;
-    for (const name of ["cs", "bg", "galy", ...Object.keys(servers)]) {
+    for (const name of ["castalie", "cs", "bg", "galy", ...Object.keys(servers)]) {
       const server = servers[name];
       const url = server?.url;
       const auth = server?.headers?.Authorization || server?.headers?.authorization;

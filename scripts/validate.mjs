@@ -43,17 +43,25 @@
 //      corrected on the screen — and stayed wrong here, which is precisely what a check is for.
 //
 //   5. NO STALE NAMESPACE. The plugin was renamed from `galy` to `bg` when the brand became
-//      B.Galy, then from `bg` to `cs` when the product became Castalie, and the rest of the agent
-//      side follows each time, one name for all of it: the marketplace is `castalie`, so the
-//      plugin installs as `cs@castalie`; the MCP server is registered as `cs`, so the tools the
-//      agent sees are `mcp__cs__<tool>`; the CLI is `cs` and its folder `.cs/`; the packages are
-//      `@castalie/*`.
+//      B.Galy, then from `bg` to `cs` when the product became Castalie.
+//
+//      IT WAS ONE NAME FOR EVERYTHING UNTIL 22 SEPTEMBER 2026, AND IT IS NOW TWO — on purpose.
+//      The plugin stays `cs`, because its name is what a person TYPES, dozens of times a day, as
+//      `/cs:<skill>`. The MCP server is registered as `castalie`, because its alias is what a
+//      person READS — in `claude mcp list`, and in every tool name `mcp__castalie__<tool>` — and
+//      what is read should be the product's name rather than an abbreviation of it. The CLI `cs`
+//      and its folder `.cs/` follow the command, not the server. The marketplace is `castalie`,
+//      so the plugin installs as `cs@castalie`; the packages are `@castalie/*`.
+//
+//      So "one namespace" stops being the rule here, and the rule that replaces it is: a name that
+//      is typed stays short, a name that is read says what the product is called. Anyone tempted
+//      to align the two again should know it was tried that way first.
+//
 //      None of the old names fails loudly. A skill that still says `galy:adapt` or `bg:adapt`
 //      gets `plugin-not-found`, which reads as a broken installation rather than a stale line; a
-//      skill that names `mcp__galy__whoami` or `mcp__bg__whoami` sends the agent after a tool
-//      nobody serves, in front of a user, mid-ritual; `cs@b-galy` names a marketplace a fresh
-//      workstation does not have, and on an old one reinstalls from a cache that no longer
-//      follows this repository.
+//      skill that names `mcp__cs__whoami` sends the agent after a tool nobody serves, in front of
+//      a user, mid-ritual; `cs@b-galy` names a marketplace a fresh workstation does not have, and
+//      on an old one reinstalls from a cache that no longer follows this repository.
 //
 //      What does NOT move, and is therefore not matched: the plugin's source folder `./galy`, the
 //      `renames` mapping that carries the plugin renames, the config folder's former names `.bg/`
@@ -201,10 +209,13 @@ const FORBIDDEN = [
     why: "a former plugin name as a skill prefix. The plugin is `cs` since the product became Castalie: write `cs:<skill>` and `/cs:<skill>`.",
   },
   {
-    // The MCP server moves with the plugin: it is registered as `cs`, and the harness names its
-    // tools after the alias. A tool named after a former alias is a tool nobody serves.
-    pattern: /mcp__(galy|bg)__/,
-    why: "a former MCP alias in a tool name. The server is registered as `cs`, so the tools your agent sees are `mcp__cs__<tool>`; a skill that names `mcp__bg__<tool>` sends it after a tool nobody serves — in front of a user, mid-ritual.",
+    // The harness names its tools after the alias the server is registered under, and that alias
+    // is `castalie`. A tool named after a former one is a tool nobody serves. `cs` joined the list
+    // on 22 September 2026: it is still the PLUGIN's name, so it goes on appearing all over this
+    // repository as `/cs:` and as the CLI — which is exactly why only the `mcp__cs__` spelling is
+    // matched, and never the bare word.
+    pattern: /mcp__(galy|bg|cs)__/,
+    why: "a former MCP alias in a tool name. The server is registered as `castalie`, so the tools your agent sees are `mcp__castalie__<tool>`; a skill that names `mcp__cs__<tool>` sends it after a tool nobody serves — in front of a user, mid-ritual. `cs` is still the plugin and the CLI; it is no longer the server.",
   },
   {
     // The install identifier is `<plugin>@<marketplace>`, and both halves have moved twice. Every
@@ -222,11 +233,11 @@ const FORBIDDEN = [
     why: "a former marketplace name in a command that acts on the current entry. The marketplace is `castalie`. Adding or updating under the old name reaches an entry a fresh workstation does not have, and on an old one refreshes a cache that no longer follows this repository.",
   },
   {
-    // `claude mcp add … bg` registers the server under an alias the kit stopped using; the skills
-    // then name tools under `cs` that the harness serves under `bg`. Only `add` is matched:
-    // `claude mcp remove bg` is precisely what setup and `connect` say to do.
-    pattern: /claude\s+mcp\s+add\b[^\n]*\s(galy|bg)(\s|$)/m,
-    why: "a registration of the MCP server under a former alias. Register it as `cs`: `claude mcp add --scope local cs …`. Two servers serving the same tools under two names shows the agent every tool twice — the doubt `connect` exists to clear.",
+    // `claude mcp add … cs` registers the server under an alias the kit stopped using; the skills
+    // then name tools under `castalie` that the harness serves under `cs`. Only `add` is matched:
+    // `claude mcp remove cs` is precisely what setup and `connect` say to do.
+    pattern: /claude\s+mcp\s+add\b[^\n]*\s(galy|bg|cs)(\s|$)/m,
+    why: "a registration of the MCP server under a former alias. Register it as `castalie`: `claude mcp add --scope local castalie …`. Two servers serving the same tools under two names shows the agent every tool twice — the doubt `connect` exists to clear.",
   },
 ];
 
@@ -260,7 +271,7 @@ for (const file of walk(ROOT)) {
 // The lesson is the one the check is named after: a stale name survives longest where it is not
 // written down but spelled out by a path.
 const mocksRoot = join(ROOT, "galy", "evals");
-const ALIAS = "cs";
+const ALIAS = "castalie";
 
 function mockServerDirs(dir) {
   const out = [];

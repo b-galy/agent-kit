@@ -24,11 +24,11 @@ watchdog never fires — ideal.
 
 ## Steps
 
-1. **Lock the spec.** `mcp__cs__whoami` → userId. `mcp__cs__feature_spec_pick(specId, userId)`.
+1. **Lock the spec.** `mcp__castalie__whoami` → userId. `mcp__castalie__feature_spec_pick(specId, userId)`.
    `success:false` → it is held by `current_lead_name`; stop, ask them to release it. (Skip on `--continue`.)
 2. **Arm the watchdog once** (skip on `--continue` or if `CronList` already shows one for this spec):
    `CronCreate(cron: "7,27,47 * * * *", prompt: "/feature-implement <specId> --continue", durable: true)`.
-3. **Read the spec.** `mcp__cs__feature_spec_get(specId)` for phases (id + status), risks, acceptance
+3. **Read the spec.** `mcp__castalie__feature_spec_get(specId)` for phases (id + status), risks, acceptance
    tests. `cs content pull feature-spec <specId>` then read the buffer for the solution body. Skip
    `Done` phases; finish `InProgress` ones first; target `NotStarted` next.
 4. **Read the host's local rules**, once, before the first phase, following
@@ -39,20 +39,20 @@ watchdog never fires — ideal.
    or there is no such line: say nothing and carry on** — a team that never wrote one must not be
    able to tell this step exists.
 5. **Implement phase by phase, same turn.** For each phase:
-   - Mark it `mcp__cs__feature_spec_set_phase_status(phaseId, status="InProgress")`.
+   - Mark it `mcp__castalie__feature_spec_set_phase_status(phaseId, status="InProgress")`.
    - Read `${CLAUDE_PLUGIN_ROOT}/instructions/acceptance-criteria.md` and the phase's
      `validationCriterionMd`. Fill missing legacy cases before the relevant code and reuse exact
      existing coverage. Implement **one case at a time: relevant failing test → code → passing tests**,
      using the convention's proportional alternatives and resume rules. Follow the repo's own coding
      conventions. Cut PRs at natural seams; a small spec is a single PR.
    - Persist test references and observed evidence in the phase's coverage cells through
-     `mcp__cs__feature_spec_update_phase(phaseId, validationCriterionMd=...)`, preserving expected outcomes.
+     `mcp__castalie__feature_spec_update_phase(phaseId, validationCriterionMd=...)`, preserving expected outcomes.
    - Re-read the phase plan; if the implementation deviated, record it via
-     `mcp__cs__feature_spec_update_phase(phaseId, actionPlanMd=<updated with a "deviation" note>)` —
+     `mcp__castalie__feature_spec_update_phase(phaseId, actionPlanMd=<updated with a "deviation" note>)` —
      never silence a deviation.
    - Build + run the change to prove it works (not just green tests). On failure, fix and retry.
    - Reconcile every required case with executed evidence and the actual CI selection before marking
-     it `mcp__cs__feature_spec_set_phase_status(phaseId, status="Done", prUrl=<your PR url>)`.
+     it `mcp__castalie__feature_spec_set_phase_status(phaseId, status="Done", prUrl=<your PR url>)`.
 6. **Verify against acceptance tests.** Walk the spec's acceptance tests (see
    `${CLAUDE_PLUGIN_ROOT}/instructions/acceptance-criteria.md`); set each status; screenshot visual blocks.
 7. **PR ready.** Invoke `ship` with the spec/phase ids and case evidence to open/finish the PR through
@@ -63,7 +63,7 @@ watchdog never fires — ideal.
    releases for you** — the value says where the loop stops handing over, never what Castalie does. On a
    chain where merging already ships, the last two describe the same thing, and `ship`/`release_trigger`
    is what says so.
-8. **Close.** `mcp__cs__feature_spec_complete(specId, prUrl)`. Adjust the brief's follow-up horizon if
+8. **Close.** `mcp__castalie__feature_spec_complete(specId, prUrl)`. Adjust the brief's follow-up horizon if
    delivery slipped (follow-up conventions). Then invoke `retro` (additive, never blocking).
 9. **Disarm the watchdog last** — `CronList` → `CronDelete` — only after the report is delivered.
 

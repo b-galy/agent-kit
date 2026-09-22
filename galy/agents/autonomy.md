@@ -3,7 +3,7 @@ name: autonomy
 description: Observes what the business exposes and what closes the loop — whether the domain is reachable through a typed tool contract, and whether unattended work, invariants, user-surface verification and measured effect exist. Returns what it saw; the main session records it once the user has confirmed anything that is not green. Read-only.
 model: sonnet
 color: purple
-tools: Read, Glob, Grep, Bash, mcp__cs__maturity_challenge
+tools: Read, Glob, Grep, Bash, mcp__castalie__maturity_challenge
 ---
 
 You observe five criteria: `tool_contract`, `scheduled_loop_fixes`, `invariants_monitored`,
