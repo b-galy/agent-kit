@@ -23,12 +23,19 @@
 //      guard in the bug-evaluation runner keeps the bare hostname it needs in order to go on
 //      recognising an instance still answering there. That entry comes out with the domains.
 //
-//   3. NO STALE REPOSITORY NAME. The repository was renamed from `claude-kit` to `agent-kit`,
-//      then its organisation from `galy-io` to `b-galy` when the brand became B.Galy. GitHub
-//      still redirects both old names, which is exactly what makes them dangerous: everything
-//      keeps working, so nobody aligns anything, and the redirection breaks the day someone
-//      creates a repository under the freed name. `galy-io` survives only as an empty
-//      placeholder organisation that holds the redirect — a courtesy, never an address to publish.
+//   3. NO STALE REPOSITORY NAME. This repository has moved three times: `claude-kit` became
+//      `agent-kit`, then the organisation `galy-io` became `b-galy` when the brand became B.Galy,
+//      then `b-galy` became `castalie-app` when the product became Castalie. GitHub redirects
+//      every one of those old addresses, which is exactly what makes them dangerous: everything
+//      keeps working, so nobody aligns anything, and a redirect breaks the day someone creates a
+//      repository under the freed name. A freed organisation survives only as an empty
+//      placeholder holding its redirect — a courtesy, never an address to publish.
+//
+//      So the former names are a LIST, below, and adding the next one is adding a string to it.
+//      They were an alternation inside two regular expressions until 22 September 2026, and the
+//      third rename is what showed the cost: to add a name you had first to read a pattern, work
+//      out which half of it was the organisation and which the repository, and edit both. A check
+//      nobody can extend without decoding it is a check that stops being extended.
 //
 //   4. NO COMMAND THAT DOES NOT EXIST. `npx galy-setup` was distributed by the `connect` skill
 //      while the package was published on no registry: npm answered `E404 Not Found`, and the
@@ -55,10 +62,17 @@
 //      `<!-- galy:begin -->` markers already written into customers' files, and the REMOVAL of a
 //      former marketplace, which is exactly what setup and the README tell a workstation to do.
 //
-//      And the repository `b-galy/agent-kit`, which is the one name here that is not ours to
-//      change: a GitHub organisation is renamed from the web interface by its owner. It is
-//      written once, as `REPOSITORY` in setup/setup.mjs, so the day it moves is one line rather
-//      than a hunt.
+//      The repository moved too, on 22 September 2026: it is `castalie-app/agent-kit`. It was the
+//      one name here nobody could change from a branch — a GitHub organisation is renamed from the
+//      web interface by its owner — so it had been reduced to a single constant beforehand,
+//      `REPOSITORY` in setup/setup.mjs, precisely so that the day would cost one line and five of
+//      prose. It did.
+//
+//      And the MARKETPLACE is `castalie`, not `castalie-app`. Not a leftover: a marketplace is
+//      named by this repository's own manifest, never by its owner — on 3 September 2026 the
+//      marketplace was `galy` while the organisation was already `b-galy`, which is what proves
+//      it. An installed workstation keys its plugin cache by that name, so renaming it to follow
+//      an organisation would cost every one of them a migration for a spelling nobody types.
 //
 // Exit code 0 = every invariant holds, 1 = at least one does not.
 
@@ -127,6 +141,28 @@ for (const skill of skills) {
 }
 
 // -------------------------------------------------- 2 & 3. what must never be published
+
+// Where this repository lives now, and everywhere it has lived. THE NEXT RENAME IS ONE LINE: move
+// the current name into the list above its own, and put the new one here. Nothing else to read.
+const ORGANISATION = "castalie-app";
+const REPOSITORY_NAME = "agent-kit";
+const REPOSITORY = `${ORGANISATION}/${REPOSITORY_NAME}`;
+
+/** Organisations this repository has belonged to, most recent first. */
+const FORMER_ORGANISATIONS = ["b-galy", "galy-io"];
+
+/** Names this repository has carried, most recent first. */
+const FORMER_REPOSITORY_NAMES = ["claude-kit"];
+
+// A former organisation is refused WITH ITS SLASH — as an address, never as a bare word. Two of
+// these names have a second life the kit still needs to spell: `b-galy` is a former MARKETPLACE
+// name, and setup, the README and `connect` all name it in order to tell a workstation to leave
+// it. Matching it bare would refuse the migration that exists to undo it.
+const formerAddress = new RegExp(`\\b(${FORMER_ORGANISATIONS.join("|")})/`);
+// A former repository name under ANY organisation, current or former: `castalie-app/claude-kit` is
+// as dead an address as `galy-io/claude-kit`.
+const formerName = new RegExp(`/(${FORMER_REPOSITORY_NAMES.join("|")})\\b`);
+
 const FORBIDDEN = [
   {
     pattern: /azurewebsites\.net/i,
@@ -140,18 +176,18 @@ const FORBIDDEN = [
     why: "an example workspace address on a domain that is being deleted. Workspaces answer on `castalie.app`: write `https://<your-workspace>.castalie.app`. While `galy.cloud` still redirects this reads as a typo; once it is gone it reads as an instruction that leads nowhere — and the reader who pays for it is the one typing their very first command, in `connect`.",
   },
   {
-    pattern: /(galy-io|b-galy)\/claude-kit/,
-    why: "the repository's former name. GitHub still redirects it, and that redirection is a silent dependency: it breaks the day anyone creates a repository under that name. Publish `b-galy/agent-kit`.",
+    pattern: formerName,
+    why: `the repository's former name (${FORMER_REPOSITORY_NAMES.join(", ")}). GitHub still redirects it, and that redirection is a silent dependency: it breaks the day anyone creates a repository under that name. Publish \`${REPOSITORY}\`.`,
   },
   {
-    pattern: /\bgaly-io\b/,
-    why: "the organisation's former name. It became `b-galy` with the brand, and `galy-io` is now an empty placeholder organisation whose only job is to hold the redirect. Publish `b-galy/agent-kit`.",
+    pattern: formerAddress,
+    why: `a former organisation used as an address (${FORMER_ORGANISATIONS.join(", ")}). Each one is now an empty placeholder whose only job is to hold its redirect — a courtesy, never an address to publish. Publish \`${REPOSITORY}\`. A former organisation's name on its own is another matter and is allowed: \`b-galy\` is also a former MARKETPLACE name, and setup, the README and \`connect\` have to spell it to tell a workstation to leave it.`,
   },
   {
     // Ancree en debut de ligne : c'est la commande DONNEE A TAPER qu'on interdit, jamais la
     // phrase qui explique pourquoi il ne faut pas la taper.
     pattern: /^\s*\$?\s*npx\s+(-y\s+)?galy-setup\b/m,
-    why: "`npx galy-setup` — that package is published on no registry and npm answers E404. Use `npx -y github:b-galy/agent-kit`.",
+    why: `\`npx galy-setup\` — that package is published on no registry and npm answers E404. Use \`npx -y github:${REPOSITORY}\`.`,
   },
   {
     // A skill or agent reference takes one of two written forms: backticked (`galy:adapt`) or
@@ -179,9 +215,9 @@ const FORBIDDEN = [
   {
     // The marketplace itself, named bare on the command line. `add` and `update` are the two that
     // act on the entry the kit now publishes, and both are wrong under a former name. `remove` is
-    // NOT matched: removing the former entry is precisely what setup and the README say to do —
-    // and neither is `marketplace add b-galy/agent-kit`, which is the repository's address and
-    // carries a slash where this pattern requires a word boundary.
+    // NOT matched: removing the former entry is precisely what setup and the README say to do.
+    // A former organisation carrying a slash is not this check's business either — `marketplace
+    // add b-galy/agent-kit` is a stale ADDRESS, and the invariant above refuses it as one.
     pattern: /claude\s+plugin\s+marketplace\s+(add|update)\s+(b-galy|galy)(\s|$)/m,
     why: "a former marketplace name in a command that acts on the current entry. The marketplace is `castalie`. Adding or updating under the old name reaches an entry a fresh workstation does not have, and on an old one refreshes a cache that no longer follows this repository.",
   },

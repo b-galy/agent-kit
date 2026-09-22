@@ -80,7 +80,7 @@ Read the answer against these four, which cover nearly every case:
 ## The command
 
 ```
-npx -y github:b-galy/agent-kit <token> --endpoint https://<their-workspace>.castalie.app
+npx -y github:castalie-app/agent-kit <token> --endpoint https://<their-workspace>.castalie.app
 ```
 
 **Not `npx galy-setup`.** That package is published on no registry: npm answers `E404 Not Found`, and

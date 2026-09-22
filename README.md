@@ -59,7 +59,7 @@ Use `--approve-only` when preparing a protocol without executing its judge.
 ### Option A — one command (recommended)
 
 ```
-npx -y github:b-galy/agent-kit <your-castalie-token> --endpoint https://<your-workspace>.castalie.app
+npx -y github:castalie-app/agent-kit <your-castalie-token> --endpoint https://<your-workspace>.castalie.app
 ```
 
 Both values are on one page in Castalie — **Connect my agent**, in the top bar of any screen — which prints
@@ -78,14 +78,27 @@ host. A guessed host does not fail loudly — it fails as a `401` that reads lik
 ### Option B — via the plugin marketplace
 
 ```
-claude plugin marketplace add b-galy/agent-kit
+claude plugin marketplace add castalie-app/agent-kit
 claude plugin install cs@castalie
 ```
 
 **Installed while the marketplace was still called `b-galy` — or `galy` before that?** A workstation
-keys the plugin by the marketplace's name, so an old entry stays and keeps serving its cached copy.
-Re-run the setup command above, which removes both, or by hand: `claude plugin marketplace remove
-b-galy` and `claude plugin marketplace remove galy`, then the two lines of option B.
+keys the plugin by the marketplace's name, so an old entry stays registered and keeps serving its own
+cached copy beside the new one. Re-running the setup command above removes both; by hand it is:
+
+```
+claude plugin marketplace remove b-galy
+claude plugin marketplace remove galy
+```
+
+then the two lines of option B. **Two names, not three**, even though the repository has moved since:
+a marketplace is named by this repository's manifest, never by its owner, so `b-galy` becoming
+`castalie-app` left the marketplace called `castalie` and added no third name to leave behind.
+
+What that rename *did* leave on an old workstation is the address the entry points at: your
+`known_marketplaces.json` still names the old `b-galy` organisation. GitHub redirects it, so updates
+keep arriving and nothing looks wrong, which is exactly why it is worth saying — a redirect is a
+courtesy, not an address. Re-running setup re-points the entry at `castalie-app/agent-kit`.
 
 The plugin declares no MCP server of its own, so it has nothing to connect to yet. Open your agent in
 your repository and it will say so and point you at the `connect` skill — or run the `galy-setup`
@@ -237,7 +250,7 @@ minutes for the whole machine, and speaks both spellings of the contract: `specI
 
 **Early access.** It is drawn by a hooks module, which Claude Code loads only where
 `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1`. The setup command writes that into your user
-settings — `--no-pane` skips it, `npx -y github:b-galy/agent-kit --enable-pane` does it
+settings — `--no-pane` skips it, `npx -y github:castalie-app/agent-kit --enable-pane` does it
 alone on a workstation installed before this existed — and it takes effect at the next
 start of Claude Code. Without the flag nothing of the module loads: the row under the
 prompt and the classic hooks go on exactly as they did, and `/cs:okr-panel` is simply not there.
@@ -514,7 +527,7 @@ galy/
   bin/build-codex.mjs             # the Codex projection, shipped so a client can run `cs codex`
 types/claude-code.d.ts            # the function-hooks API, as /plugin-types wrote it; the pane is typed against this
 tsconfig.json                     # what CI recompiles on every push
-package.json                      # makes the repo itself runnable: npx -y github:b-galy/agent-kit
+package.json                      # makes the repo itself runnable: npx -y github:castalie-app/agent-kit
 setup/setup.mjs                   # the one-command setup
 scripts/build-codex.mjs           # the projection with this repository's defaults — a caller, not a copy
 scripts/check-where.mjs           # the pane's rows, replayed on both workspaces' real answers
