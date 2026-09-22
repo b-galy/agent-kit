@@ -161,3 +161,8 @@ person gave still holds.
 - **One item, one commit.** A commit that carries three remarks cannot be reverted for one of them.
 - **Verified means seen.** An item is `done` when you watched the product do the right thing, not when
   the build went green.
+
+## Hand back
+
+Close the turn on the state table and the lettered questions of
+`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.

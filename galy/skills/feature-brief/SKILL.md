@@ -76,3 +76,8 @@ Print the brief title and a clickable Castalie link, and point to `feature-spec`
 - **Acceptance criteria that mention code** are technical — they belong to a spec.
 - **Auto-chain on HOW signals.** If discovery surfaced implementation detail (file paths, libraries,
   architecture), invoke `feature-spec` right after confirmation — the user already crossed into HOW.
+
+## Hand back
+
+Close the turn on the state table and the lettered questions of
+`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.

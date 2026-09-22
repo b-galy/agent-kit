@@ -42,3 +42,8 @@ business "why" on top, the naked verdict, the next check date (or "technical che
 - **Observed, not assumed.** A verdict must rest on something you saw in the running app.
 - **Never blocks the user.** Report the verdict and the reschedule; the corrective work is a suggestion,
   not a halt.
+
+## Hand back
+
+Close the turn on the state table and the lettered questions of
+`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.

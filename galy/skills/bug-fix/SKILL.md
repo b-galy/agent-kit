@@ -245,3 +245,8 @@ it, and where the ticket now sits.
 
 Then, if it applies, the one sentence that is worth more than the fix: what would have caught
 this at the boundary, and what it would cost to add.
+
+## Hand back
+
+Close the turn on the state table and the lettered questions of
+`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.

@@ -69,3 +69,8 @@ A check-in without all three is not worth recording:
   rewriting targets. Creating a key result is a strategic decision, made by the user in Castalie.
 - **Name things, never ids** — titles and clickable links (`/strategie/resultat/<id>` on the
   workspace host), so the user can open what you just wrote to.
+
+## Hand back
+
+Close the turn on the state table and the lettered questions of
+`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.

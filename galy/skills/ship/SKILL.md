@@ -85,3 +85,8 @@ any of them is set to.
 - **The diff stays local.** The review runs on your machine; no code is sent to Castalie.
 - **You are not the last reviewer.** The panel + your CI are behind you — shipping compiling,
   panel-clean code is the correct mode.
+
+## Hand back
+
+Close the turn on the state table and the lettered questions of
+`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.
