@@ -2,7 +2,7 @@
 name: bug-fix
 description: Take a bug from a report to a pull request — reproduce it first, settle whether it is a defect at all, find the cause and the change that brought it in, fix the cause, prove the fix on the path the user actually took, and record the follow-up. Also answers a ticket relayed by a salesperson or a customer, and motivates a "this is not a bug" verdict instead of closing it in one word. Accepts a raw error, a stack trace, or a ticket id from whichever system holds this team's bugs. Ends at "PR ready"; it never merges and never deploys.
 model: claude-opus-5-5
-effort: high
+effort: low
 ---
 
 # bug-fix — from a report to a pull request
