@@ -1,5 +1,5 @@
 {
-  "name": "@b-galy/agent-kit-repo",
+  "name": "@castalie/agent-kit-repo",
   "version": "1.0.0",
   "description": "Castalie Agent Kit — one-command setup, runnable straight from this repository with npx.",
   "type": "module",

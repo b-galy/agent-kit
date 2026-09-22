@@ -1,11 +1,14 @@
 #!/usr/bin/env node
 // galy-setup — one-command onboarding for the Castalie Agent Kit.
 //
-//   npx -y github:b-galy/agent-kit <token> --endpoint https://<your-workspace>.castalie.app
+//   npx -y github:<this repository> <token> --endpoint https://<your-workspace>.castalie.app
+//
+// The repository's own address is written once, in `REPOSITORY` below, and every line that prints
+// it reads it from there.
 //
 // Does four things, in order, each best-effort with a clear message on failure:
-//   a) installs the plugin via the Claude CLI (marketplace add + install) — removing first a
-//      marketplace still registered under its former name, `galy` — or prints manual steps if
+//   a) installs the plugin via the Claude CLI (marketplace add + install) — removing first any
+//      marketplace still registered under a former name — or prints manual steps if
 //      `claude` isn't on PATH;
 //   b) registers the MCP endpoint for THIS project under the alias `cs`, with the address and
 //      the token written literally into the local scope — so the connection does not depend on
@@ -33,21 +36,43 @@ import { join } from "node:path";
 import { homedir } from "node:os";
 import { fileURLToPath } from "node:url";
 
-const MARKETPLACE = "b-galy/agent-kit";
+/**
+ * THE GITHUB ADDRESS OF THIS REPOSITORY — written once in this file, and read by every line that
+ * prints it.
+ *
+ * It still reads `b-galy` while everything else the kit publishes reads Castalie, and that is not
+ * an oversight: a GitHub organisation is renamed from the web interface by its owner, never from
+ * an API, so this value follows a gesture no branch can make.
+ *
+ * WHAT THE DAY OF THAT RENAME COSTS, exactly, so that it is a gesture and not a hunt: this
+ * constant, and the five lines of prose that spell the address out for a reader — four in the
+ * README, one in the `connect` skill. `git grep 'b-galy/agent-kit'` finds those six, plus this
+ * comment and the messages validate.mjs prints; nothing else in the repository holds it. GitHub
+ * redirects the old path meanwhile, which is precisely what makes it easy to forget — validate.mjs
+ * invariant 3 exists because that redirection already went stale once.
+ *
+ * Everything else that carries a name has already moved: the marketplace is `castalie`, the plugin
+ * `cs`, the packages `@castalie/*`.
+ */
+const REPOSITORY = "b-galy/agent-kit";
 
 // What Claude Code reads before it loads a single hooks module — the pane beside the
 // transcript among them. Absent, nothing of the module loads, the classic hooks and the
 // row under the prompt go on exactly as before, and `/where` simply is not there.
 const FUNCTION_HOOKS_FLAG = "CLAUDE_CODE_ENABLE_FUNCTION_HOOKS";
 
-// One namespace on the agent side, `cs` — and `b-galy` for what carries it. The marketplace was
-// declared as `galy` until the brand became B.Galy, and its name is not cosmetic: an installed
-// workstation keys its plugin cache by that name, so the entry does not follow a rename of the
-// file. It has to be removed, and setup does it (see installPlugin). The marketplace itself keeps
-// the name `b-galy`, and the repository `b-galy/agent-kit`: both are published addresses, and
-// moving them is a decision of its own.
-const MARKETPLACE_NAME = "b-galy";
-const FORMER_MARKETPLACE_NAME = "galy";
+// One namespace on the agent side, `cs` — and `castalie` for what carries it. A marketplace's name
+// is not cosmetic: an installed workstation keys its plugin cache and its `known_marketplaces.json`
+// by that name, so an entry does NOT follow a rename of the file it came from. It has to be
+// removed, and setup does it (see installPlugin).
+//
+// Both former names are listed, newest first, and both are removed. The kit has been renamed twice
+// — `galy` when the brand became B.Galy, `b-galy` when the product became Castalie — and a
+// workstation that skipped one carries the older entry. A migration that only knew the most recent
+// name would leave it registered, serving its own cached copy of the plugin under a second
+// identifier, which is the exact failure this removal exists to prevent.
+const MARKETPLACE_NAME = "castalie";
+const FORMER_MARKETPLACE_NAMES = ["b-galy", "galy"];
 const PLUGIN = `cs@${MARKETPLACE_NAME}`;
 
 // The alias the MCP server is registered under: the tools your agent sees are `mcp__cs__<tool>`.
@@ -123,7 +148,7 @@ function warn(msg) { console.log(`  ! ${msg}`); }
 
 const HELP = `galy-setup — connect your agent to your Castalie workspace
 
-  npx -y github:b-galy/agent-kit <token> --endpoint https://<your-workspace>.castalie.app
+  npx -y github:${REPOSITORY} <token> --endpoint https://<your-workspace>.castalie.app
 
   <token>       your Castalie API token
   --endpoint    the address of your workspace
@@ -138,27 +163,31 @@ Castalie never sees your code. This connects your assistant to your Castalie wor
 it does not give Castalie access to your repository.`;
 
 /**
- * True when a marketplace named `galy` is known on this workstation AND points at this repository.
+ * True when a marketplace under the given former name is known on this workstation AND points at
+ * this repository.
  *
  * Read from the CLI's own registry first (known_marketplaces.json under the config directory), then
  * from `claude plugin marketplace list` when that file is not where we expect it — two readings, so
- * a file that moves does not silently switch the migration off. A `galy` marketplace pointing
+ * a file that moves does not silently switch the migration off. A marketplace of that name pointing
  * anywhere else is somebody else's, and is left alone.
+ *
+ * @param {string} name a former marketplace name
+ * @returns {boolean}
  */
-function formerMarketplaceIsOurs() {
+function formerMarketplaceIsOurs(name) {
   const configDir = process.env.CLAUDE_CONFIG_DIR || join(homedir(), ".claude");
   let known = null;
   try { known = JSON.parse(readFileSync(join(configDir, "plugins", "known_marketplaces.json"), "utf8")); }
   catch { /* not there, or not readable: ask the CLI */ }
   if (known !== null && typeof known === "object") {
-    const entry = known[FORMER_MARKETPLACE_NAME];
+    const entry = known[name];
     return entry !== undefined && /\/agent-kit(\.git)?$/i.test(String(entry?.source?.repo || entry?.source?.url || ""));
   }
 
   const listed = runClaude(["plugin", "marketplace", "list"], { encoding: "utf8" });
   const lines = String(listed.stdout || "").split(/\r?\n/);
   for (let i = 0; i < lines.length; i++) {
-    if (lines[i].replace(/^[^A-Za-z0-9]+/, "").trim() !== FORMER_MARKETPLACE_NAME) continue;
+    if (lines[i].replace(/^[^A-Za-z0-9]+/, "").trim() !== name) continue;
     const source = lines.slice(i + 1).find((l) => l.trim() !== "") || "";
     return /agent-kit/i.test(source);
   }
@@ -167,16 +196,17 @@ function formerMarketplaceIsOurs() {
 
 // (a) Install the plugin through the Claude CLI, if present.
 //
-// A workstation that installed the kit while the marketplace was still called `galy` keeps that
-// entry, keyed by name: adding `b-galy/agent-kit` again registers a SECOND marketplace, and the
-// old one goes on serving its cached copy under the former identifier. So the former entry is
-// removed first — the CLI uninstalls the plugins that came from it in the same motion, which is
-// exactly what we want here.
+// A workstation that installed the kit under a former marketplace name keeps that entry, keyed by
+// name: adding the repository again registers a SECOND marketplace, and the old one goes on serving
+// its cached copy under the former identifier. So every former entry is removed first — the CLI
+// uninstalls the plugins that came from it in the same motion, which is exactly what we want here.
 function installPlugin(haveClaude) {
   step("Installing the plugin via the Claude CLI");
   const manual = () => {
-    console.log(`      claude plugin marketplace remove ${FORMER_MARKETPLACE_NAME}   # only if that entry exists`);
-    console.log(`      claude plugin marketplace add ${MARKETPLACE}`);
+    for (const former of FORMER_MARKETPLACE_NAMES) {
+      console.log(`      claude plugin marketplace remove ${former}   # only if that entry exists`);
+    }
+    console.log(`      claude plugin marketplace add ${REPOSITORY}`);
     console.log(`      claude plugin install ${PLUGIN}`);
   };
   if (!haveClaude) {
@@ -186,14 +216,15 @@ function installPlugin(haveClaude) {
     return;
   }
   const run = (args) => runClaude(args, { stdio: "inherit" }).status === 0;
-  if (formerMarketplaceIsOurs()) {
-    if (run(["plugin", "marketplace", "remove", FORMER_MARKETPLACE_NAME])) {
-      ok(`marketplace \`${FORMER_MARKETPLACE_NAME}\` — the former name — removed; \`${MARKETPLACE_NAME}\` replaces it.`);
+  for (const former of FORMER_MARKETPLACE_NAMES) {
+    if (!formerMarketplaceIsOurs(former)) continue;
+    if (run(["plugin", "marketplace", "remove", former])) {
+      ok(`marketplace \`${former}\` — a former name — removed; \`${MARKETPLACE_NAME}\` replaces it.`);
     } else {
-      warn(`could not remove the former marketplace \`${FORMER_MARKETPLACE_NAME}\`; the install below may land beside it.`);
+      warn(`could not remove the former marketplace \`${former}\`; the install below may land beside it.`);
     }
   }
-  if (run(["plugin", "marketplace", "add", MARKETPLACE]) && run(["plugin", "install", PLUGIN])) {
+  if (run(["plugin", "marketplace", "add", REPOSITORY]) && run(["plugin", "install", PLUGIN])) {
     ok("plugin installed.");
   } else {
     warn("the Claude CLI reported an error — finish the install by hand:");
