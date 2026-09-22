@@ -76,6 +76,7 @@ Read the answer against these four, which cover nearly every case:
 | the URL contains `${GALY_MCP_URL}` unexpanded | it is declared through an environment variable nobody set | re-run setup; it registers literal values and stops depending on the shell |
 | `401` / `unauthorized` on any call | the token is revoked, belongs to another workspace, or its bearer's account was closed — the instance refuses a token whose membership is no longer active | a new token on the same page, then setup again; if that also fails, their account itself is closed and only an owner reopens it |
 | `castalie` defined in **two** scopes | two definitions, and the local one wins — often the broken one loses silently, or the wrong one wins | keep one: `claude mcp remove castalie -s project` or `-s local` |
+| `castalie` answers, but a `get` or the connector panel says **“Needs authentication”** | a rename, and nothing else. Claude Code files an authenticated session under the SERVER's name, so a token minted while it was called `bg` or `cs` stayed filed under that old name. The calls keep working; only the label is stale | it is not a fault to repair. Re-run setup — it registers the value literally — or sign in once under the new name. Reported from sixteen working copies on 22 September 2026, the day the server took the product's name |
 
 ## The command
 
