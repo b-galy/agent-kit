@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// bg — Stop hook: a pull request that leaves no trace in the workspace is stopped once.
+// cs — Stop hook: a pull request that leaves no trace in the workspace is stopped once.
 //
 // WHAT THE KIT PROMISES, AND WHERE IT LEAKS. Every skill here ends in the same place: the work is
 // framed in the workspace, coded in the repository, and recorded back. The recording is the half
@@ -32,8 +32,8 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
 
-// Under `bg`, beside the stamp of the guard on CLAUDE.md files.
-const STAMPS = join(homedir(), ".claude", "bg", "stamps");
+// Under `cs`, beside the stamp of the guard on CLAUDE.md files.
+const STAMPS = join(homedir(), ".claude", "cs", "stamps");
 
 // A pull request was opened from this session.
 const OPENED_A_PULL_REQUEST = /\bgh\s+pr\s+create\b/;

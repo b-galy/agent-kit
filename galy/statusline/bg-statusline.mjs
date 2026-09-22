@@ -5,7 +5,7 @@
 // brief and the spec, by their names, each one a clickable link into the workspace that
 // owns it. Nothing here is specific to one workspace: the address, the credentials and
 // the links are resolved from the working copy's own configuration, so the same script
-// serves every workspace that speaks the Galy tool contract.
+// serves every workspace that speaks the Castalie tool contract.
 //
 // What the row is NOT, and used to be: the workspace's queue — every spec in progress
 // and every brief cleared for a spec. On a workstation running ten worktrees that row
@@ -78,17 +78,17 @@ const TEXT = `${ESC}[0;36m`;
 const RESET = `${ESC}[0m`;
 
 // ── The workspace ─────────────────────────────────────────────────────────
-// Same order as the `bg` CLI, then one fallback it does not need: a workspace
-// connected through the harness alone has no `.bg/config.json` on disk, and its
+// Same order as the `cs` CLI, then one fallback it does not need: a workspace
+// connected through the harness alone has no `.cs/config.json` on disk, and its
 // token lives in the harness's own registration. Reading it there is what makes
 // the line work on a machine where nobody ran a setup script.
 //
 // A third shape serves a repository whose workspace is registered in its own `.mcp.json`
-// rather than in a Galy config: `{ "mcp": "<server name>" }` names that server, and the
+// rather than in a Castalie config: `{ "mcp": "<server name>" }` names that server, and the
 // row speaks to it with the headers the harness would send. Where the workspace's pages
 // live is the repository's to say too — `links` carries one template per kind, relative
-// to the server's origin — because the kit knows the pages of Galy and of nobody else.
-const CONFIG_DIRS = [".bg", ".galy"];
+// to the server's origin — because the kit knows the pages of Castalie and of nobody else.
+const CONFIG_DIRS = [".cs", ".bg", ".galy"];
 const GALY_LINKS = { spec: "/specs/{id}", brief: "/briefs/{id}", objective: "/" };
 
 // A git worktree is a directory of its own, and neither the config file nor the
@@ -146,7 +146,7 @@ function fromHarness(dirs) {
   if (!root) return {};
   const pick = (servers) => {
     if (!servers) return null;
-    for (const name of ["bg", "galy", ...Object.keys(servers)]) {
+    for (const name of ["cs", "bg", "galy", ...Object.keys(servers)]) {
       const server = servers[name];
       const url = server?.url;
       const auth = server?.headers?.Authorization || server?.headers?.authorization;
@@ -227,7 +227,7 @@ function workspace(cwd) {
   }
   let base;
   try { base = new URL(mcp).origin; } catch { return null; }
-  // A Galy workspace's pages are the kit's to know; any other workspace says where its own are.
+  // A Castalie workspace's pages are the kit's to know; any other workspace says where its own are.
   const links = { ...(file.mcp ? {} : GALY_LINKS), ...(file.links || {}) };
   return { mcp, headers, base, links };
 }
@@ -237,7 +237,7 @@ function workspace(cwd) {
 // says which specs and briefs those are, and asking the workspace cannot answer it:
 // two worktrees of the same repository share an account and a queue, and differ only
 // in what each one is doing. So the answer is written where the difference lives —
-// beside the code, in the copy's own `.bg/work.json`, by the hook that watches what
+// beside the code, in the copy's own `.cs/work.json`, by the hook that watches what
 // the session writes to the workspace.
 //
 // The climb stops at the first `.git` and deliberately does NOT go on to the main
@@ -262,7 +262,7 @@ function inHand(cwd) {
   const empty = { specs: [], briefs: [] };
   const root = workingCopyRoot(cwd || process.cwd());
   if (!root) return empty;
-  const held = readJson(join(root, ".bg", "work.json"));
+  const held = readJson(join(root, ".cs", "work.json"));
   if (!held) return empty;
   const fresh = (entries) => (Array.isArray(entries) ? entries : [])
     .filter((entry) => Number.isInteger(entry?.id) && Date.now() - Date.parse(entry?.at) < HORIZON_MS)
@@ -531,7 +531,7 @@ async function main() {
 // kit installed the badges and `--uninstall` still removes them.
 function shimSource() {
   return `#!/usr/bin/env node
-// Installed by bg --install. Finds the kit's current status line script and runs it,
+// Installed by cs --install. Finds the kit's current status line script and runs it,
 // so a plugin update — which changes the folder's name — does not break the row.
 import { existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -566,7 +566,7 @@ function withoutBadges(settings) {
 
 function install() {
   if (!workspace(process.cwd())) {
-    process.stderr.write("No workspace. Run bg:connect first, or set GALY_ENDPOINT and GALY_TOKEN.\n");
+    process.stderr.write("No workspace. Run cs:connect first, or set GALY_ENDPOINT and GALY_TOKEN.\n");
     return 1;
   }
   mkdirSync(dirname(SHIM), { recursive: true });

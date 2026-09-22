@@ -1,24 +1,24 @@
 #!/usr/bin/env node
-// galy-setup — one-command onboarding for the Galy Agent Kit.
+// galy-setup — one-command onboarding for the Castalie Agent Kit.
 //
-//   npx -y github:b-galy/agent-kit <token> --endpoint https://<your-workspace>.galy.cloud
+//   npx -y github:b-galy/agent-kit <token> --endpoint https://<your-workspace>.castalie.app
 //
 // Does four things, in order, each best-effort with a clear message on failure:
 //   a) installs the plugin via the Claude CLI (marketplace add + install) — removing first a
 //      marketplace still registered under its former name, `galy` — or prints manual steps if
 //      `claude` isn't on PATH;
-//   b) registers the MCP endpoint for THIS project under the alias `bg`, with the address and
+//   b) registers the MCP endpoint for THIS project under the alias `cs`, with the address and
 //      the token written literally into the local scope — so the connection does not depend on
 //      an environment variable that only one launcher knows how to set;
-//   c) writes .bg/config.json { endpoint, token } for the `bg` CLI, and makes sure the whole
-//      .bg/ directory is gitignored — neither the token nor the workflow mirror, which carries
+//   c) writes .cs/config.json { endpoint, token } for the `cs` CLI, and makes sure the whole
+//      .cs/ directory is gitignored — neither the token nor the workflow mirror, which carries
 //      a consent decision, ever lands in a committable file;
 //   d) smoke-tests the endpoint (GET /api/pm/search?q=ping) with the token;
 //   e) installs the status line that names, under the prompt, what this working copy has
 //      in hand, keeping any status line already configured — `--no-statusline` skips it.
 //
 // Why the local scope and not an env var. The kit used to ship a .mcp.json holding one
-// hardcoded address and `Bearer ${GALY_TOKEN}`. Galy is multi-tenant: every workspace
+// hardcoded address and `Bearer ${GALY_TOKEN}`. Castalie is multi-tenant: every workspace
 // answers on its own host, so a single baked-in address authenticates nobody, and the
 // env var left the token to be persisted by hand — on Windows that meant `setx`, which
 // writes it in clear into the user's registry. `claude mcp add --scope local` stores both
@@ -40,27 +40,32 @@ const MARKETPLACE = "b-galy/agent-kit";
 // row under the prompt go on exactly as before, and `/where` simply is not there.
 const FUNCTION_HOOKS_FLAG = "CLAUDE_CODE_ENABLE_FUNCTION_HOOKS";
 
-// One namespace on the agent side, `bg` — and `b-galy` for what carries it. The marketplace was
+// One namespace on the agent side, `cs` — and `b-galy` for what carries it. The marketplace was
 // declared as `galy` until the brand became B.Galy, and its name is not cosmetic: an installed
 // workstation keys its plugin cache by that name, so the entry does not follow a rename of the
-// file. It has to be removed, and setup does it (see installPlugin).
+// file. It has to be removed, and setup does it (see installPlugin). The marketplace itself keeps
+// the name `b-galy`, and the repository `b-galy/agent-kit`: both are published addresses, and
+// moving them is a decision of its own.
 const MARKETPLACE_NAME = "b-galy";
 const FORMER_MARKETPLACE_NAME = "galy";
-const PLUGIN = `bg@${MARKETPLACE_NAME}`;
+const PLUGIN = `cs@${MARKETPLACE_NAME}`;
 
-// The alias the MCP server is registered under: the tools your agent sees are `mcp__bg__<tool>`.
-// It was `galy` before the rename, and a previous setup may have left that entry behind.
-const MCP_ALIAS = "bg";
-const FORMER_MCP_ALIAS = "galy";
+// The alias the MCP server is registered under: the tools your agent sees are `mcp__cs__<tool>`.
+// It was `galy`, then `bg`, and a previous setup may have left either entry behind — so BOTH are
+// removed before the new one is added. One left in place is not a harmless leftover: two servers
+// answering the same workspace show the agent every tool twice, which is the doubt `connect`
+// exists to clear.
+const MCP_ALIAS = "cs";
+const FORMER_MCP_ALIASES = ["bg", "galy"];
 
-// The config folder, and its name before the rename. The `bg` CLI still reads `.galy/config.json`
-// as a fallback, so nobody loses a token; setup writes the new folder only.
-const CONFIG_DIR = ".bg";
-const FORMER_CONFIG_DIR = ".galy";
+// The config folder, and the names it carried before. The `cs` CLI still reads `.bg/config.json`
+// and `.galy/config.json` as fallbacks, so nobody loses a token; setup writes the new folder only.
+const CONFIG_DIR = ".cs";
+const FORMER_CONFIG_DIRS = [".bg", ".galy"];
 
-// The whole directory, not just config.json. `.bg/` also holds workflow-defaults.json, which
+// The whole directory, not just config.json. `.cs/` also holds workflow-defaults.json, which
 // now carries a consent decision — whether the end of an onboarding sends a retrospective back
-// to Galy. A per-file ignore left that one tracked, so one developer's answer would have been
+// to Castalie. A per-file ignore left that one tracked, so one developer's answer would have been
 // committed and applied to everyone who cloned. Ignoring the directory is the only version of
 // this that stays correct as the directory grows.
 const GITIGNORE_LINE = `${CONFIG_DIR}/`;
@@ -116,21 +121,21 @@ function step(msg) { console.log(`\n• ${msg}`); }
 function ok(msg) { console.log(`  ✓ ${msg}`); }
 function warn(msg) { console.log(`  ! ${msg}`); }
 
-const HELP = `galy-setup — connect your agent to your Galy workspace
+const HELP = `galy-setup — connect your agent to your Castalie workspace
 
-  npx -y github:b-galy/agent-kit <token> --endpoint https://<your-workspace>.galy.cloud
+  npx -y github:b-galy/agent-kit <token> --endpoint https://<your-workspace>.castalie.app
 
-  <token>       your Galy API token
+  <token>       your Castalie API token
   --endpoint    the address of your workspace
   --no-statusline  do not touch the status line under your prompt
   --no-pane        do not enable the pane beside the transcript (/where)
   --enable-pane    enable that pane and do nothing else (no token needed)
 
-Both are on one page in Galy: Settings → Connect your assistant. It prints this exact
+Both are on one page in Castalie: Settings → Connect your assistant. It prints this exact
 command, address already filled in — copy it from there rather than typing it.
 
-Galy never sees your code. This connects your assistant to your Galy workspace —
-it does not give Galy access to your repository.`;
+Castalie never sees your code. This connects your assistant to your Castalie workspace —
+it does not give Castalie access to your repository.`;
 
 /**
  * True when a marketplace named `galy` is known on this workstation AND points at this repository.
@@ -212,12 +217,16 @@ function registerMcp(haveClaude, endpoint, token) {
   }
 
   // Re-running setup with a fresh token must replace the old entry, not collide with it. And the
-  // entry a setup run before the rename registered under the former alias goes too: two servers
+  // entries a setup run before either rename registered under a former alias go too: two servers
   // serving the same tools under two names shows the agent every tool twice, which is exactly the
-  // doubt the diagnosis table in `connect` exists to clear. Both removals are best-effort — an
-  // absent entry is the normal case, and its failure says nothing.
+  // doubt the diagnosis table in `connect` exists to clear. EVERY former alias is removed, not
+  // just the most recent one — a workstation that has skipped a rename carries the older name,
+  // and a removal that only knew the last one would leave it answering. All of them are
+  // best-effort: an absent entry is the normal case, and its failure says nothing.
   runClaude(["mcp", "remove", MCP_ALIAS, "-s", "local"], { encoding: "utf8" });
-  runClaude(["mcp", "remove", FORMER_MCP_ALIAS, "-s", "local"], { encoding: "utf8" });
+  for (const former of FORMER_MCP_ALIASES) {
+    runClaude(["mcp", "remove", former, "-s", "local"], { encoding: "utf8" });
+  }
 
   const added = runClaude([
     "mcp", "add", "--scope", "local", MCP_ALIAS,
@@ -245,15 +254,16 @@ function registerMcp(haveClaude, endpoint, token) {
         warn(`.mcp.json also declares a server named \`${MCP_ALIAS}\`. The local one now wins.`);
         console.log(`    Keep one of the two:  claude mcp remove ${MCP_ALIAS} -s project`);
       }
-      if (parsed?.mcpServers?.[FORMER_MCP_ALIAS]) {
-        warn(`.mcp.json declares a server named \`${FORMER_MCP_ALIAS}\` — the alias before the rename. Your agent will see every tool twice.`);
-        console.log(`    Remove it:  claude mcp remove ${FORMER_MCP_ALIAS} -s project`);
+      for (const former of FORMER_MCP_ALIASES) {
+        if (!parsed?.mcpServers?.[former]) continue;
+        warn(`.mcp.json declares a server named \`${former}\` — an alias from before a rename. Your agent will see every tool twice.`);
+        console.log(`    Remove it:  claude mcp remove ${former} -s project`);
       }
     } catch { /* an unreadable .mcp.json is not this command's problem */ }
   }
 }
 
-// (c) Write .bg/config.json for the CLI, and make sure it is gitignored.
+// (c) Write .cs/config.json for the CLI, and make sure it is gitignored.
 function writeConfig(endpoint, token) {
   step(`Writing local config for the \`${MCP_ALIAS}\` CLI`);
   const dir = join(process.cwd(), CONFIG_DIR);
@@ -262,16 +272,18 @@ function writeConfig(endpoint, token) {
   writeFileSync(path, JSON.stringify({ endpoint, token }, null, 2) + "\n", "utf8");
   ok(`${path}`);
 
-  // A token written before the rename is not deleted — the CLI still reads it, after the new
+  // A token written before a rename is not deleted — the CLI still reads it, after the new
   // folder — but it is named: a credential nobody remembers is the one that never gets rotated.
-  const former = join(process.cwd(), FORMER_CONFIG_DIR, "config.json");
-  if (existsSync(former)) warn(`${former} is from before the rename; ${CONFIG_DIR}/ is read first. Delete it when you like.`);
+  for (const folder of FORMER_CONFIG_DIRS) {
+    const former = join(process.cwd(), folder, "config.json");
+    if (existsSync(former)) warn(`${former} is from before a rename; ${CONFIG_DIR}/ is read first. Delete it when you like.`);
+  }
 
   const gitignore = join(process.cwd(), ".gitignore");
   const hasGit = existsSync(join(process.cwd(), ".git"));
   if (existsSync(gitignore)) {
     const body = readFileSync(gitignore, "utf8");
-    // Only a directory-wide rule counts. An older `.bg/config.json` line is NOT enough: it
+    // Only a directory-wide rule counts. An older `.cs/config.json` line is NOT enough: it
     // leaves every other file in there tracked, which is how the mirror would get committed.
     const ignored = body.split(/\r?\n/).some((l) => {
       const t = l.trim();
@@ -296,11 +308,11 @@ function writeConfig(endpoint, token) {
 //   /health   anonymous, outside the rate limiter. It answers when the ADDRESS is right.
 //             Network error -> unreachable address. 404 -> the address answers, but no
 //             workspace lives there.
-//   /mcp      with the token. 401/403 -> the token. 404 -> the address serves Galy but not
+//   /mcp      with the token. 401/403 -> the token. 404 -> the address serves Castalie but not
 //             the MCP route, on an image older than the profile fix.
 //
 // And it is /mcp we prove, not /api/pm. Those are two different doors: the REST one is what the
-// `bg` CLI uses, the MCP one is what the ASSISTANT uses — the whole point of this command.
+// `cs` CLI uses, the MCP one is what the ASSISTANT uses — the whole point of this command.
 // Testing only the first announced "token accepted" on instances where the agent would then
 // have found no tool at all, which is the single outcome this script exists to rule out.
 async function smoke(endpoint, token) {
@@ -317,7 +329,7 @@ async function smoke(endpoint, token) {
 
   if (health.status === 404) {
     fail(`no workspace at ${endpoint}.
-  Something answers there, but it serves no Galy workspace: the subdomain is probably not
+  Something answers there, but it serves no Castalie workspace: the subdomain is probably not
   yours. The exact address is printed on your own "Connect my agent" screen.`);
   }
   // A 5xx is the instance saying it is unwell, not the address saying it is wrong — and the
@@ -332,9 +344,9 @@ async function smoke(endpoint, token) {
   If it persists, whoever operates the instance needs to look; the address is not the problem.`);
   }
   if (!health.ok) {
-    fail(`${endpoint} answered HTTP ${health.status} on /health — that address does not serve a Galy instance.`);
+    fail(`${endpoint} answered HTTP ${health.status} on /health — that address does not serve a Castalie instance.`);
   }
-  ok("address reachable, a Galy workspace answers there.");
+  ok("address reachable, a Castalie workspace answers there.");
 
   // The MCP handshake, with the token: exactly what the assistant does on its first call.
   let mcp;
@@ -361,7 +373,7 @@ async function smoke(endpoint, token) {
   workspace. Mint a fresh one on ${endpoint}/account/assistant`);
   }
   if (mcp.status === 404) {
-    fail(`${endpoint} serves a Galy workspace but no MCP endpoint (404 on /mcp).
+    fail(`${endpoint} serves a Castalie workspace but no MCP endpoint (404 on /mcp).
   That instance predates the fix that serves /mcp on the delivered profile — ask whoever
   operates it to move it up a version.`);
   }
@@ -447,7 +459,7 @@ async function main() {
 
   // The pane on its own: no token, no address, no network.
   if (args.paneOnly) {
-    console.log("Galy Agent Kit — enabling the pane beside the transcript");
+    console.log("Castalie Agent Kit — enabling the pane beside the transcript");
     const outcome = installFunctionHooksFlag();
     if (outcome === "written") console.log("\n✅ Restart Claude Code, then type /where.\n");
     else if (outcome === "already") console.log("\n✅ Already enabled — type /where in a session.\n");
@@ -456,14 +468,14 @@ async function main() {
 
   const token = args._[0];
   if (!token) fail("missing token.\n" + HELP);
-  // No default address on purpose: Galy is multi-tenant, and a guessed host fails as a 401
+  // No default address on purpose: Castalie is multi-tenant, and a guessed host fails as a 401
   // that reads like a bad token — sending the user after the wrong problem.
   if (!args.endpoint) fail("missing --endpoint.\n" + HELP);
   const endpoint = args.endpoint.replace(/\/+$/, "").replace(/\/mcp$/i, "");
   if (!/^https?:\/\//i.test(endpoint)) fail(`--endpoint must be a full url, got "${args.endpoint}".`);
   if (!/^[0-9a-f]{64}$/i.test(token)) warn("token doesn't look like a 64-hex string — continuing anyway.");
 
-  console.log("Galy Claude Kit — setup");
+  console.log("Castalie Agent Kit — setup");
   const haveClaude = claudeCli() !== null;
   installPlugin(haveClaude);
   registerMcp(haveClaude, endpoint, token);
@@ -473,13 +485,13 @@ async function main() {
   const pane = args.pane === false ? "skipped" : installFunctionHooksFlag();
 
   // THE DIRECTORY IS NAMED IN THE CONCLUSION, not only in the steps above. `claude mcp add
-  // --scope local` and `.bg/config.json` are both attached to the current directory: run
+  // --scope local` and `.cs/config.json` are both attached to the current directory: run
   // anywhere but at the root of the repository the developer works in, this command installs,
   // registers, tests the connection and announces success for a project that is not theirs.
   // Nothing contradicts it until the agent that, a quarter of an hour later, finds no tool at
   // all. The success line is the one that gets read — so it is the one that has to carry what
   // shows the mistake at the moment it is made.
-  console.log(`\n✅ Assistant connected in ${process.cwd()} — Galy never sees your code.`);
+  console.log(`\n✅ Assistant connected in ${process.cwd()} — Castalie never sees your code.`);
   console.log("   Reopen Claude Code THERE: a server declared while it was running is only seen");
   console.log("   at the next start. It will then tell you where your practices stand.");
   if (pane === "written") {

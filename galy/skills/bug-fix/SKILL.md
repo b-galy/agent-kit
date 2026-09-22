@@ -16,7 +16,7 @@ root instruction file, and it decides where you read from and where you write ba
 
 - **Their existing system** — a ticket id in their shape (`PROJ-123`, `#1234`, `AB#5678`), read
   through their own tools. You update it there, in their statuses, with their vocabulary.
-- **Galy** — no ticket anywhere yet. Frame it as a brief with one user story, so the fix is
+- **Castalie** — no ticket anywhere yet. Frame it as a brief with one user story, so the fix is
   attached to something, and the follow-up has a home.
 
 If you are handed a bare error and cannot tell which system owns it, **ask** — one question, one
@@ -35,7 +35,7 @@ meet it, **counted today** over the reporter's own population; what the rule cos
 it bends; whether a setting that already exists answers it. **A business rule is never bent for
 one account.**
 
-**The challenge happens on the ticket and is answered there**, mentioning the reporter — in Galy,
+**The challenge happens on the ticket and is answered there**, mentioning the reporter — in Castalie,
 `discussion_post` with `entity_type="bug"`, `author_kind="agent"` and `mentioned_user_ids`; in
 their tracker, its equivalent. **An unattended run answers too**: leaving a salesperson in front
 of a customer with no reply costs an account, where a reasoned refusal costs an afternoon. Hand it
@@ -117,7 +117,7 @@ show are two different tickets; and **your confidence as a percentage, with the 
 would raise it**. A figure you are unwilling to write down is a figure you do not have.
 
 Write it as a comment on the ticket, **signed as the automaton whenever nobody asked for it in
-this turn** — `discussion_post(…, author_kind="agent")` in Galy — so the thread says a machine
+this turn** — `discussion_post(…, author_kind="agent")` in Castalie — so the thread says a machine
 concluded instead of signing it as the person whose token it used. `bug_add_comment` carries no
 signature at all: it is right for "what I tried, what I found" and wrong for a verdict or for a
 reply somebody is owed.
@@ -195,13 +195,13 @@ Two proofs, both required:
 
 ### 6. Record what it would take to see it earlier
 
-Add a follow-up check with `mcp__bg__followup_check_add`, or in their system if that is where
+Add a follow-up check with `mcp__cs__followup_check_add`, or in their system if that is where
 bugs live: what to look at, on what horizon, to know this class of failure has not returned. One
 check, concrete enough to run without you.
 
 ### 7. Hand it over
 
-Use `bg:ship` before reporting completion, including when the fix is already applied locally.
+Use `cs:ship` before reporting completion, including when the fix is already applied locally.
 It commits in the house style, opens the pull request, runs the self-review
 panel and fixes what it finds.
 
@@ -224,7 +224,7 @@ bar, or on `always-manual`, you stop and wait however sure you feel. A fix that 
 bar says so in the pull request rather than slipping through on a good mood.
 
 **The kit itself still merges nothing and deploys nothing.** That is a documented boundary, not a
-gap: `auto-merge` means you hand over to the process they already have — the one `bg:adapt`
+gap: `auto-merge` means you hand over to the process they already have — the one `cs:adapt`
 wrote against their pipeline — and `merge-and-release` means you hand over twice. Never merge
 because the checks went green, never because the user said "vas-y" about an earlier step, and
 never because a setting sounded like permission to do it yourself.

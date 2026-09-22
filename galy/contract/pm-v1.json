@@ -1,9 +1,9 @@
 {
   "contract": "galy-pm-v1",
-  "description": "The project-management verbs the Galy MCP server exposes to your agent. Strictly outward: your assistant reads strategy, briefs and specs and writes back statuses, plans and follow-ups. No verb accepts source code, a diff, or file content — Galy never sees your repository. And no verb sends anything out of your tenant: everything written here stays in your own instance. Support is blind by construction — nothing in this contract can change that, and no skill asks a user to.",
+  "description": "The project-management verbs the Castalie MCP server exposes to your agent. Strictly outward: your assistant reads strategy, briefs and specs and writes back statuses, plans and follow-ups. No verb accepts source code, a diff, or file content — Castalie never sees your repository. And no verb sends anything out of your tenant: everything written here stays in your own instance. Support is blind by construction — nothing in this contract can change that, and no skill asks a user to.",
   "transport": {
     "type": "http",
-    "url": "https://<your-workspace>.galy.cloud/mcp (every workspace answers on its own host; registered per project by galy-setup, never hardcoded)",
+    "url": "https://<your-workspace>.castalie.app/mcp (every workspace answers on its own host; registered per project by galy-setup, never hardcoded)",
     "auth": "Bearer token in the Authorization header (posted by galy-setup); token is looked up by its SHA-256, so it never travels or is stored in clear on the server"
   },
   "workflow_options": {
@@ -11,7 +11,7 @@
     "server_owned_skills": [
       "intake"
     ],
-    "server_owned_note": "Namespaces in the vocabulary below that NO skill of this kit owns: the Galy instance itself honours them, and the agent's only business with them is setting them. They are listed so that the 'declared but never read' check does not cry ghost over an option the product really does read - and a name here that IS one of this kit's skills is refused, so the exemption cannot be used to silence a real ghost.",
+    "server_owned_note": "Namespaces in the vocabulary below that NO skill of this kit owns: the Castalie instance itself honours them, and the agent's only business with them is setting them. They are listed so that the 'declared but never read' check does not cry ghost over an option the product really does read - and a name here that IS one of this kit's skills is refused, so the exemption cannot be used to silence a real ghost.",
     "options": {
       "feature-implement": {
         "merge_mode": [
@@ -88,8 +88,8 @@
     }
   },
   "rest_api": {
-    "description": "The REST surface the `bg` CLI uses (galy PmContentController), same Bearer auth. Read side only + the markdown body round-trip. Content bodies are raw markdown whose sections are delimited by <!-- @field <name> --> and composed/parsed server-side.",
-    "base": "https://<your-workspace>.galy.cloud",
+    "description": "The REST surface the `cs` CLI uses (galy PmContentController), same Bearer auth. Read side only + the markdown body round-trip. Content bodies are raw markdown whose sections are delimited by <!-- @field <name> --> and composed/parsed server-side.",
+    "base": "https://<your-workspace>.castalie.app",
     "routes": [
       {
         "method": "GET",
@@ -121,7 +121,7 @@
   },
   "conventions": {
     "return_envelope": "Every tool returns a JSON string { success: bool, ... } and { success: false, error: string } on failure.",
-    "bodies": "Long markdown bodies (brief problem/vision, spec executive summary/problem/solution) are never passed as tool arguments — read and write them with the `bg content pull|push <type> <id>` CLI. Tools carry metadata only (title, phases, status, risks).",
+    "bodies": "Long markdown bodies (brief problem/vision, spec executive summary/problem/solution) are never passed as tool arguments — read and write them with the `cs content pull|push <type> <id>` CLI. Tools carry metadata only (title, phases, status, risks).",
     "forbidden_fields": "No tool declares a parameter named code, diff, patch, file_content or source_code. The flow is outward-only.",
     "addresses": "An entity answer MAY carry `url`, the absolute https address of that entity's own page, computed by the workspace that served it because it alone knows its host: on `feature_spec_get` and `feature_brief_get`, on each node of `strategy_get_objective_breadcrumb`, on each item of `strategy_navigate_children`, and on any objective a workspace answers outside this contract. It is optional in both directions — a workspace that serves none is conformant, and a client that reads it falls back to plain text when it is absent, and when it is an address its own surface would refuse."
   },
@@ -129,7 +129,7 @@
     {
       "name": "whoami",
       "kind": "read",
-      "description": "Identify the authenticated Galy user and workspace for this session (resolved from the token, no parameter). Use it for the user_id that feature_spec_pick and other per-user tools expect — and for the workspace mark, which callers outside a browser have no other way to learn: logo_url and accent_color are null when the workspace has declared none, meaning \"use the product's own mark\", never \"use none\".",
+      "description": "Identify the authenticated Castalie user and workspace for this session (resolved from the token, no parameter). Use it for the user_id that feature_spec_pick and other per-user tools expect — and for the workspace mark, which callers outside a browser have no other way to learn: logo_url and accent_color are null when the workspace has declared none, meaning \"use the product's own mark\", never \"use none\".",
       "params": [],
       "returns": {
         "success": "bool",
@@ -440,7 +440,7 @@
     {
       "name": "feature_brief_create",
       "kind": "write",
-      "description": "Create a new feature brief (business framing: title, domain, objective). Returns the new brief id. Write the body (problem/vision/executive summary) with `bg content push feature-brief <id>`, not as arguments.",
+      "description": "Create a new feature brief (business framing: title, domain, objective). Returns the new brief id. Write the body (problem/vision/executive summary) with `cs content push feature-brief <id>`, not as arguments.",
       "params": [
         {
           "name": "title",
@@ -691,7 +691,7 @@
     {
       "name": "feature_spec_create",
       "kind": "write",
-      "description": "Create a technical spec under a brief (1..N specs per brief). Write the body with `bg content push feature-spec <id>`, not as arguments.",
+      "description": "Create a technical spec under a brief (1..N specs per brief). Write the body with `cs content push feature-spec <id>`, not as arguments.",
       "params": [
         {
           "name": "featureBriefId",
@@ -1160,7 +1160,7 @@
         "decided_by": "admin | user | default",
         "admin_policy": "allow | deny | user_choice | null",
         "user_value": "string | null",
-        "settings_url": "string (the page on the user's Galy account where both layers are visible)"
+        "settings_url": "string (the page on the user's Castalie account where both layers are visible)"
       }
     },
     {
@@ -1646,7 +1646,7 @@
     {
       "name": "onboarding_retro_record",
       "kind": "write",
-      "description": "Record the retrospective of an onboarding pass - what worked, what rubbed, the open questions, the suggestions - about the PROCESS, not about the team's work. It is written to the client's own tenant and stays there; no policy guards it, because writing in your own workspace asks nobody's permission. The four fields carry process feedback only: never code, file excerpts, paths, host names, command output, secrets, customer or product names, nor any recorded observation. The server redacts as a net and says so; a redaction that fires means something was written that should not have been. STAYS IN YOUR WORKSPACE, like every verb in this contract. Whether the instance forwards anything to Galy is an instance setting the client's administrator holds, disabled by default - no verb here decides it, and no user is asked.",
+      "description": "Record the retrospective of an onboarding pass - what worked, what rubbed, the open questions, the suggestions - about the PROCESS, not about the team's work. It is written to the client's own tenant and stays there; no policy guards it, because writing in your own workspace asks nobody's permission. The four fields carry process feedback only: never code, file excerpts, paths, host names, command output, secrets, customer or product names, nor any recorded observation. The server redacts as a net and says so; a redaction that fires means something was written that should not have been. STAYS IN YOUR WORKSPACE, like every verb in this contract. Whether the instance forwards anything to Castalie is an instance setting the client's administrator holds, disabled by default - no verb here decides it, and no user is asked.",
       "params": [
         {
           "name": "run_id",

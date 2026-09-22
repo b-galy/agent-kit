@@ -1,6 +1,6 @@
 ---
 name: workflows
-description: See and change what Galy's skills do on their own and what they stop to ask you — commit and open the pull request unattended, or pause for your check first. Fires on "quels réglages Galy sont actifs ?", "arrête de committer tout seul", "demande-moi avant d'ouvrir la PR", "galy settings". Shows what your administrator decided for the whole workspace and what is left to you, and points at the page on your Galy account.
+description: See and change what Castalie's skills do on their own and what they stop to ask you — commit and open the pull request unattended, or pause for your check first. Fires on "quels réglages Castalie sont actifs ?", "arrête de committer tout seul", "demande-moi avant d'ouvrir la PR", "castalie settings". Shows what your administrator decided for the whole workspace and what is left to you, and points at the page on your Castalie account.
 ---
 
 # workflows — act, or stop and ask
@@ -10,7 +10,7 @@ own, does it take it, or does it stop and ask you?** Committing a reviewed chang
 request, moving to the next phase — each is a point where a developer wants a different answer on a
 Friday afternoon than on a first day in a new repository.
 
-They are stored on your Galy account, not in this repository, so they follow you from one checkout
+They are stored on your Castalie account, not in this repository, so they follow you from one checkout
 to the next.
 
 ## Two layers, and the top one wins
@@ -19,7 +19,7 @@ to the next.
   `allow`, `deny`, or `user_choice`.
 - **Your own preference**, which only decides when the policy says `user_choice`.
 
-`mcp__bg__workflow_policy_resolve(skill, option)` returns both plus the answer:
+`mcp__cs__workflow_policy_resolve(skill, option)` returns both plus the answer:
 
 ```
 { effective: "allow" | "deny" | "ask", decided_by: "admin" | "user" | "default",
@@ -33,8 +33,8 @@ there, and the next session discovers the lie.
 
 ## Showing the current state
 
-Read `mcp__bg__workflow_default_get_all` for the user's side and resolve each known option for
-the policy side. **Take the list of options from `mcp__bg__workflow_catalog_list`**, never from
+Read `mcp__cs__workflow_default_get_all` for the user's side and resolve each known option for
+the policy side. **Take the list of options from `mcp__cs__workflow_catalog_list`**, never from
 the table below: it is what *this* instance knows, and showing a row it does not know would be
 offering a control nothing reads. Render one short table — option, effective value, who decided —
 and end with the `settings_url`. No option is worth more than one line.
@@ -71,8 +71,8 @@ fix" is what tells the person which of them they are changing.
 
 ## Changing one
 
-`mcp__bg__workflow_default_set(skill, option, value)`, then rewrite the local mirror
-`.bg/workflow-defaults.json` so an offline or headless run sees the same thing. **Persist the
+`mcp__cs__workflow_default_set(skill, option, value)`, then rewrite the local mirror
+`.cs/workflow-defaults.json` so an offline or headless run sees the same thing. **Persist the
 canonical machine value, never the label you displayed** — labels get reworded, and a stored label
 silently stops matching.
 

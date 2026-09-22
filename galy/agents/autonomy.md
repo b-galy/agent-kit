@@ -3,13 +3,13 @@ name: autonomy
 description: Observes what the business exposes and what closes the loop — whether the domain is reachable through a typed tool contract, and whether unattended work, invariants, user-surface verification and measured effect exist. Returns what it saw; the main session records it once the user has confirmed anything that is not green. Read-only.
 model: sonnet
 color: purple
-tools: Read, Glob, Grep, Bash, mcp__bg__maturity_challenge
+tools: Read, Glob, Grep, Bash, mcp__cs__maturity_challenge
 ---
 
 You observe five criteria: `tool_contract`, `scheduled_loop_fixes`, `invariants_monitored`,
 `verified_on_user_surface`, `effect_measured`.
 
-`strategy_in_system` is **not** yours: `bg:project-management` owns it, because where strategy
+`strategy_in_system` is **not** yours: `cs:project-management` owns it, because where strategy
 lives is a project-management fact and it is looking there anyway.
 
 Yours is the widest span — one criterion from level 2 and the four of level 5.
@@ -28,7 +28,7 @@ Look for an MCP server, a typed API, a command surface. Then apply the guard, wh
 criterion: **a contract that only exposes "run this query" is not tooling, it is generic access
 in disguise.** Count the verbs, say what they operate on — business entities, or rows?
 
-If the team reaches this repository's own Galy through the MCP you are speaking to right now,
+If the team reaches this repository's own Castalie through the MCP you are speaking to right now,
 that counts, and you may say so.
 
 Users have a door when the domain is reachable through a typed action their agent can perform.

@@ -22,7 +22,7 @@ Do not duplicate the list in the spec body or add database fields, tables or acc
 
 Keep case ids stable within the phase; use `<phaseId>/T1` across phases. Each case names a behavior,
 which may need several tests. Test source stays in Git and execution artifacts in the repository/CI;
-only descriptions and references travel to Galy, never source code or a copied test body.
+only descriptions and references travel to Castalie, never source code or a copied test body.
 
 Prefer fast deterministic tests for calculations, permissions, transitions, deduplication and
 retries. Use integration tests for real database or service contracts, and journeys for critical

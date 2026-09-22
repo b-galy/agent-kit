@@ -1,6 +1,6 @@
 ---
 name: okr-review
-description: The state of play of your objectives, read-only — the tree with its progress, and the key results that are off track or that nobody has reported on in a fortnight, at the top. Use it before a review, at the start of a quarter check, or whenever someone asks how the period is going. Reads via the Galy MCP; writes nothing.
+description: The state of play of your objectives, read-only — the tree with its progress, and the key results that are off track or that nobody has reported on in a fortnight, at the top. Use it before a review, at the start of a quarter check, or whenever someone asks how the period is going. Reads via the Castalie MCP; writes nothing.
 ---
 
 # okr-review — where the objectives really stand
@@ -33,18 +33,18 @@ better with another one; if the user asks for a different one, say which you use
 
 ## Tools
 
-- `mcp__bg__whoami` — who is asking, needed for `--mine` and to address the user as the owner.
-- `mcp__bg__strategy_list_periods` — the periods, when the user names one.
-- `mcp__bg__strategy_my_okrs` — one call: the objectives someone owns, their key results, the
+- `mcp__cs__whoami` — who is asking, needed for `--mine` and to address the user as the owner.
+- `mcp__cs__strategy_list_periods` — the periods, when the user names one.
+- `mcp__cs__strategy_my_okrs` — one call: the objectives someone owns, their key results, the
   progress, and for each the `last_check_in` with `days_since_check_in`. Takes `period_id` and
   `team_id`.
-- `mcp__bg__strategy_navigate_children` — the rest of the tree, one level at a time
+- `mcp__cs__strategy_navigate_children` — the rest of the tree, one level at a time
   (`period_id` for the roots, then `parent_objective_id`). Key results arrive in the same shape,
   silence included.
-- `mcp__bg__strategy_check_in_history` — the last check-ins of one key result. Call it for the
+- `mcp__cs__strategy_check_in_history` — the last check-ins of one key result. Call it for the
   handful you are about to call out, never for every key result: it answers "is this figure really
   moving?", which one value cannot.
-- `mcp__bg__strategy_get_objective_breadcrumb` — the parent chain, to name where a key result
+- `mcp__cs__strategy_get_objective_breadcrumb` — the parent chain, to name where a key result
   lives when the tree is deep.
 
 ## Order of presentation, fixed

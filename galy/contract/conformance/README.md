@@ -1,6 +1,6 @@
 # Contract conformance
 
-Verifies that a Galy MCP endpoint honours the `galy-pm-v1` contract — and, above all, the outward-only
+Verifies that a Castalie MCP endpoint honours the `galy-pm-v1` contract — and, above all, the outward-only
 guarantee: **no verb ever accepts source code, a diff, or file content.**
 
 ## Run
@@ -15,7 +15,7 @@ Against a live endpoint — set `GALY_ENDPOINT` (the host) and `GALY_TOKEN`. The
 url (`<endpoint>/mcp`) and the REST base from it, and exercises both surfaces:
 
 ```
-GALY_ENDPOINT=https://<your-workspace>.galy.cloud GALY_TOKEN=<token> node runner.mjs
+GALY_ENDPOINT=https://<your-workspace>.castalie.app GALY_TOKEN=<token> node runner.mjs
 ```
 
 (You can pin the MCP url separately with `GALY_MCP_URL` if it differs.) Exit code `0` = all checks pass,
@@ -23,13 +23,13 @@ GALY_ENDPOINT=https://<your-workspace>.galy.cloud GALY_TOKEN=<token> node runner
 
 ## What it checks
 
-**MCP layer** (the `mcp__bg__*` verbs):
+**MCP layer** (the `mcp__cs__*` verbs):
 1. **Forbidden fields** — neither the contract nor the live tool schemas declare a `code` / `diff` /
    `patch` / `file_content` / `source_code` parameter.
 2. **Advertised verbs** — every verb in `pm-v1.json` is present in `tools/list`.
 3. **Read envelopes** — read verbs return `{ success: true, ... }`.
 
-**REST layer** (the routes the `bg` CLI uses — `PmContentController`):
+**REST layer** (the routes the `cs` CLI uses — `PmContentController`):
 4. `GET /api/pm/search?q=ping` returns `{ briefs:[], specs:[] }`.
 5. The same call **without** a token is rejected (401/403) — the outward API requires the Bearer token.
 6. The token looks like the expected 64-hex string.

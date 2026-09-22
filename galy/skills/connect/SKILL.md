@@ -1,19 +1,19 @@
 ---
 name: connect
-description: Connect this repository to a Galy workspace — opening one first if the user has none, without ever sending them to a page they cannot sign in to. Also diagnoses a connection that is not answering — 401, wrong address, missing token, two servers with the same name. Registers the MCP endpoint for this project without the user pasting anything into a config file, and never writes a token into a committable file.
+description: Connect this repository to a Castalie workspace — opening one first if the user has none, without ever sending them to a page they cannot sign in to. Also diagnoses a connection that is not answering — 401, wrong address, missing token, two servers with the same name. Registers the MCP endpoint for this project without the user pasting anything into a config file, and never writes a token into a committable file.
 ---
 
-# connect — wire this repository to a Galy workspace
+# connect — wire this repository to a Castalie workspace
 
-The user is here because the `mcp__bg__*` tools answer nothing, or because they have never connected.
+The user is here because the `mcp__cs__*` tools answer nothing, or because they have never connected.
 
 ## First, the question they should never have to answer themselves
 
-**Do they already have a Galy workspace?**
+**Do they already have a Castalie workspace?**
 
 Ask it plainly, once, before anything else — and ask it as a person would, not as a system: *"Vous avez
-déjà un espace Galy, ou on en ouvre un ?"* The user is not thinking "am I enrolling or connecting"; they
-want their repository to talk to Galy. Which of the two paths that takes is your problem, not theirs.
+déjà un espace Castalie, ou on en ouvre un ?"* The user is not thinking "am I enrolling or connecting"; they
+want their repository to talk to Castalie. Which of the two paths that takes is your problem, not theirs.
 
 **They have one** — the rest of this skill applies. Diagnose, then the setup command.
 
@@ -42,13 +42,13 @@ skill does not care where it came from.
 
 Two values, and neither may be typed into a tracked file:
 
-- **the address of their instance** — `https://<their-workspace>.galy.cloud`, their own host. There is
-  no single Galy address to hardcode: this is a multi-tenant product, and every workspace answers on its
+- **the address of their instance** — `https://<their-workspace>.castalie.app`, their own host. There is
+  no single Castalie address to hardcode: this is a multi-tenant product, and every workspace answers on its
   own name. A kit that assumed one address would authenticate nobody.
 - **their token** — minted by them, shown once.
 
 Both are on the same page, and they never leave the machine: **Connect my agent**, in the top bar of
-any screen, at `https://<their-workspace>.galy.cloud/account/assistant`. Every active member of the
+any screen, at `https://<their-workspace>.castalie.app/account/assistant`. Every active member of the
 workspace reaches it and mints **their own** token — borrowing an administrator's would attribute
 their check-ins, their writes and every access-log line to somebody else. The page prints the exact
 command, address already filled in, with a copy button.
@@ -61,7 +61,7 @@ Run these before saying anything. They are read-only and cost a second.
 claude mcp list            # the address and the state, for every server
 ```
 
-**Never `claude mcp get bg`.** It prints the `Authorization` header **in full**, so the token
+**Never `claude mcp get cs`.** It prints the `Authorization` header **in full**, so the token
 lands in the transcript — which is uploaded on many setups, and which this very skill tells you a
 token must never enter. `list` gives the address and the state, which answers all four rows below.
 On the rare occasion the scope is genuinely in doubt, ask the user to run `get` themselves with `!`
@@ -71,24 +71,24 @@ Read the answer against these four, which cover nearly every case:
 
 | What you see | What it means | What to do |
 |---|---|---|
-| no server named `bg` | never connected here | ask for the setup command below |
-| a server named `galy`, with or without `bg` beside it | the alias before the brand became B.Galy: a setup run before the rename registered it, and the agent sees every tool twice when both answer | re-run setup, which removes it; or `claude mcp remove galy -s local` |
+| no server named `cs` | never connected here | ask for the setup command below |
+| a server named `bg` or `galy`, with or without `cs` beside it | an alias from before a rename — `galy` until the brand became B.Galy, `bg` until the product became Castalie: a setup run before that rename registered it, and the agent sees every tool twice when both answer | re-run setup, which removes both; or `claude mcp remove bg -s local` / `claude mcp remove galy -s local` |
 | the URL contains `${GALY_MCP_URL}` unexpanded | it is declared through an environment variable nobody set | re-run setup; it registers literal values and stops depending on the shell |
 | `401` / `unauthorized` on any call | the token is revoked, belongs to another workspace, or its bearer's account was closed — the instance refuses a token whose membership is no longer active | a new token on the same page, then setup again; if that also fails, their account itself is closed and only an owner reopens it |
-| `bg` defined in **two** scopes | two definitions, and the local one wins — often the broken one loses silently, or the wrong one wins | keep one: `claude mcp remove bg -s project` or `-s local` |
+| `cs` defined in **two** scopes | two definitions, and the local one wins — often the broken one loses silently, or the wrong one wins | keep one: `claude mcp remove cs -s project` or `-s local` |
 
 ## The command
 
 ```
-npx -y github:b-galy/agent-kit <token> --endpoint https://<their-workspace>.galy.cloud
+npx -y github:b-galy/agent-kit <token> --endpoint https://<their-workspace>.castalie.app
 ```
 
 **Not `npx galy-setup`.** That package is published on no registry: npm answers `E404 Not Found`, and
-a developer who has never seen Galy work concludes the product does not exist. The plugin repository is
+a developer who has never seen Castalie work concludes the product does not exist. The plugin repository is
 public and `npx` runs it as it is. The day the package is published, the short form comes back — here
 and on the screen, together.
 
-It registers the MCP endpoint for **this project only**, writes `.bg/config.json` for the `bg` CLI,
+It registers the MCP endpoint for **this project only**, writes `.cs/config.json` for the `cs` CLI,
 makes sure that file is gitignored, and tests the connection before claiming success.
 
 It also installs the **status line**: one row under the prompt naming the specs and briefs this
@@ -106,7 +106,7 @@ conversation is a token in a log, in a backup, and in whatever the transcript is
 
 Say what changed, in one line, then get out of the way — the user came to work, not to configure.
 
-If this repository has never been observed, offer the `bg:audit-organisation` skill: it tours the ground, says
+If this repository has never been observed, offer the `cs:audit-organisation` skill: it tours the ground, says
 where the practices stand against the twenty criteria, and records what it saw. It reads and proposes;
 it changes nothing on its own.
 

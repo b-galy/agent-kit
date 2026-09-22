@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// Portable local runner for B.Galy bug evaluations.
+// Portable local runner for Castalie bug evaluations.
 //
-// The runner owns source, patches, prompts and reports. B.Galy receives only the typed MCP
+// The runner owns source, patches, prompts and reports. Castalie receives only the typed MCP
 // contract and opaque artifact hashes. Every command is an allow-listed operation; provider
 // adapters use a named, documented API schema with bounded JSON, never a shell or arbitrary CLI.
 
@@ -20,7 +20,7 @@ const MAX_LOG_BYTES = 50 * 1024 * 1024;
 const MAX_ARCHIVE_BYTES = 4 * 1024 * 1024 * 1024;
 const MAX_ATTEMPT_NUMBER = 200;
 const RETENTION_DAYS = 180;
-const EXCLUDED_DIRS = new Set([".git", ".hg", ".svn", ".tmp", ".cache", ".codex", ".claude", ".bg", ".galy",
+const EXCLUDED_DIRS = new Set([".git", ".hg", ".svn", ".tmp", ".cache", ".codex", ".claude", ".cs", ".bg", ".galy",
   ".agents", "node_modules", "bin", "obj", "coverage", "dist", "packages", "artifacts", ".vs"]);
 const EXCLUDED_INSTRUCTIONS = new Set(["agents.md", "claude.md", "instructions.md", "copilot.md"]);
 
@@ -1153,7 +1153,11 @@ class McpClient {
   constructor(endpoint, token, { allowProduction = false } = {}) {
     if (!endpoint || !token) die("mcp_configuration_required: set endpoint and GALY_TOKEN in the process environment");
     const url = new URL(endpoint.endsWith("/mcp") ? endpoint : `${endpoint.replace(/\/+$/, "")}/mcp`);
-    const production = url.hostname.endsWith(".galy.cloud") || url.hostname === "galy.cloud";
+    // Both estates, and the older one stays: this guard is what stops a local run billing against a
+    // real workspace, and an instance still answering on `*.galy.cloud` is exactly as production as
+    // one on `*.castalie.app`. Dropping the former name here would disarm the guard in silence.
+    const PRODUCTION_HOSTS = ["castalie.app", "galy.cloud"];
+    const production = PRODUCTION_HOSTS.some((host) => url.hostname === host || url.hostname.endsWith(`.${host}`));
     if (production && !allowProduction && process.env.BUG_EVALUATION_ALLOW_PRODUCTION !== "1")
       die("production_requires_explicit_opt_in: pass --allow-production only after the approved budget and worker are ready");
     this.url = url.toString(); this.token = token; this.id = 0; this.initialized = false;
@@ -1855,25 +1859,25 @@ function purge(args) {
   }
   print({ removed, removedObjects, retentionDays });
 }
-const HELP = `bg bug-evaluation — local, isolated runner
+const HELP = `cs bug-evaluation — local, isolated runner
 
-  bg bug-evaluation profile qualify       qualify the bwrap/WSL profile and print its hash
-  bg bug-evaluation can-run               report whether the local sandbox is available
-  bg bug-evaluation snapshot create       snapshot --root <workspace> with exclusions and a 2 GiB preflight
-  bg bug-evaluation inspect --run-id <id> [--namespace <24-hex>] inspect one archive run; an unambiguous local match is accepted
-  bg bug-evaluation purge                 purge local archives after 180 days
-  bg bug-evaluation oracle verify         run one shared baseline/reference/candidate oracle script in the sandbox
-  bg bug-evaluation run self-test         execute fixture analyst → solver → oracle → judge with no billing
-  bg bug-evaluation run poll              find a queued run through MCP (worker id from env or option)
-  bg bug-evaluation run execute           claim, heartbeat and publish one run through MCP
-  bg bug-evaluation run resume             resume execute for the same worker after a checkpoint
-  bg bug-evaluation run heartbeat          renew one lease through MCP
-  bg bug-evaluation run settle             attach one immutable provider bill to a journaled attempt
-  bg bug-evaluation rejudge                approve/reuse and execute one judge-only protocol against the final archive
-  bg bug-evaluation rejudge --approve-only prepare a protocol without executing its judge
+  cs bug-evaluation profile qualify       qualify the bwrap/WSL profile and print its hash
+  cs bug-evaluation can-run               report whether the local sandbox is available
+  cs bug-evaluation snapshot create       snapshot --root <workspace> with exclusions and a 2 GiB preflight
+  cs bug-evaluation inspect --run-id <id> [--namespace <24-hex>] inspect one archive run; an unambiguous local match is accepted
+  cs bug-evaluation purge                 purge local archives after 180 days
+  cs bug-evaluation oracle verify         run one shared baseline/reference/candidate oracle script in the sandbox
+  cs bug-evaluation run self-test         execute fixture analyst → solver → oracle → judge with no billing
+  cs bug-evaluation run poll              find a queued run through MCP (worker id from env or option)
+  cs bug-evaluation run execute           claim, heartbeat and publish one run through MCP
+  cs bug-evaluation run resume             resume execute for the same worker after a checkpoint
+  cs bug-evaluation run heartbeat          renew one lease through MCP
+  cs bug-evaluation run settle             attach one immutable provider bill to a journaled attempt
+  cs bug-evaluation rejudge                approve/reuse and execute one judge-only protocol against the final archive
+  cs bug-evaluation rejudge --approve-only prepare a protocol without executing its judge
 
 Limits: snapshot 2 GiB, patch 20 MiB, log 50 MiB. Secrets, histories, caches, instructions and links are excluded.
-Production Galy endpoints require explicit --allow-production after the approved budget and worker are ready.
+Production Castalie endpoints require explicit --allow-production after the approved budget and worker are ready.
 Every published run requires a frozen IsolationProfileHash plus --profile-file and --profile-root; the profile is re-qualified before work.
 Oracle descriptors use one immutable script mounted against /input for baseline, reference and candidate; independent scripts are refused.
 Supported provider adapters: openai (Responses API, openai-responses-v1) and anthropic (Messages API, anthropic-messages-v1).
@@ -1909,9 +1913,9 @@ export async function runCli(argv) {
   if (command === "run" && (action === "settle" || action === "reconcile")) return settleAttempt(args);
   if (command === "rejudge" || (command === "run" && action === "rejudge")) return rejudge(args);
   if (command === "run" && (action === "execute" || action === "resume")) return execute(args);
-  die(`unknown bug-evaluation command; run 'bg bug-evaluation help'`);
+  die(`unknown bug-evaluation command; run 'cs bug-evaluation help'`);
 }
 export { AnthropicMessagesAdapter, FixtureAdapter, OpenAIResponsesAdapter, createProviderAdapter, runLocalOracle,
   sandboxRunMounts, validateJudgeCriteria, humanReviewProjection };
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href)
-  runCli(process.argv.slice(2)).catch(error => { console.error(`bg bug-evaluation: ${error.message}`); process.exitCode = 1; });
+  runCli(process.argv.slice(2)).catch(error => { console.error(`cs bug-evaluation: ${error.message}`); process.exitCode = 1; });

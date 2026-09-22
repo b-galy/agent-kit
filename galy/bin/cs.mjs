@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// bg — cross-platform CLI for the Galy project-management API.
+// cs — cross-platform CLI for the Castalie project-management API.
 //
-// Talks REST to /api/pm/* on your Galy endpoint. Mirrors the read side of the MCP
+// Talks REST to /api/pm/* on your Castalie endpoint. Mirrors the read side of the MCP
 // verbs your agent uses, but is shell-friendly: search work items, read
 // compact JSON cards, and pull/push the large markdown body of a brief or spec as
 // a local file so you never shove a whole body through a tool argument.
@@ -12,9 +12,9 @@
 //
 // Config resolution (first hit wins per field):
 //   env GALY_ENDPOINT / GALY_TOKEN
-//   .bg/config.json    ({ "endpoint": "...", "token": "..." }) searched upward from cwd;
-//   .galy/config.json  is the folder's former name, still read after it so a token written
-//                      before the rename keeps working
+//   .cs/config.json    ({ "endpoint": "...", "token": "..." }) searched upward from cwd;
+//   .bg/config.json    then .galy/config.json — the folder's two former names, still read
+//                      after it so a token written before either rename keeps working
 //
 // Content buffer: .tmp/galy-content/<type>/<id>.md — raw markdown whose sections are
 //   delimited by <!-- @field <name> -->. The server composes/parses it; the CLI
@@ -28,24 +28,26 @@
 //   PUT  /api/pm/content/<type>/<id>/body  <- { "Body": "<markdown>" }
 //
 // Commands:
-//   bg search <query>
-//   bg brief <id>
-//   bg spec <id>
-//   bg content pull <type> <id>        # type = feature-brief | feature-spec
-//   bg content push <type> <id>
-//   bg codex                           # project this kit into the layouts Codex reads
+//   cs search <query>
+//   cs brief <id>
+//   cs spec <id>
+//   cs content pull <type> <id>        # type = feature-brief | feature-spec
+//   cs content push <type> <id>
+//   cs codex                           # project this kit into the layouts Codex reads
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const TYPES = new Set(["feature-brief", "feature-spec"]);
 
 // ── Config ────────────────────────────────────────────────────────────────
-// `.bg/` is the folder; `.galy/` is what it was called before the brand became B.Galy. A setup run
-// before the rename left its token there, and a CLI that stopped reading it would answer "No token"
-// on a workstation that has one — so the former name stays readable, after the new one, at each
-// level of the walk up.
-const CONFIG_DIRS = [".bg", ".galy"];
+// `.cs/` is the folder; `.bg/` and `.galy/` are what it was called under the two names the kit
+// carried before Castalie. A setup run before either rename left its token there, and a CLI that
+// stopped reading it would answer "No token" on a workstation that has one — so the former names
+// stay readable, after the new one, at each level of the walk up. Newest first: a workstation that
+// has run setup twice holds both, and the current one is the one that was written last.
+const CONFIG_DIRS = [".cs", ".bg", ".galy"];
 
 function findConfig(startDir) {
   let dir = resolve(startDir);
@@ -69,8 +71,8 @@ function loadConfig() {
   }
   let endpoint = process.env.GALY_ENDPOINT || fromFile.endpoint;
   const token = process.env.GALY_TOKEN || fromFile.token;
-  if (!endpoint) die("No endpoint. Set GALY_ENDPOINT or .bg/config.json { \"endpoint\": ... }.");
-  if (!token) die("No token. Set GALY_TOKEN or .bg/config.json { \"token\": ... }. Get one from galy.io → Settings → Connect your assistant.");
+  if (!endpoint) die("No endpoint. Set GALY_ENDPOINT or .cs/config.json { \"endpoint\": ... }.");
+  if (!token) die("No token. Set GALY_TOKEN or .cs/config.json { \"token\": ... }. Get one from castalie.app → Settings → Connect your assistant.");
   endpoint = endpoint.replace(/\/+$/, "").replace(/\/mcp$/i, ""); // tolerate a pasted MCP url
   return { endpoint, token };
 }
@@ -91,7 +93,7 @@ async function request(method, path, { json, raw } = {}) {
   if (!res.ok) {
     let msg = text.slice(0, 300);
     try { msg = JSON.parse(text).error || msg; } catch { /* keep raw */ }
-    if (res.status === 401) msg = "unauthorized — check your token (galy.io → Settings → Connect your assistant)";
+    if (res.status === 401) msg = "unauthorized — check your token (castalie.app → Settings → Connect your assistant)";
     die(`${method} ${path} → HTTP ${res.status}: ${msg}`);
   }
   return raw ? text : (text ? JSON.parse(text) : {});
@@ -105,26 +107,26 @@ function bufferPath(type, id) {
 // ── Commands ──────────────────────────────────────────────────────────────
 async function cmdSearch(args) {
   const q = args._[0];
-  if (!q) die("Usage: bg search <query>");
+  if (!q) die("Usage: cs search <query>");
   print(await request("GET", `/api/pm/search?q=${encodeURIComponent(q)}`));
 }
 
 async function cmdBrief(args) {
   const id = args._[0];
-  if (!id) die("Usage: bg brief <id>");
+  if (!id) die("Usage: cs brief <id>");
   print(await request("GET", `/api/pm/brief/${encodeURIComponent(id)}`));
 }
 
 async function cmdSpec(args) {
   const id = args._[0];
-  if (!id) die("Usage: bg spec <id>");
+  if (!id) die("Usage: cs spec <id>");
   print(await request("GET", `/api/pm/spec/${encodeURIComponent(id)}`));
 }
 
 async function cmdContent(args) {
   const [action, type, id] = args._;
   if (!["pull", "push"].includes(action) || !TYPES.has(type) || !id) {
-    die("Usage: bg content pull|push <type> <id>   (type = feature-brief | feature-spec)");
+    die("Usage: cs content pull|push <type> <id>   (type = feature-brief | feature-spec)");
   }
   const path = bufferPath(type, id);
   const route = `/api/pm/content/${type}/${encodeURIComponent(id)}/body`;
@@ -138,7 +140,7 @@ async function cmdContent(args) {
   }
 
   // push — send the buffer verbatim; the server parses the <!-- @field --> sections.
-  if (!existsSync(path)) die(`No buffer at ${path}. Run 'bg content pull ${type} ${id}' first.`);
+  if (!existsSync(path)) die(`No buffer at ${path}. Run 'cs content pull ${type} ${id}' first.`);
   const body = readFileSync(path, "utf8");
   await request("PUT", route, { json: { Body: body }, raw: true });
   console.log(`Pushed ${type} ${id}`);
@@ -160,21 +162,21 @@ function parseArgs(argv) {
 }
 
 function print(obj) { console.log(JSON.stringify(obj, null, 2)); }
-function die(msg) { console.error(`bg: ${msg}`); process.exit(1); }
+function die(msg) { console.error(`cs: ${msg}`); process.exit(1); }
 
-const HELP = `bg — Galy project-management CLI
+const HELP = `cs — Castalie project-management CLI
 
-  bg search <query>                 # briefs + specs matching the query
-  bg brief <id>                     # a brief with its user stories
-  bg spec <id>                      # a spec with its phases, risks, acceptance tests
-  bg content pull <type> <id>       # type = feature-brief | feature-spec
-  bg content push <type> <id>
-  bg codex [--verify|--check]       # project this kit's skills, instructions and agents into
+  cs search <query>                 # briefs + specs matching the query
+  cs brief <id>                     # a brief with its user stories
+  cs spec <id>                      # a spec with its phases, risks, acceptance tests
+  cs content pull <type> <id>       # type = feature-brief | feature-spec
+  cs content push <type> <id>
+  cs codex [--verify|--check]       # project this kit's skills, instructions and agents into
                                     #   .agents/ and .codex/ here, for a Codex session
-  bg bug-evaluation help              # local isolated bug-evaluation runner
+  cs bug-evaluation help              # local isolated bug-evaluation runner
 
-Config: env GALY_ENDPOINT / GALY_TOKEN, or .bg/config.json { "endpoint", "token" }.
-Galy never sees your code — this CLI only carries work items and their text.`;
+Config: env GALY_ENDPOINT / GALY_TOKEN, or .cs/config.json { "endpoint", "token" }.
+Castalie never sees your code — this CLI only carries work items and their text.`;
 
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
@@ -200,7 +202,7 @@ async function main() {
     case "-h":
     case "--help":
     case "help": return console.log(HELP);
-    default: die(`Unknown command '${cmd}' in bg ${installedVersion()}. Run 'bg help' for what this version knows — and if you expected '${cmd}', the kit answering here is older than the one that has it.`);
+    default: die(`Unknown command '${cmd}' in cs ${installedVersion()}. Run 'cs help' for what this version knows — and if you expected '${cmd}', the kit answering here is older than the one that has it.`);
   }
 }
 
@@ -208,11 +210,18 @@ async function main() {
 /// hardcoded. It exists for one sentence, in one place: the refusal above.
 ///
 /// A host discovered why on 21 September 2026, the day `codex` shipped. Their repository pinned
-/// the plugin at 1.5.3 while their user scope had 1.5.9, so `bg codex` resolved to the old kit and
+/// the plugin at 1.5.3 while their user scope had 1.5.9, so `cs codex` resolved to the old kit and
 /// answered `Unknown command 'codex'` — true, useless, and indistinguishable from a typo. They
 /// worked around it by testing for `bin/build-codex.mjs` on disk instead of trusting the pin,
 /// which is a fine remedy for them and one nobody else should have to invent. A subcommand added
 /// after a pin will keep happening; naming the version turns the next occurrence into one line.
+///
+/// And it answered `an unknown version` from the day it shipped: `fileURLToPath` was never
+/// imported, so the first line threw a `ReferenceError` that the `catch` below swallowed whole.
+/// The sentence was written, reviewed and merged, and the only thing missing was the import —
+/// which nothing could say, because a fallback is indistinguishable from a manifest that genuinely
+/// cannot be read. A `catch` that returns a plausible value is how a defect gets to look like a
+/// feature.
 function installedVersion() {
   try {
     const manifest = join(dirname(fileURLToPath(import.meta.url)), "..", ".claude-plugin", "plugin.json");

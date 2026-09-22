@@ -1,18 +1,18 @@
 ---
 name: adapt
-description: Turn the kit's generic skills into skills bound to this team's own environment — including a merge skill and a release skill written against the pipeline the delivery pass actually read — and propose them as a pull request together with an added CLAUDE.md section. Runs right after the project-management and delivery audits of the first pass, or on its own with "adapte les skills Galy à notre environnement". It opens a branch and a pull request; it never merges, never deploys, never rewrites an existing skill, and never changes an existing process.
+description: Turn the kit's generic skills into skills bound to this team's own environment — including a merge skill and a release skill written against the pipeline the delivery pass actually read — and propose them as a pull request together with an added CLAUDE.md section. Runs right after the project-management and delivery audits of the first pass, or on its own with "adapte les skills Castalie à notre environnement". It opens a branch and a pull request; it never merges, never deploys, never rewrites an existing skill, and never changes an existing process.
 ---
 
 # adapt — make the kit fit this repository, as a pull request
 
-The kit's skills are written against Galy's verbs and nobody else's. This step rewrites them
+The kit's skills are written against Castalie's verbs and nobody else's. This step rewrites them
 against **what this team actually has**, and hands the result over as a pull request: a branch,
 an added section in the root instruction file, and adapted skills beside their existing ones —
 plus, where the delivery pass actually read their chain, a merge skill and a release skill that
 describe the way they already ship.
 
 **Nothing existing changes.** Not one command, not one workflow, not one convention. If the only
-way to use Galy were to move their work items, they would keep the work items and drop Galy.
+way to use Castalie were to move their work items, they would keep the work items and drop Castalie.
 
 ## The pull request is the judge, and there is no gate before it
 
@@ -30,12 +30,12 @@ pages in the product. Putting files in a repository has one too, and it is the p
 
 ## What it needs before it starts
 
-The **binding proposal** from `bg:project-management` — which system owns briefs, specs,
+The **binding proposal** from `cs:project-management` — which system owns briefs, specs,
 tickets and strategy; what the id shapes are; which commands already exist. If it was not
 produced in this session, run that agent first. Adapting without it means guessing at their
 method, and a wrong guess lands in a pull request with your name on it.
 
-And, for the delivery half only, the **named facts** from `bg:delivery`: the chain file and
+And, for the delivery half only, the **named facts** from `cs:delivery`: the chain file and
 what triggers it, whether a push to the default branch deploys, whether that branch is
 protected, whether anything stops two releases at once, where going back is written down, how a
 change is actually merged, and the commands that already exist.
@@ -64,7 +64,7 @@ is the one that works**. Read `delivery_commands` before you choose a name, not 
 On a collision, you have two honest options and you pick per skill, not globally:
 
 - **Skip it.** Their version already does the job, and it drives a system that already holds
-  their work. Say so, and say what Galy adds that theirs does not: usually the strategy link and
+  their work. Say so, and say what Castalie adds that theirs does not: usually the strategy link and
   the follow-up horizon.
 - **Ship it under a prefixed name** — `galy-feature-spec` — when the two genuinely do different
   things, and say in one line how a reader tells them apart.
@@ -93,8 +93,8 @@ committed, not that it is any particular file.
 The block itself:
 
 ```markdown
-<!-- galy:begin — géré par la prise en main Galy, modifiable -->
-## Galy, à côté de ce qui existe
+<!-- galy:begin — géré par la prise en main Castalie, modifiable -->
+## Castalie, à côté de ce qui existe
 
 <qui possède quoi — une ligne par système, tirée de la proposition de liaison>
 <la phrase qui dit que rien d'existant ne change>
@@ -130,19 +130,19 @@ on n'y ajoute rien.
 Three properties, each load-bearing:
 
 - **Delimited**, so a later pass updates it without touching a word the team wrote. The markers
-  keep the name `galy` on purpose, although the plugin is `bg` now: blocks already written in
+  keep the name `galy` on purpose, although the plugin is `cs` now: blocks already written in
   customers' files carry it, and a later pass finds them by that name. Renaming the marker would
   orphan every one of them.
 - **Short.** It joins a file every session reads in full; anything long gets skipped, and a
   doctrine nobody finishes is a doctrine nobody applies.
-- **It names their system first**, Galy second. The reader must see their own world described
+- **It names their system first**, Castalie second. The reader must see their own world described
   correctly before being told what is added to it.
 
 #### It routes. It does not inventory.
 
 **This is the part that decides whether the block does anything at all.** A section that says
-"Galy holds the briefs and the specs" is a description: a session reads it, learns a fact, and
-carries on writing code without ever opening Galy. The block has to say what a session must **do**,
+"Castalie holds the briefs and the specs" is a description: a session reads it, learns a fact, and
+carries on writing code without ever opening Castalie. The block has to say what a session must **do**,
 and **when the rule fires**.
 
 The shape below is proven on a repository of a hundred-odd skills. Take its structure; the names
@@ -166,7 +166,7 @@ in it belong to whoever wrote them:
 
 5. **How a change reaches production here**, in three lines and a two-row routing table — the
    chain file and its trigger quoted from the file, whether merging is enough to ship, and how
-   going back is done. **Every line either carries a fact `bg:delivery` read, or says out loud
+   going back is done. **Every line either carries a fact `cs:delivery` read, or says out loud
    that it did not.** *« Votre chaîne se déclenche sur un push vers `main`, et je n'ai trouvé
    aucun retour arrière écrit »* is a good line. *« Suivez votre procédure de retour arrière »*
    is the failure: it sounds like doctrine and it is a guess.
@@ -207,7 +207,7 @@ The contract the skills follow is `${CLAUDE_PLUGIN_ROOT}/instructions/host-instr
 block written before this line existed keeps working untouched: no line simply means no file, which
 is what every one of them already says.
 
-If the file does not exist, propose one — and then it is a doctrine, not a Galy section: cover
+If the file does not exist, propose one — and then it is a doctrine, not a Castalie section: cover
 the stack, how to build and test, the conventions read from their history, and above all the
 rules whose violation costs real data.
 
@@ -216,7 +216,7 @@ rules whose violation costs real data.
 Under `.claude/skills/<name>/SKILL.md`, one directory per skill, each a rewrite of the kit's
 generic version with:
 
-- **their** server name and verbs, not `mcp__bg__*`, wherever the system of record is theirs;
+- **their** server name and verbs, not `mcp__cs__*`, wherever the system of record is theirs;
 - **their** id shapes, so a reference the user pastes is routed to the right system;
 - **their** branch and commit conventions, read from `git log`, not invented;
 - a first line saying which system this skill writes to. A skill that silently writes to the
@@ -228,7 +228,7 @@ twelve that need arguing about.
 ### 3. The two delivery skills, written against their chain
 
 Same rules as above, same collision handling, same directory. What changes is where the words
-come from: **not the kit's generic version, but the named facts `bg:delivery` came back with.**
+come from: **not the kit's generic version, but the named facts `cs:delivery` came back with.**
 There is no generic merge skill to adapt, because there is no generic way to merge.
 
 **Two skills, not one, and the split is the whole lesson.** It is proven on a repository of a
@@ -267,7 +267,7 @@ That is not a caveat to soften a sentence: it *is* the sentence. A skill that li
 chain is read in their first hour, is wrong, and nobody comes back to it — and it does not look
 like a broken thing, it looks like a working one.
 
-Two things that must never appear in what you write: the word **Galy**, or the name of this
+Two things that must never appear in what you write: the word **Castalie**, or the name of this
 kit's own repository, anywhere in a command; and a command that is not in their repository.
 The skills are theirs and speak only of theirs.
 
@@ -275,12 +275,12 @@ The skills are theirs and speak only of theirs.
 
 Three of these answers are settings, not facts, and a setting changes without a pull request:
 `ship`/`release_trigger`, `ship`/`release_hold`, `ship`/`rollback_mode`. Write the generated
-skills to **resolve them at run time** — `mcp__bg__workflow_policy_resolve` — instead of
+skills to **resolve them at run time** — `mcp__cs__workflow_policy_resolve` — instead of
 freezing today's answer in their text. A team that changes its mind on the settings page and
 sees nothing change has been given a control that is not one.
 
 **Read the option names and their values from the instance, never from memory:**
-`mcp__bg__workflow_catalog_list` says what *this* instance actually knows. An option it does
+`mcp__cs__workflow_catalog_list` says what *this* instance actually knows. An option it does
 not know is a setting nothing will ever honour, and a value it does not accept is one it will
 refuse to store — so a name typed from memory produces a page that toggles nothing. That has
 already happened twice, in both directions, in one hour.
@@ -297,7 +297,7 @@ invention in the one place inventions cost most.
   back yet**. Recording the hole is the point; it is what stops the next session inventing one.
 
 Ask once, for the three together, in the user's language, and say where the observation came
-from. On a yes, write them with `mcp__bg__workflow_default_set` — canonical values, exactly as
+from. On a yes, write them with `mcp__cs__workflow_default_set` — canonical values, exactly as
 the catalogue spells them, never a label you displayed. On a no, or on silence, write nothing and
 say in one line what stayed unset: an unanswered question is not an answer.
 

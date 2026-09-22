@@ -1,6 +1,6 @@
 ---
 name: contrarian
-description: Challenge an idea before you commit to it — spawn a fresh adversarial sub-agent that steelmans the idea, then attacks it hardest, names the single decisive test, surfaces failure modes and a cheaper alternative; then converge on a verdict you own. No Galy tools needed; it reasons about the idea, not your data.
+description: Challenge an idea before you commit to it — spawn a fresh adversarial sub-agent that steelmans the idea, then attacks it hardest, names the single decisive test, surfaces failure modes and a cheaper alternative; then converge on a verdict you own. No Castalie tools needed; it reasons about the idea, not your data.
 ---
 
 # contrarian — challenge an idea before committing
@@ -48,5 +48,5 @@ authorship pride finds the flaw the thread is invested in not seeing.
 
 ## Discipline
 
-- **No Galy tools required.** This skill reasons about the idea; it does not read or write your data.
+- **No Castalie tools required.** This skill reasons about the idea; it does not read or write your data.
 - **Own the verdict.** You are a participant, not a router — end on a recommendation you stand behind.

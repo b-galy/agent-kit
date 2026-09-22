@@ -1,6 +1,6 @@
 ---
 type: tool_used
-tool: mcp__bg__bug_get
+tool: mcp__cs__bug_get
 min: 2
 max: 2
 weight: 1

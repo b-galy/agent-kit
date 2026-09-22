@@ -1,6 +1,6 @@
 ---
 name: okr-checkin
-description: The check-in ritual — go through the key results you own in one pass, record where each one really stands (value, confidence, one sentence), and say what changed and what has just tipped into risk. Writes to Galy through the MCP; every figure comes from the user, never from you.
+description: The check-in ritual — go through the key results you own in one pass, record where each one really stands (value, confidence, one sentence), and say what changed and what has just tipped into risk. Writes to Castalie through the MCP; every figure comes from the user, never from you.
 ---
 
 # okr-checkin — record where the key results stand
@@ -18,12 +18,12 @@ Reading the state of play without recording anything is `okr-review`.
 
 ## Tools
 
-- `mcp__bg__whoami` — the author. The check-in is signed from the token, so nothing to pass.
-- `mcp__bg__strategy_my_okrs` — the key results the user owns, with their current value and
+- `mcp__cs__whoami` — the author. The check-in is signed from the token, so nothing to pass.
+- `mcp__cs__strategy_my_okrs` — the key results the user owns, with their current value and
   `days_since_check_in`. This is the working list.
-- `mcp__bg__strategy_check_in_history` — the last check-ins of one key result, when the user
+- `mcp__cs__strategy_check_in_history` — the last check-ins of one key result, when the user
   asks what the previous value was or since when it has been stuck.
-- `mcp__bg__strategy_create_check_in` — the write: `key_result_id`, `new_value`, `confidence`,
+- `mcp__cs__strategy_create_check_in` — the write: `key_result_id`, `new_value`, `confidence`,
   `comment`. It moves the key result's current value and refreshes every gauge above it, and
   returns the objectives whose progress changed.
 
@@ -66,6 +66,6 @@ A check-in without all three is not worth recording:
 - **You are not the author of the judgement.** The confidence is the owner's reading, not yours. You
   may point out that a pace no longer adds up; you do not change `on_track` into `at_risk` yourself.
 - **One pass, then stop.** Do not chain into replanning, into creating key results, or into
-  rewriting targets. Creating a key result is a strategic decision, made by the user in Galy.
+  rewriting targets. Creating a key result is a strategic decision, made by the user in Castalie.
 - **Name things, never ids** — titles and clickable links (`/strategie/resultat/<id>` on the
   workspace host), so the user can open what you just wrote to.

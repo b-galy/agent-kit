@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// bg — Stop hook: a merge that leaves the working copy on its branch is stopped once.
+// cs — Stop hook: a merge that leaves the working copy on its branch is stopped once.
 //
 // WHERE A MERGE ACTUALLY ENDS. Not at the forge's green. A pull request merged from a working
 // copy that stays on its branch leaves two things behind: a remote branch nobody will delete,
@@ -33,8 +33,8 @@ import { join } from "node:path";
 import { homedir } from "node:os";
 import { execFileSync } from "node:child_process";
 
-// Under `bg`, beside the stamps of the other hooks.
-const STAMPS = join(homedir(), ".claude", "bg", "stamps");
+// Under `cs`, beside the stamps of the other hooks.
+const STAMPS = join(homedir(), ".claude", "cs", "stamps");
 
 // A pull request was merged from this session — the two forges the kit's skills name.
 const MERGED_A_PULL_REQUEST = /\bgh\s+pr\s+merge\b|\bglab\s+mr\s+merge\b/;

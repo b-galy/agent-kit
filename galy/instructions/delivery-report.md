@@ -16,13 +16,13 @@ Reports are **written in the user's language**, in full sentences readable by a 
   just below it. Never bury the verdict inside prose.
 - **The status word reflects the real end state, never the intention** — `Merged`, `Deployed` (released
   and verified), or `PR ready` (a human merges). Never say "Delivered" for a PR that only opened.
-- **Every entity reference is a clickable link** (the Galy detail page, or your PR) — never a bare id,
+- **Every entity reference is a clickable link** (the Castalie detail page, or your PR) — never a bare id,
   and never a bare route: give the full address the product returned, never one you assembled.
 - **`👁️ <live link>` on the very last line** — the running page that shows the change working. Not
   released yet → the link still goes last, saying what it serves **today**. Gated,
   queued, or unobserved → write *"deployed, not visually verified — confirm"*. No user-facing page at
   all (local tooling) → omit the line silently. Never claim "live" on a pipeline status alone.
-- **Objective.** A feature report names the Galy objective the work serves.
+- **Objective.** A feature report names the Castalie objective the work serves.
 - **Terminal-friendly.** No tables, no raw URL dumps; only the few clickable links that matter. All
   timestamps in the user's local timezone.
 
@@ -35,7 +35,7 @@ Reports are **written in the user's language**, in full sentences readable by a 
 
 <1-2 business sentences: what, for whom, why now.> Serves the objective **<title>**.
 
-<status> — PR <link>. Spec: <Galy link>.
+<status> — PR <link>. Spec: <Castalie link>.
 Phases (all ✅): <P1 … · P2 … · …>
 Acceptance: <N/M tests passed>.
 Follow-up: <next check date · title | none>.
