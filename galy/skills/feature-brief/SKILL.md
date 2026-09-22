@@ -1,6 +1,8 @@
 ---
 name: feature-brief
 description: Frame a business need into a Castalie brief — problem, vision, user stories, success criteria — attached to an objective. Interactive discovery with targeted questions; writes the brief via the Castalie MCP and its body via the cs CLI. This is the WHAT and WHY, never the HOW (that is feature-spec).
+model: claude-opus-5-5
+effort: high
 ---
 
 # feature-brief — frame a business need

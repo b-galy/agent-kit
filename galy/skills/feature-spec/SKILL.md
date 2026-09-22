@@ -1,6 +1,8 @@
 ---
 name: feature-spec
 description: Turn a Castalie brief into a technical spec — explore your own codebase, weigh design options, then write phases, risks and acceptance tests. Writes the spec via the Castalie MCP and its body via the cs CLI. Your code stays local; only the plan and its metadata go to Castalie.
+model: claude-opus-5-5
+effort: high
 ---
 
 # feature-spec — write the technical spec for a brief
