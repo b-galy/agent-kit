@@ -1,6 +1,8 @@
 ---
 name: feature-single-deliverable
 description: One deliverable, one pull request — create the brief, its single user story and a one-phase spec in a single gesture, then run the implementation loop to "PR ready". Use it when the work is one thing that takes an afternoon, or when a brief already exists and only needs building. A need carrying several user stories belongs to `cs:feature-brief`; a behaviour that used to work and no longer does belongs to `cs:bug-fix`. Never merges and never deploys.
+model: claude-opus-5-5
+effort: high
 ---
 
 # feature-single-deliverable — one deliverable, one pull request

@@ -1,6 +1,8 @@
 ---
 name: feature-implement
 description: Implement a Castalie spec autonomously in your own repository — claim the spec, read its phases, code phase by phase with a cron watchdog as a safety net, verify against the acceptance tests, and end at "PR ready". Never merges (that is your CI/process). Reads the spec from Castalie; the code never leaves your machine.
+model: claude-opus-5-5
+effort: high
 ---
 
 # feature-implement — autonomous implementation loop

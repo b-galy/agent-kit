@@ -1,6 +1,8 @@
 ---
 name: feature-followup
 description: Run the post-delivery checks a spec or brief scheduled — replay the acceptance criteria in production, measure the outcome against the pass/fail thresholds, report the verdict, and reschedule the next horizon. Reads the checks from Castalie; verification happens against your running app.
+model: claude-opus-5-5
+effort: high
 ---
 
 # feature-followup — post-delivery verification
