@@ -195,7 +195,7 @@ Two proofs, both required:
 
 ### 6. Record what it would take to see it earlier
 
-Add a follow-up check with `mcp__cs__followup_check_add`, or in their system if that is where
+Add a follow-up check with `mcp__castalie__followup_check_add`, or in their system if that is where
 bugs live: what to look at, on what horizon, to know this class of failure has not returned. One
 check, concrete enough to run without you.
 

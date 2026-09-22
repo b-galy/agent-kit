@@ -19,7 +19,7 @@ to the next.
   `allow`, `deny`, or `user_choice`.
 - **Your own preference**, which only decides when the policy says `user_choice`.
 
-`mcp__cs__workflow_policy_resolve(skill, option)` returns both plus the answer:
+`mcp__castalie__workflow_policy_resolve(skill, option)` returns both plus the answer:
 
 ```
 { effective: "allow" | "deny" | "ask", decided_by: "admin" | "user" | "default",
@@ -33,8 +33,8 @@ there, and the next session discovers the lie.
 
 ## Showing the current state
 
-Read `mcp__cs__workflow_default_get_all` for the user's side and resolve each known option for
-the policy side. **Take the list of options from `mcp__cs__workflow_catalog_list`**, never from
+Read `mcp__castalie__workflow_default_get_all` for the user's side and resolve each known option for
+the policy side. **Take the list of options from `mcp__castalie__workflow_catalog_list`**, never from
 the table below: it is what *this* instance knows, and showing a row it does not know would be
 offering a control nothing reads. Render one short table — option, effective value, who decided —
 and end with the `settings_url`. No option is worth more than one line.
@@ -71,7 +71,7 @@ fix" is what tells the person which of them they are changing.
 
 ## Changing one
 
-`mcp__cs__workflow_default_set(skill, option, value)`, then rewrite the local mirror
+`mcp__castalie__workflow_default_set(skill, option, value)`, then rewrite the local mirror
 `.cs/workflow-defaults.json` so an offline or headless run sees the same thing. **Persist the
 canonical machine value, never the label you displayed** — labels get reworded, and a stored label
 silently stops matching.

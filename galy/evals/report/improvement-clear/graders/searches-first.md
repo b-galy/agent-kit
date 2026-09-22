@@ -1,7 +1,7 @@
 ---
 type: tool_order
-before: mcp__cs__pm_search
-after: mcp__cs__bug_create
+before: mcp__castalie__pm_search
+after: mcp__castalie__bug_create
 weight: 1
 ---
 

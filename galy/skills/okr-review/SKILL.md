@@ -33,18 +33,18 @@ better with another one; if the user asks for a different one, say which you use
 
 ## Tools
 
-- `mcp__cs__whoami` — who is asking, needed for `--mine` and to address the user as the owner.
-- `mcp__cs__strategy_list_periods` — the periods, when the user names one.
-- `mcp__cs__strategy_my_okrs` — one call: the objectives someone owns, their key results, the
+- `mcp__castalie__whoami` — who is asking, needed for `--mine` and to address the user as the owner.
+- `mcp__castalie__strategy_list_periods` — the periods, when the user names one.
+- `mcp__castalie__strategy_my_okrs` — one call: the objectives someone owns, their key results, the
   progress, and for each the `last_check_in` with `days_since_check_in`. Takes `period_id` and
   `team_id`.
-- `mcp__cs__strategy_navigate_children` — the rest of the tree, one level at a time
+- `mcp__castalie__strategy_navigate_children` — the rest of the tree, one level at a time
   (`period_id` for the roots, then `parent_objective_id`). Key results arrive in the same shape,
   silence included.
-- `mcp__cs__strategy_check_in_history` — the last check-ins of one key result. Call it for the
+- `mcp__castalie__strategy_check_in_history` — the last check-ins of one key result. Call it for the
   handful you are about to call out, never for every key result: it answers "is this figure really
   moving?", which one value cannot.
-- `mcp__cs__strategy_get_objective_breadcrumb` — the parent chain, to name where a key result
+- `mcp__castalie__strategy_get_objective_breadcrumb` — the parent chain, to name where a key result
   lives when the tree is deep.
 
 ## Order of presentation, fixed

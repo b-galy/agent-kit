@@ -128,7 +128,7 @@ function parseRpc(text) {
   return last;
 }
 
-// ── Live MCP layer (the mcp__cs__* verbs) ──────────────────────────────────
+// ── Live MCP layer (the mcp__castalie__* verbs) ──────────────────────────────────
 async function runMcp(url, token, writeMode) {
   console.log(`\nLive MCP checks against ${url}:`);
   const client = new McpClient(url, token);
@@ -523,7 +523,7 @@ function scanCitedVerbs() {
   for (const [label, file] of sources) {
     let body;
     try { body = readFileSync(file, "utf8"); } catch { continue; }
-    for (const m of body.matchAll(/mcp__cs__([a-z0-9_]+)/g)) {
+    for (const m of body.matchAll(/mcp__castalie__([a-z0-9_]+)/g)) {
       citations++;
       if (declared.has(m[1])) continue;
       if (!phantoms.has(m[1])) phantoms.set(m[1], new Set());

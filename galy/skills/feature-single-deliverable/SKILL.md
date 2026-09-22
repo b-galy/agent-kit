@@ -36,10 +36,10 @@ Somebody handing you a brief id has already done the framing, and doing it again
 workspace with two records of one deliverable and no way to tell which one the pull request
 answers.
 
-`mcp__cs__feature_brief_get(briefId)` — it returns the brief with its child specs.
+`mcp__castalie__feature_brief_get(briefId)` — it returns the brief with its child specs.
 
-- **It carries none** → `mcp__cs__feature_spec_create(featureBriefId, title)`, then one phase,
-  `mcp__cs__feature_spec_add_phase(specId, title)` — the phase's title is the deliverable, never
+- **It carries none** → `mcp__castalie__feature_spec_create(featureBriefId, title)`, then one phase,
+  `mcp__castalie__feature_spec_add_phase(specId, title)` — the phase's title is the deliverable, never
   "Phase 1". Go to *Build it*.
 - **It carries exactly one** → that spec is the work. Go to *Build it*.
 - **It carries several** → **stop, and name them.** List each one's id and title and say you cannot
@@ -63,7 +63,7 @@ Nothing else is edited on the way past. A brief somebody wrote is theirs.
 
 ## Create the record
 
-`mcp__cs__feature_single_deliverable_create` makes all four objects at once — brief, user story,
+`mcp__castalie__feature_single_deliverable_create` makes all four objects at once — brief, user story,
 spec, phase:
 
 - `title` — one line, and it titles the brief, the spec **and** the phase. It is the whole of the
@@ -92,7 +92,7 @@ One phase means one pull request. Cutting it in two is the same mistake as filin
 
 ## Where it stops
 
-**Read the handover, never assume it.** `mcp__cs__workflow_policy_resolve` on
+**Read the handover, never assume it.** `mcp__castalie__workflow_policy_resolve` on
 `feature-single-deliverable`/`merge_mode`, following
 `${CLAUDE_PLUGIN_ROOT}/instructions/workflow-defaults.md` — apply a stored answer in silence, ask
 the two questions only when nothing is stored.

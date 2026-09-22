@@ -23,7 +23,7 @@ GALY_ENDPOINT=https://<your-workspace>.castalie.app GALY_TOKEN=<token> node runn
 
 ## What it checks
 
-**MCP layer** (the `mcp__cs__*` verbs):
+**MCP layer** (the `mcp__castalie__*` verbs):
 1. **Forbidden fields** — neither the contract nor the live tool schemas declare a `code` / `diff` /
    `patch` / `file_content` / `source_code` parameter.
 2. **Advertised verbs** — every verb in `pm-v1.json` is present in `tools/list`.

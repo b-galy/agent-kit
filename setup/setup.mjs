@@ -78,15 +78,33 @@ const FUNCTION_HOOKS_FLAG = "CLAUDE_CODE_ENABLE_FUNCTION_HOOKS";
 // identifier, which is the exact failure this removal exists to prevent.
 const MARKETPLACE_NAME = "castalie";
 const FORMER_MARKETPLACE_NAMES = ["b-galy", "galy"];
+
+// THREE NAMES, AND THEY ARE NOT THE SAME NAME. They were identical until 22 September 2026, which
+// is why one of them used to be read from another's constant — see `CLI` below.
+//
+//   PLUGIN     `cs`, so the commands stay `/cs:<skill>`: short to type, dozens of times a day.
+//   MCP_ALIAS  `castalie`, so the server reads `castalie` in `claude mcp list` and the tools are
+//              `mcp__castalie__<tool>`: read, not typed, and what a person sees there should be
+//              the product's name rather than an abbreviation of it.
+//   CLI        `cs`, and its folder `.cs/`. It follows the COMMAND, not the server.
+//
+// Keeping the short prefix and showing the full name are two levers, and pulling one does not
+// oblige the other.
 const PLUGIN = `cs@${MARKETPLACE_NAME}`;
 
-// The alias the MCP server is registered under: the tools your agent sees are `mcp__cs__<tool>`.
-// It was `galy`, then `bg`, and a previous setup may have left either entry behind — so BOTH are
-// removed before the new one is added. One left in place is not a harmless leftover: two servers
-// answering the same workspace show the agent every tool twice, which is the doubt `connect`
-// exists to clear.
-const MCP_ALIAS = "cs";
-const FORMER_MCP_ALIASES = ["bg", "galy"];
+// The alias the MCP server is registered under: the tools your agent sees are
+// `mcp__castalie__<tool>`. It was `galy`, then `bg`, then `cs`, and a previous setup may have left
+// any of those entries behind — so ALL of them are removed before the new one is added. One left in
+// place is not a harmless leftover: two servers answering the same workspace show the agent every
+// tool twice, which is the doubt `connect` exists to clear.
+const MCP_ALIAS = "castalie";
+const FORMER_MCP_ALIASES = ["cs", "bg", "galy"];
+
+// The command this kit installs, which is NOT the server's alias — it follows `/cs:`, the prefix a
+// person types. Until the alias moved to `castalie` the two were one string, and the line that
+// names the CLI read it from `MCP_ALIAS`: correct only for as long as they happened to agree, and
+// it would have announced a `castalie` command that does not exist.
+const CLI = "cs";
 
 // The config folder, and the names it carried before. The `cs` CLI still reads `.bg/config.json`
 // and `.galy/config.json` as fallbacks, so nobody loses a token; setup writes the new folder only.
@@ -301,7 +319,7 @@ function registerMcp(haveClaude, endpoint, token) {
 
 // (c) Write .cs/config.json for the CLI, and make sure it is gitignored.
 function writeConfig(endpoint, token) {
-  step(`Writing local config for the \`${MCP_ALIAS}\` CLI`);
+  step(`Writing local config for the \`${CLI}\` CLI`);
   const dir = join(process.cwd(), CONFIG_DIR);
   mkdirSync(dir, { recursive: true });
   const path = join(dir, "config.json");

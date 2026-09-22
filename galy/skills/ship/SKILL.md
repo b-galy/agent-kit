@@ -73,8 +73,8 @@ every single run, is noise.
 there is nowhere to put it rather than inventing a command. An invented deploy reads like a
 procedure and is discovered on the day it matters.
 
-Read them with `mcp__cs__workflow_policy_resolve`, never from memory, and read the vocabulary
-this instance actually knows with `mcp__cs__workflow_catalog_list`: an option it does not know
+Read them with `mcp__castalie__workflow_policy_resolve`, never from memory, and read the vocabulary
+this instance actually knows with `mcp__castalie__workflow_catalog_list`: an option it does not know
 is a setting nothing will ever honour. `cs:adapt` is what turns their answers into skills that
 merge and ship the way your team already does; **this skill still stops at PR ready**, whatever
 any of them is set to.
