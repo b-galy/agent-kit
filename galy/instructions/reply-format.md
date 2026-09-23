@@ -42,8 +42,7 @@ b) <the other choice>, <what it costs>
 
 **Five bullets at most**, the effect on the user first, no preamble and no restating of the request
 (`user-attention.md` if this kit carries one; otherwise the skill's own discipline). Where a
-delivery report is printed, it comes first and keeps its form, and the table closes the turn under
-it.
+delivery report is printed, it replaces the table and closes the turn.
 
 ## What this is not
 
