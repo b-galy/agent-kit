@@ -95,5 +95,5 @@ belongs to group 1 — say the silence on its line rather than listing it twice.
 
 ## Hand back
 
-Close the turn on the sentences and the waiting line of
+Close the turn on the reply and the verdict of
 `${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.
