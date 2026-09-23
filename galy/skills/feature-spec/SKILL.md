@@ -41,6 +41,11 @@ synced by the CLI.
    separated them into the `solution` field: an option nobody wrote down is proposed again by the next
    reader, and the same argument is had twice, the second time without the facts. If a decision is
    genuinely contested, invoke `contrarian` before committing.
+   **End `solution` with an `Authorisations` section**: one line per outgoing or lasting gesture the
+   delivery requires — publishing, granting access, tagging, changing a setting, writing to someone
+   else — naming the gesture, its exact target (repository, package, environment, recipient) and the
+   phase that performs it. A listed line is the user's consent to that gesture; one left out stays
+   under the usual rules, and the implementer stops on it.
    Read `${CLAUDE_PLUGIN_ROOT}/instructions/acceptance-criteria.md` and define each phase's **Cases to
    cover** before its action plan: concrete states, expected outcomes, forbidden effects, verification
    level and existing coverage. Resolve meaningful business ambiguities before handoff. Plan scenarios,
@@ -77,7 +82,8 @@ synced by the CLI.
 9. **Have it read by someone who did not write it**, before you print the link. Spawn one sub-agent
    with the brief and the spec as written, and ask it for what an implementer would have to invent: a
    phase whose completion cannot be observed, a case with no expected outcome, a user story no phase
-   reaches, a risk with no mitigation. Same rule as the review panel
+   reaches, a risk with no mitigation, a delivery gesture a phase plan names that `Authorisations`
+   does not list. Same rule as the review panel
    (`${CLAUDE_PLUGIN_ROOT}/instructions/review-lenses.md`): it returns findings, never a verdict, and
    **nothing found is not a pass** — retry once, then read it yourself against that list. An author
    re-reading their own spec reads what they meant to write, which is why the gaps survive to the
