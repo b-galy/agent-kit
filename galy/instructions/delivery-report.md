@@ -5,9 +5,8 @@ spec, follow-up, ship. Each skill renders the variant for its entity instead of 
 inline. Applies to any report that work is finished, including outside `feature-implement`,
 `feature-followup`, `ship`, `end`.
 
-**The report is not the last block of the turn.** It comes first and keeps the form below; the
-turn then closes on the state table and the lettered questions of
-`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.
+**The report is the last block of the turn** — no state table after it; a lettered question, if
+one is truly needed, sits under it.
 
 Reports are **written in the user's language**, in full sentences readable by a non-specialist,
 **printed to the terminal** — never to a file unless the user explicitly asks.
@@ -60,6 +59,15 @@ Follow-up: <next check date · title | none>.
 Next: <the fix if PASS · what we wait for + re-check date if postponed · the human decision if blocked>
 
 👁️ Next check: <YYYY-MM-DD · title>   ← or: 🎉 Technical checks complete
+```
+
+### Merge only
+
+```
+## ✅ Merged — <title of what was merged>
+
+👁️ Verified in the browser      ← only if a visual check was done
+⏳ Production deployment: <target>      ← only if a deployment follows
 ```
 
 ### Ship celebration (`end`)
