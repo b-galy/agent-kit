@@ -31,7 +31,10 @@ buffer synced by the CLI, never passed as a tool argument.
 
 ## Steps
 
-1. **Identity + objective.** `mcp__castalie__whoami` for the userId. Pick the objective the need serves —
+1. **Identity + objective.** `mcp__castalie__whoami` for the userId. Then settle **whose brief it is**
+   by `${CLAUDE_PLUGIN_ROOT}/instructions/on-whose-behalf.md` → `ownerUserId`: attended, the userId
+   (or whoever the person in front of you names); unattended (`cs on-behalf`), the person who asked
+   for it when the input names one, else the workspace's robot account. Pick the objective the need serves —
    invoke the `strategy` skill or `mcp__castalie__strategy_navigate_children` to find it. A brief with no
    objective has no reason to exist: refuse to create one without it.
 2. **Read who this repository already writes for**, following
@@ -49,14 +52,15 @@ buffer synced by the CLI, never passed as a tool argument.
    done, and it is answered with a shrug or with whatever is shortest to type — which you then write
    down as their intent.
 4. **Look for the brief before you create one.**
-   `mcp__castalie__feature_brief_list(ownerUserId=<userId>, statusFilter="Draft", query=<a distinctive word
+   `mcp__castalie__feature_brief_list(ownerUserId=<ownerUserId>, statusFilter="Draft", query=<a distinctive word
    of the title>)`. One that is plainly this need is the one you continue: `mcp__castalie__feature_brief_get`
    it, say in one line what it already carries, and pick up at the first step it is missing.
    **A session that died between the create and the body leaves a brief with a title and nothing else**
    — invisible to whoever relaunches, so they frame it again, and the workspace ends with two records
    of one need and a spec hanging off whichever the second run remembered.
-   Nothing matches → `mcp__castalie__feature_brief_create(title, domain, objectiveId, ownerUserId=<userId>,
-   nextFollowupDate?)` → capture `brief_id`. Never pass the body as an argument.
+   Nothing matches → `mcp__castalie__feature_brief_create(title, domain, objectiveId, owner_user_id=<ownerUserId>,
+   nextFollowupDate?)` → capture `brief_id`, and check `brief.owner_user_id` in the answer is the one
+   you named. The author stays you — Castalie records it from the token. Never pass the body as an argument.
 5. **Write the body via the CLI.** `cs content pull feature-brief <brief_id>` to seed the buffer,
    edit `.tmp/galy-content/feature-brief/<brief_id>.md` (fields `problem`, `vision`, `executive` —
    executive ≤ 375 words, readable without internal jargon), then `cs content push feature-brief <brief_id>`.
