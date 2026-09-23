@@ -483,7 +483,9 @@ holds — not a question for the person in front of you.
 Each field carries only what its name says, **about the process**: what helped, where the pass
 stalled or wasted their time, what it could not answer, what would have made it better in their own
 words. Never code, paths, host names, command output, secrets, customer names, nor the observations
-themselves — those belong to the workspace.
+themselves — those belong to the workspace. When the response carries `redacted: true`, something
+in what you wrote looked like a secret and was masked before storage: say so in the line below, so the
+person knows the retrospective was not stored as written.
 
 Then one line, and do not turn it into a choice:
 
