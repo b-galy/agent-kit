@@ -33,6 +33,9 @@ watchdog never fires — ideal.
 3. **Read the spec.** `mcp__castalie__feature_spec_get(specId)` for phases (id + status), risks, acceptance
    tests. `cs content pull feature-spec <specId>` then read the buffer for the solution body. Skip
    `Done` phases; finish `InProgress` ones first; target `NotStarted` next.
+   **Read its `Authorisations` section before asking anything.** A gesture listed there is already
+   agreed: perform it in its phase, retry it on failure, report it as done — never pose it as a
+   question.
 4. **Read the host's local rules**, once, before the first phase, following
    `${CLAUDE_PLUGIN_ROOT}/instructions/host-instructions.md`: the lines carrying
    `<!-- galy:instructions -->` in the root instruction file name the files a skill must open, and a
@@ -74,7 +77,8 @@ watchdog never fires — ideal.
 Runs for hours; the developer is gone. The only acceptable stops: a real merge conflict on business
 logic, an unresolved business expectation that only the user can settle, a hard build/test failure
 you cannot fix, or an action only the user can take (report it + the
-resume command, then `CronDelete`). Naming, formatting, file layout, which seam to cut — decide from the
+resume command, then `CronDelete`). A gesture the spec's `Authorisations` lists is not one of them: a
+first failure is a reason to retry, not to hand it to someone else. Naming, formatting, file layout, which seam to cut — decide from the
 repo's patterns and keep going. You are not the final reviewer: build + the `ship` panel + your CI are
 behind you. Continue independent work during a clarification; those later checks never authorize
 silently changing a required outcome or treating an unverified case as complete.
