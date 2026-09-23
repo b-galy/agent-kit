@@ -815,7 +815,7 @@
     {
       "name": "feature_brief_get",
       "kind": "read",
-      "description": "Get a feature brief by id, with linked objectives, child specs, owner/team names.",
+      "description": "Get a feature brief by id, with linked objectives, child specs, owner/team names — its user stories (each with `spec_ids`, the specs that deliver it), its acceptance criteria with their verdicts, and `acceptance`: `can_enter_acceptance`, `can_be_done`, the `missing_items` that stand in the way of Done, and the brief's acceptance pass.",
       "params": [
         {
           "name": "briefId",
@@ -899,7 +899,8 @@
         {
           "name": "status",
           "type": "string",
-          "required": false
+          "required": false,
+          "description": "Draft, Accepted, InProgress, Acceptance, Done or Canceled. Castalie moves a brief to Acceptance itself when its last active spec closes with one delivered; Done is refused until the acceptance is conforming and recorded — use feature_brief_accept."
         },
         {
           "name": "priority",
@@ -957,6 +958,160 @@
       "returns": {
         "success": "bool",
         "user_story_id": "int"
+      }
+    },
+    {
+      "name": "feature_brief_acceptance_pick",
+      "kind": "write",
+      "description": "Claim a brief's acceptance for this machine, so two sessions never replay the same brief. Granted when the brief is in Acceptance and unclaimed, already claimed by the same hostname, or claimed more than 24 hours ago.",
+      "params": [
+        {
+          "name": "featureBriefId",
+          "type": "int",
+          "required": true
+        },
+        {
+          "name": "hostname",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "returns": {
+        "success": "bool",
+        "claimed": "bool",
+        "reason": "string — not_in_acceptance, held_by_another (when claimed is false)",
+        "brief": "object"
+      }
+    },
+    {
+      "name": "feature_brief_acceptance_pick_next",
+      "kind": "write",
+      "description": "Claim the oldest free brief in Acceptance, one per owner per night (from 18:00 UTC).",
+      "params": [
+        {
+          "name": "hostname",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "ownerUserId",
+          "type": "int",
+          "required": false
+        }
+      ],
+      "returns": {
+        "success": "bool",
+        "claimed": "bool",
+        "reason": "string — nothing_to_claim, budget_exceeded (when claimed is false)",
+        "brief": "object"
+      }
+    },
+    {
+      "name": "feature_brief_acceptance_release",
+      "kind": "write",
+      "description": "Give a brief's acceptance claim back.",
+      "params": [
+        {
+          "name": "featureBriefId",
+          "type": "int",
+          "required": true
+        }
+      ],
+      "returns": {
+        "success": "bool"
+      }
+    },
+    {
+      "name": "feature_brief_set_acceptance_test_status",
+      "kind": "write",
+      "description": "Write the verdict of one of the brief's acceptance criteria: Pass, Fail, NotApplicable, or NotChecked to clear it. Pass and Fail need resultMd — what was done and what was seen; NotApplicable needs the reason.",
+      "params": [
+        {
+          "name": "acceptanceTestId",
+          "type": "int",
+          "required": true
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "resultMd",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "returns": {
+        "success": "bool",
+        "brief_acceptance_test": "object"
+      }
+    },
+    {
+      "name": "feature_brief_accept",
+      "kind": "write",
+      "description": "Record a conforming acceptance and close the brief (Done) in one call. Refused, and nothing written, unless every active spec is closed with one delivered, every user story is Done or Canceled, every criterion is Pass or NotApplicable, and no acceptance pass is open; the error names what is missing.",
+      "params": [
+        {
+          "name": "featureBriefId",
+          "type": "int",
+          "required": true
+        },
+        {
+          "name": "verdictMd",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "returns": {
+        "success": "bool",
+        "brief": "object"
+      }
+    },
+    {
+      "name": "feature_brief_update_user_story",
+      "kind": "write",
+      "description": "Update the supplied fields of a user story, including its status. Canceled is refused without canceledReason.",
+      "params": [
+        {
+          "name": "id",
+          "type": "int",
+          "required": true
+        },
+        {
+          "name": "persona",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "action",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "benefit",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "priority",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "canceledReason",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "returns": {
+        "success": "bool",
+        "user_story": "object"
       }
     },
     {
@@ -1150,6 +1305,47 @@
           "type": "string",
           "required": false,
           "description": "URL of the delivered change on your side (optional)."
+        }
+      ],
+      "returns": {
+        "success": "bool"
+      }
+    },
+    {
+      "name": "feature_spec_link_user_story",
+      "kind": "write",
+      "description": "Say that this spec delivers a user story of ITS OWN brief. Castalie closes the story when every active spec linked to it is Done, and reopens it when one of them leaves Done. A story of another brief is refused; linking twice is harmless.",
+      "params": [
+        {
+          "name": "featureSpecId",
+          "type": "int",
+          "required": true
+        },
+        {
+          "name": "userStoryId",
+          "type": "int",
+          "required": true
+        }
+      ],
+      "returns": {
+        "success": "bool",
+        "user_story_ids": "int[]"
+      }
+    },
+    {
+      "name": "feature_spec_unlink_user_story",
+      "kind": "write",
+      "description": "Withdraw the link between a spec and a user story.",
+      "params": [
+        {
+          "name": "featureSpecId",
+          "type": "int",
+          "required": true
+        },
+        {
+          "name": "userStoryId",
+          "type": "int",
+          "required": true
         }
       ],
       "returns": {
@@ -2185,6 +2381,107 @@
         "expires_at": "datetime",
         "evidence_was_redacted": "bool",
         "page_url": "string"
+      }
+    },
+    {
+      "name": "arbitration_ask",
+      "kind": "write",
+      "description": "Deposit an arbitration you cannot settle yourself, then carry on with everything that does not depend on the answer. Returns the request id, or a refusal saying what to fix.",
+      "params": [
+        {
+          "name": "title",
+          "type": "string",
+          "required": true,
+          "description": "The arbitration to settle, not the topic."
+        },
+        {
+          "name": "escalation_reason",
+          "type": "string",
+          "required": true,
+          "description": "money, public_voice, shareholder, private_knowledge or irreversible. If none fits, the arbitration is yours."
+        },
+        {
+          "name": "why_human_md",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "blocked_md",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "continuing_md",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "resume_state",
+          "type": "string",
+          "required": true,
+          "description": "What you need to resume later; never shown to the human."
+        },
+        {
+          "name": "answer_shape",
+          "type": "string",
+          "required": true,
+          "description": "closed (yes / no / other) or open (two or three written options)."
+        },
+        {
+          "name": "options",
+          "type": "object[]",
+          "required": false,
+          "description": "For an open question: title, body, favours, givesUp."
+        },
+        {
+          "name": "context_md",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "feature_brief_id",
+          "type": "int",
+          "required": false
+        },
+        {
+          "name": "feature_spec_id",
+          "type": "int",
+          "required": false
+        },
+        {
+          "name": "blocked_items",
+          "type": "int",
+          "required": false
+        },
+        {
+          "name": "asked_by_agent",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "surfaces",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "returns": {
+        "success": "bool",
+        "arbitration_request_id": "int"
+      }
+    },
+    {
+      "name": "arbitration_check",
+      "kind": "read",
+      "description": "Read one arbitration request you deposited: whether it was answered, the answer, and the state you left yourself to resume from.",
+      "params": [
+        {
+          "name": "arbitration_request_id",
+          "type": "int",
+          "required": true
+        }
+      ],
+      "returns": {
+        "success": "bool"
       }
     }
   ]
