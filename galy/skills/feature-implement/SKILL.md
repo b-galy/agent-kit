@@ -75,6 +75,12 @@ watchdog never fires — ideal.
    is what says so.
 8. **Close.** `mcp__castalie__feature_spec_complete(specId, prUrl)`. Adjust the brief's follow-up horizon if
    delivery slipped (follow-up conventions). Then invoke `retro` (additive, never blocking).
+   **Then go back up to the brief.** `mcp__castalie__feature_brief_get(briefId)`: when this spec was its
+   last open one, Castalie has already moved the brief to `Acceptance`, and the stories this spec was
+   linked to are closed. A brief in `Acceptance` is not finished — its need has not been replayed yet:
+   hand it to `brief-acceptance <briefId>`, in a fresh session when your environment opens one,
+   otherwise in this one once the report is delivered, and say so in the report. Never close the brief
+   yourself; `feature_brief_update(status=Done)` is refused until its acceptance is recorded.
 9. **Disarm the watchdog last** — `CronList` → `CronDelete` — only after the report is delivered.
 
 ## Autonomy contract

@@ -72,6 +72,12 @@ synced by the CLI.
    team's merge tempo, and a number that is wrong reads like a rule; where they have written one it is
    in the rules file their doctrine declares (step 2), and where nothing says, the state each phase
    leaves behind decides on its own.
+   **Then say which user stories this spec delivers.** For each story of the brief it carries to the
+   user, `mcp__castalie__feature_spec_link_user_story(featureSpecId=<spec_id>, userStoryId)`, the ids
+   read from `feature_brief_get`. Castalie closes a linked story when every spec linked to it is Done,
+   and the brief's acceptance reads which spec answers for which story. A story of another brief is
+   refused. A spec that delivers no story of a brief that has some is a question to ask, not a gap to
+   leave.
 6. **Risks.** `mcp__castalie__feature_spec_add_risk(specId, label, riskType, severity, probability, mitigation)`
    for each real risk (technical/business/timeline).
 7. **Acceptance tests.** `mcp__castalie__feature_spec_add_acceptance_test(specId, kind, label, verificationMd)`
@@ -82,7 +88,7 @@ synced by the CLI.
 9. **Have it read by someone who did not write it**, before you print the link. Spawn one sub-agent
    with the brief and the spec as written, and ask it for what an implementer would have to invent: a
    phase whose completion cannot be observed, a case with no expected outcome, a user story no phase
-   reaches, a risk with no mitigation, a delivery gesture a phase plan names that `Authorisations`
+   reaches or no spec is linked to, a risk with no mitigation, a delivery gesture a phase plan names that `Authorisations`
    does not list. Same rule as the review panel
    (`${CLAUDE_PLUGIN_ROOT}/instructions/review-lenses.md`): it returns findings, never a verdict, and
    **nothing found is not a pass** — retry once, then read it yourself against that list. An author

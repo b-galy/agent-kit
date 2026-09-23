@@ -390,6 +390,7 @@ Eighteen skills that take a need from idea to shipped, each driven by the Castal
 | `feature-brief` | Frame a business need into a brief — problem, vision, user stories, success criteria. |
 | `feature-spec` | Turn a brief into a technical spec — explore your codebase, design, phases, risks, acceptance tests. |
 | `feature-implement` | Implement a spec autonomously in your repo, phase by phase, ending at "PR ready". |
+| `brief-acceptance` | Replay a delivered brief as its customer would: a verdict per criterion, the gaps fixed on one PR, the owner asked about the disproportionate ones, and the brief accepted only when it conforms. |
 | `feature-followup` | Replay a delivered spec's checks in production and reschedule the next horizon. |
 | `retro` | Post durable learnings from a run as retro suggestions for later review. |
 | `contrarian` | Challenge an idea before you commit — adversarial sub-agents + a verdict you own. |
