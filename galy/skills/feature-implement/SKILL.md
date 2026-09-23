@@ -85,7 +85,8 @@ silently changing a required outcome or treating an unverified case as complete.
 
 ## Report
 
-Deliver the **ship — spec** variant from `${CLAUDE_PLUGIN_ROOT}/instructions/delivery-report.md`.
+Read `${CLAUDE_PLUGIN_ROOT}/instructions/delivery-report.md` and `reply-format.md` now, not from
+memory, then deliver the **ship — spec** variant.
 
 ## Hand back
 

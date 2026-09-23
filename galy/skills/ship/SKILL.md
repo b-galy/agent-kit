@@ -40,7 +40,8 @@ reconciliation in QA/PR evidence and update the linked phase's coverage cells.
 4. **Mark the PR ready.** Confidence high and 0 blockers → mark it ready for review. Apply the
    `ship`/`auto_ship` default (see `${CLAUDE_PLUGIN_ROOT}/instructions/workflow-defaults.md`):
    `confident` + high confidence + low risk → finish hands-off; otherwise the human gate fires.
-5. **Report.** Print the PR link, the panel outcome (N found / M fixed, rounds), and the naked verdict.
+5. **Report.** Read `${CLAUDE_PLUGIN_ROOT}/instructions/delivery-report.md` and `reply-format.md` now,
+   not from memory. Print the PR link, the panel outcome (N found / M fixed, rounds), and the naked verdict.
 
 ## Extension point — merge and release (not done here)
 
