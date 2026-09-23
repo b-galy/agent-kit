@@ -365,8 +365,9 @@ Eighteen skills that take a need from idea to shipped, each driven by the Castal
 | `report` | Receive a bug report or improvement request from an agent, find or create its ticket, and return the link. |
 | `acceptance` | Sit in front of the running product and fire remarks: each is queued the instant it lands, then coded one at a time in the order received — one commit per remark, a single PR. |
 | `strategy` | Explore your objectives tree (read-only) and map work to the objective it serves. |
-| `okr-review` | Where the objectives stand: the tree with its progress, off-track and unreported key results first, and the pace each one now demands. Reads only. |
-| `okr-checkin` | The check-in ritual: one pass over the key results you own, one question, a dated trace on every figure that moved. |
+| `okr-review` | Where the objectives stand: the tree with its progress, off-track and unreported key results first, and the pace each one now demands, then the key results that read off no report. Reads only. |
+| `okr-checkin` | The check-in ritual: one pass over the key results you own, one question, a dated trace on every figure that moved. A key result measured by a workspace report is recalculated, not asked. |
+| `okr-key-result` | Give an objective its one key result, read off a report that tracks the metric over time: a report of your workspace, or the address of one elsewhere. The target is proposed from the data and confirmed by you; a key result with no report is refused. |
 | `feature-single-deliverable` | One deliverable, one pull request: brief, single story and one-phase spec in a single gesture, then the implementation loop to "PR ready". |
 | `feature-brief` | Frame a business need into a brief — problem, vision, user stories, success criteria. |
 | `feature-spec` | Turn a brief into a technical spec — explore your codebase, design, phases, risks, acceptance tests. |
