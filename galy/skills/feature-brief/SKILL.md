@@ -81,5 +81,5 @@ Print the brief title and a clickable Castalie link, and point to `feature-spec`
 
 ## Hand back
 
-Close the turn on the state table and the lettered questions of
+Close the turn on the sentences and the waiting line of
 `${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.
