@@ -74,6 +74,12 @@ spec, phase:
 - `persona` / `action` / `benefit` — the three story fields, all three or none.
 - `objective_id` — the strategy objective it serves, when you know it; `cs:strategy` finds it.
   Unlike a brief, a deliverable is not refused for want of one.
+- `owner_user_id` — **whose deliverable it is**, settled by
+  `${CLAUDE_PLUGIN_ROOT}/instructions/on-whose-behalf.md`. Attended, leave it out: the loop's pick
+  makes you the lead. Unattended (`cs on-behalf`), the person who asked for it — the ticket's
+  reporter, the adopted brief's owner — else the workspace's robot account. It owns the new brief and
+  leads the spec; on an adopted brief it only leads the spec. Check `brief.owner_user_id` in the
+  answer. `cs:feature-implement` then finds the spec already led and keeps that lead.
 
 The answer carries `feature_brief_id`, `feature_spec_id` and `spec_phase_id`.
 
@@ -82,7 +88,8 @@ already decided it is worth doing. Do not stage an approval they have given you.
 
 ## Build it
 
-Invoke `cs:feature-implement` with the `feature_spec_id`, and let it run: it claims the spec, arms
+Invoke `cs:feature-implement` with the `feature_spec_id`, and let it run: it claims the spec (under
+the lead settled above — unattended, it reads the spec's lead and keeps it), arms
 its watchdog, implements the phase against its validation criteria, reports the phase status back
 to Castalie, and ends at "PR ready".
 

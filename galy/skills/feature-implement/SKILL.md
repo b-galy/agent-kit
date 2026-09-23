@@ -26,7 +26,12 @@ watchdog never fires — ideal.
 
 ## Steps
 
-1. **Lock the spec.** `mcp__castalie__whoami` → userId. `mcp__castalie__feature_spec_pick(specId, userId)`.
+1. **Lock the spec, under the right name.** Settle who leads it by
+   `${CLAUDE_PLUGIN_ROOT}/instructions/on-whose-behalf.md`: `cs on-behalf` says whether this run is
+   unattended. **Attended** → `mcp__castalie__feature_spec_pick(id=specId)`, and the caller leads it.
+   **Unattended** → the spec's current lead, else its brief's owner, else the workspace's robot
+   account, passed as `feature_spec_pick(id=specId, lead_user_id=<that id>)` — the token says who is
+   calling, not who the work is for. Read `spec.lead_user_id` back from the answer.
    `success:false` → it is held by `current_lead_name`; stop, ask them to release it. (Skip on `--continue`.)
 2. **Arm the watchdog once** (skip on `--continue` or if `CronList` already shows one for this spec):
    `CronCreate(cron: "7,27,47 * * * *", prompt: "/feature-implement <specId> --continue", durable: true)`.

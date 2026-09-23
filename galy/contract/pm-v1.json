@@ -733,7 +733,7 @@
           "name": "ownerUserId",
           "type": "int",
           "required": false,
-          "description": "Omit to default to the authenticated user."
+          "description": "Served as owner_user_id. Who the brief belongs to: the person who asked for it, or the workspace's automation account, named without their token (instructions/on-whose-behalf.md). Must be an active member, otherwise owner_not_found and nothing is created. The author stays the caller."
         },
         {
           "name": "nextFollowupDate",
@@ -793,6 +793,12 @@
           "type": "int",
           "required": false,
           "description": "Optional strategy objective to attach."
+        },
+        {
+          "name": "owner_user_id",
+          "type": "int",
+          "required": false,
+          "description": "Who the deliverable is for: the person who asked for it, or the workspace's automation account, named without their token (instructions/on-whose-behalf.md). Owns the new brief and leads the spec; on an existing brief it only leads the spec. Must be an active member, otherwise owner_not_found and nothing is created. Omit to leave the brief without an owner and the spec without a lead."
         }
       ],
       "returns": {
@@ -1063,7 +1069,7 @@
           "name": "userId",
           "type": "int",
           "required": false,
-          "description": "Omit to default to the authenticated user."
+          "description": "Served as lead_user_id. The lead: the person the work is done for, or the workspace's automation account, named without their token (instructions/on-whose-behalf.md). Must be an active member, otherwise lead_not_found and nothing changes. Omit to default to the authenticated user."
         }
       ],
       "returns": {

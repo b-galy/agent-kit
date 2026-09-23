@@ -337,6 +337,24 @@ developer who wants the question every time has decided to stay in the loop.
 None of it makes the kit merge or deploy. It **stops at "PR ready"** — a documented boundary, not a
 gap — and the merge stays with the process you already have.
 
+### Whose name the work carries when nobody is watching
+
+A token says who is calling, not who the work is for. When a session runs **unattended** — a
+scheduled run, tabs opened by a launcher — the skills that pick a spec or create a brief name the
+person who asked for the work, or failing that your workspace's **robot account**, instead of the
+token's owner. The author Castalie records stays the caller.
+
+Two settings, given to the session by whatever launches it:
+
+```
+CS_UNATTENDED=1            # this session runs unattended
+CS_ROBOT_USER_ID=<id>      # the workspace's automation account (or CS_ROBOT_EMAIL=<address>)
+```
+
+The robot can also live in `.cs/config.json` as `robot_user_id` / `robot_email`. `cs on-behalf`
+prints what a session sees. The rule, rung by rung, is in `galy/instructions/on-whose-behalf.md`.
+Without them, nothing changes: an attended session files the work under the person at the keyboard.
+
 ### Nothing leaves your instance
 
 No verb in this kit sends anything out of your tenant. **Support is blind by construction**, and
@@ -393,6 +411,7 @@ cs brief 12
 cs spec 42
 cs content pull feature-spec 42     # → .tmp/galy-content/feature-spec/42.md
 cs content push feature-spec 42     # after you edit the buffer
+cs on-behalf                        # unattended or not, and the workspace's robot account
 cs codex                            # project the kit into .agents/ + .codex/ for a Codex session
 ```
 

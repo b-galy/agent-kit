@@ -33,6 +33,7 @@
 //   cs spec <id>
 //   cs content pull <type> <id>        # type = feature-brief | feature-spec
 //   cs content push <type> <id>
+//   cs on-behalf                       # attended or not, and the workspace's robot account
 //   cs codex                           # project this kit into the layouts Codex reads
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
@@ -146,6 +147,39 @@ async function cmdContent(args) {
   console.log(`Pushed ${type} ${id}`);
 }
 
+// ── On whose behalf ─────────────────────────────────────────────────────────
+// Whether this session runs unattended, and which account is the workspace's robot — the two
+// facts a skill needs to decide whose name a spec or a brief carries (instructions/on-whose-behalf.md).
+// Printed as ONE answer so a skill never parses a shell's environment itself: the syntax differs
+// between shells, and a skill that reads `$CS_UNATTENDED` in PowerShell reads nothing, silently.
+// No network: this says what the session was TOLD, and Castalie is what checks the account.
+function truthy(value) {
+  return typeof value === "string" && ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
+}
+
+function cmdOnBehalf() {
+  let fromFile = {};
+  const path = findConfig(process.cwd());
+  if (path) {
+    try { fromFile = JSON.parse(readFileSync(path, "utf8")); }
+    catch (e) { die(`Cannot parse ${path}: ${e.message}`); }
+  }
+  const envId = process.env.CS_ROBOT_USER_ID?.trim();
+  const envEmail = process.env.CS_ROBOT_EMAIL?.trim();
+  const rawId = envId || fromFile.robot_user_id;
+  const robotUserId = rawId === undefined || rawId === null || rawId === "" ? null : Number(rawId);
+  if (robotUserId !== null && !(Number.isInteger(robotUserId) && robotUserId > 0)) {
+    die(`The robot account id must be a positive integer, got '${rawId}' (${envId ? "CS_ROBOT_USER_ID" : path}).`);
+  }
+  const robotEmail = envEmail || fromFile.robot_email || null;
+  print({
+    unattended: truthy(process.env.CS_UNATTENDED),
+    robot_user_id: robotUserId,
+    robot_email: robotEmail,
+    source: envId || envEmail ? "environment" : (fromFile.robot_user_id || fromFile.robot_email ? path : null),
+  });
+}
+
 // ── arg parsing / output ────────────────────────────────────────────────────
 function parseArgs(argv) {
   const out = { _: [] };
@@ -171,11 +205,14 @@ const HELP = `cs — Castalie project-management CLI
   cs spec <id>                      # a spec with its phases, risks, acceptance tests
   cs content pull <type> <id>       # type = feature-brief | feature-spec
   cs content push <type> <id>
+  cs on-behalf                      # unattended or not, and the workspace's robot account
   cs codex [--verify|--check]       # project this kit's skills, instructions and agents into
                                     #   .agents/ and .codex/ here, for a Codex session
   cs bug-evaluation help              # local isolated bug-evaluation runner
 
 Config: env GALY_ENDPOINT / GALY_TOKEN, or .cs/config.json { "endpoint", "token" }.
+On whose behalf: env CS_UNATTENDED, CS_ROBOT_USER_ID / CS_ROBOT_EMAIL, or .cs/config.json
+  { "robot_user_id", "robot_email" }.
 Castalie never sees your code — this CLI only carries work items and their text.`;
 
 async function main() {
@@ -198,6 +235,7 @@ async function main() {
     case "brief": return cmdBrief(args);
     case "spec": return cmdSpec(args);
     case "content": return cmdContent(args);
+    case "on-behalf": return cmdOnBehalf();
     case undefined:
     case "-h":
     case "--help":
