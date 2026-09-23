@@ -919,6 +919,11 @@ let backOfficeRows;
   check("a key result nobody drew costs every leaf objective, never an objective of its number",
     forgotten("mcp__castalie__strategy_create_check_in", { key_result_id: 5, new_value: 1 }) === "objective/178,children/178" &&
       !forgotten("mcp__castalie__strategy_create_check_in", { key_result_id: 5, new_value: 1 }).includes("objective/5"));
+  check("a recalculation from a report names the objective its key result is drawn under",
+    forgotten("mcp__castalie__strategy_refresh_key_result", { key_result_id: 93 }) === "objective/178,children/178",
+    forgotten("mcp__castalie__strategy_refresh_key_result", { key_result_id: 93 }));
+  check("a report is not drawn, so writing one is not a write the pane follows",
+    writeVerbOf("mcp__castalie__report_save_table") === null && writeVerbOf("mcp__castalie__report_create") === null);
   check("a new key result names its objective",
     forgotten("mcp__castalie__strategy_create_key_result", { objective_id: 178, title: "x" }) === "chain/178,objective/178,children/178");
 

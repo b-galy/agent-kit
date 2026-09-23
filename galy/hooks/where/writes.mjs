@@ -107,6 +107,10 @@ export const WRITES = {
   strategy_update_key_result: { of: "keyResult", read: KEY_RESULT },
   strategy_delete_key_result: { of: "keyResult", read: KEY_RESULT },
   strategy_create_check_in: { of: "keyResult", read: KEY_RESULT },
+  // A recalculation from the key result's report moves its value exactly as a check-in does,
+  // without writing one — so it forgets the same branch. The report_* verbs move nothing the
+  // pane draws and are not named: a report is not drawn in the tree.
+  strategy_refresh_key_result: { of: "keyResult", read: KEY_RESULT },
 };
 
 /**

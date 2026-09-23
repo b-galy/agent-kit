@@ -314,7 +314,7 @@
         "success": "bool",
         "owner_user_id": "int",
         "period": "period?",
-        "objectives": "[{ objective, parent_title, key_results: [{ id, title, unit, start_value, target_value, current_value, computed_progress, last_check_in, days_since_check_in }] }]"
+        "objectives": "[{ objective, parent_title, key_results: [{ id, title, unit, start_value, target_value, current_value, computed_progress, last_check_in, days_since_check_in, report_id?, report_table_id?, external_report_url? }] }]"
       }
     },
     {
@@ -339,6 +339,28 @@
         "success": "bool",
         "key_result_id": "int",
         "check_ins": "[{ id, previous_value, new_value, confidence, comment, author_user_id, author_name, date_created }]"
+      }
+    },
+    {
+      "name": "strategy_get_objective",
+      "kind": "read",
+      "description": "One objective read by its id, with its key results — each carrying its latest check-in and how many days old that figure is — its owner, its team, the title of its parent, and main_key_result_id when one is designated. An archived objective reads as absent (objective_not_found).",
+      "params": [
+        {
+          "name": "objective_id",
+          "type": "int",
+          "required": true
+        }
+      ],
+      "returns": {
+        "success": "bool",
+        "objective": "objective",
+        "parent_title": "string?",
+        "description_md": "string?",
+        "owner_user_id": "int?",
+        "team_id": "int?",
+        "main_key_result_id": "int?",
+        "key_results": "[{ id, title, metric_type, unit, start_value, target_value, current_value, computed_progress, last_check_in, days_since_check_in, report_id?, report_table_id?, external_report_url? }]"
       }
     },
     {
@@ -378,9 +400,71 @@
       }
     },
     {
+      "name": "strategy_create_key_result",
+      "kind": "write",
+      "description": "Add a key result to an objective. A key result is what makes the objective measurable. It is born without a report link: the link is set right after, with strategy_update_key_result.",
+      "params": [
+        {
+          "name": "objective_id",
+          "type": "int",
+          "required": true,
+          "description": "Objective this key result measures."
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "required": true,
+          "description": "What is measured, in the user's language."
+        },
+        {
+          "name": "metric_type",
+          "type": "string",
+          "required": false,
+          "description": "number | percent | currency | boolean. Anything else becomes number."
+        },
+        {
+          "name": "unit",
+          "type": "string",
+          "required": false,
+          "description": "Unit shown next to the figure (€, %, clients)."
+        },
+        {
+          "name": "start_value",
+          "type": "decimal",
+          "required": false,
+          "default": 0,
+          "description": "Value it starts from."
+        },
+        {
+          "name": "target_value",
+          "type": "decimal",
+          "required": false,
+          "default": 0,
+          "description": "Value to reach."
+        },
+        {
+          "name": "current_value",
+          "type": "decimal",
+          "required": false,
+          "description": "Value today. Defaults to the starting value."
+        },
+        {
+          "name": "previous_value_type",
+          "type": "string",
+          "required": false,
+          "description": "period_start (progress along the way, the default) | previous_period (a historical marker, the counter restarts at zero for this period)."
+        }
+      ],
+      "returns": {
+        "success": "bool",
+        "key_result_id": "int",
+        "key_result": "key_result"
+      }
+    },
+    {
       "name": "strategy_update_key_result",
       "kind": "write",
-      "description": "Correct a key result's definition — title, unit, starting value, target — or fix a current value entered by mistake. A figure that has genuinely MOVED is recorded with strategy_create_check_in instead, which leaves the trace. Only the fields passed are changed.",
+      "description": "Correct a key result's definition — title, unit, starting value, target — fix a current value entered by mistake, or link it to the report its value is read from. A figure that has genuinely MOVED is recorded with strategy_create_check_in instead, which leaves the trace. Only the fields passed are changed; a unit left out is kept.",
       "params": [
         {
           "name": "key_result_id",
@@ -430,11 +514,174 @@
           "type": "string",
           "required": false,
           "description": "period_start | previous_period."
+        },
+        {
+          "name": "report_id",
+          "type": "int",
+          "required": false,
+          "description": "A report of THIS workspace that measures the key result: the engine reads its value from the first cell of the report's first active table, and its curve from the second table — every day, and on strategy_refresh_key_result. Pass 0 to unlink. Must be an active main report the caller may read; refused otherwise, and a refusal leaves the whole call untouched."
+        },
+        {
+          "name": "report_table_id",
+          "type": "int",
+          "required": false,
+          "description": "One table of the linked report to read the value from instead of its first one. Pass 0 to go back to the first table. Must belong to the linked report."
+        },
+        {
+          "name": "external_report_url",
+          "type": "string",
+          "required": false,
+          "description": "HTTPS address of a report that lives in ANOTHER system. A reader can open it; nothing is computed from it. Pass an empty string to remove it. Anything but https is refused (external_report_url_https_required)."
         }
       ],
       "returns": {
         "success": "bool",
         "key_result": "key_result"
+      }
+    },
+    {
+      "name": "strategy_refresh_key_result",
+      "kind": "write",
+      "description": "Recalculate a key result from the report of this workspace it is linked to (report_id), as the sheet's « Recalculer maintenant » does: the value is read from the report as the caller would read it, becomes the current value and today's point in its history. No check-in is written. Refused with no_automatic_value when the key result has no report of this workspace, or when the report cannot be read — the message says which.",
+      "params": [
+        {
+          "name": "key_result_id",
+          "type": "int",
+          "required": true
+        }
+      ],
+      "returns": {
+        "success": "bool",
+        "key_result_id": "int",
+        "value": "decimal",
+        "computed_progress": "decimal"
+      }
+    },
+    {
+      "name": "report_get_context",
+      "kind": "read",
+      "description": "The report-building rules of this workspace — where the SQL runs, column formats, graphic types — and the schema a report may read. Served only where the workspace has reports, to those allowed to author them. Read it before report_create and report_save_table.",
+      "params": [],
+      "returns": {
+        "(text)": "the authoring rules and the readable schema"
+      }
+    },
+    {
+      "name": "report_create",
+      "kind": "write",
+      "description": "Create an empty report of this workspace, attached to the work it measures: featureSpecId for one spec, featureBriefId for a whole feature. Its page is /Report/Viewer/View/{reportId} on the workspace host. The report_* authoring verbs are the report owner's.",
+      "params": [
+        {
+          "name": "title",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "featureSpecId",
+          "type": "int",
+          "required": false,
+          "description": "The spec it measures."
+        },
+        {
+          "name": "featureBriefId",
+          "type": "int",
+          "required": false,
+          "description": "The feature it measures as a whole."
+        }
+      ],
+      "returns": {
+        "success": "bool",
+        "reportId": "int"
+      }
+    },
+    {
+      "name": "report_save_table",
+      "kind": "write",
+      "description": "Create or update one table of a report: its SQL, its columns and its options (graphic_type, sub_title…). The SQL is a read, run under the workspace's read-only report account. Call report_get_context first.",
+      "params": [
+        {
+          "name": "reportId",
+          "type": "int",
+          "required": true
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "sql",
+          "type": "string",
+          "required": true,
+          "description": "A SELECT (or WITH) over the workspace's readable schema."
+        },
+        {
+          "name": "columns",
+          "type": "string",
+          "required": true,
+          "description": "JSON array: [{ index, title, align?, format?, … }] — one per SELECT column."
+        },
+        {
+          "name": "tableId",
+          "type": "int",
+          "required": false,
+          "description": "Existing table to update; omitted, a new one is created."
+        },
+        {
+          "name": "parameters",
+          "type": "string",
+          "required": false,
+          "description": "JSON array of SQL parameter definitions."
+        },
+        {
+          "name": "options",
+          "type": "string",
+          "required": false,
+          "description": "JSON: { has_total?, has_average?, graphic_type?, sub_title?, description? }."
+        }
+      ],
+      "returns": {
+        "success": "bool",
+        "tableId": "int"
+      }
+    },
+    {
+      "name": "report_read_table",
+      "kind": "read",
+      "description": "Read a report of this workspace the way its page shows it, computed by the same engine. Open to every member. Pass report_id alone to list its readable tables; pass report_table_id to read one table's columns and rows. Refusals: forbidden, reports_unavailable (this workspace serves no report), not_found, sql_error, invalid_parameters, missing_target.",
+      "params": [
+        {
+          "name": "report_table_id",
+          "type": "int",
+          "required": false
+        },
+        {
+          "name": "report_id",
+          "type": "int",
+          "required": false
+        },
+        {
+          "name": "parameters",
+          "type": "string",
+          "required": false,
+          "description": "JSON object of parameter name to value."
+        },
+        {
+          "name": "version_nb",
+          "type": "int",
+          "required": false
+        }
+      ],
+      "returns": {
+        "success": "bool",
+        "report_id": "int",
+        "report_table_id": "int?",
+        "title": "string?",
+        "columns": "[{ name, title, format }]?",
+        "rows": "[[value]]?",
+        "row_count": "int?",
+        "truncated": "bool?",
+        "tables": "[{ report_table_id, version_nb, title, graphic_type }]?"
       }
     },
     {
