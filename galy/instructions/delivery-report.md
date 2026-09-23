@@ -5,8 +5,7 @@ spec, follow-up, ship. Each skill renders the variant for its entity instead of 
 inline. Applies to any report that work is finished, including outside `feature-implement`,
 `feature-followup`, `ship`, `end`.
 
-**The report closes the turn**, followed only by the italic waiting line of `reply-format.md`
-when something is waited for.
+**The report comes first**, and the verdict of `reply-format.md` closes the turn under it.
 
 Reports are **written in the user's language**, in full sentences readable by a non-specialist,
 **printed to the terminal** — never to a file unless the user explicitly asks.

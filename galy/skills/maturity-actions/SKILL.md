@@ -75,5 +75,5 @@ reason, and the reason is theirs.
 
 ## Hand back
 
-Close the turn on the sentences and the waiting line of
+Close the turn on the reply and the verdict of
 `${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.
