@@ -31,7 +31,8 @@ const git = (args, cwd = root) => run('git', args, { cwd });
 
 // Changed paths of the working copy, relative to the root: modified, deleted, untracked.
 const changes = new Map();
-const status = git(['status', '--porcelain=v1', '-z', '--untracked-files=all']).split('\0');
+// Untrimmed: the first entry's status code may start with a space.
+const status = execFileSync('git', ['status', '--porcelain=v1', '-z', '--untracked-files=all'], { cwd: root, encoding: 'utf8' }).split('\0');
 for (let i = 0; i < status.length; i++) {
   const entry = status[i];
   if (!entry) continue;
