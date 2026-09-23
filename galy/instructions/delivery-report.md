@@ -5,8 +5,8 @@ spec, follow-up, ship. Each skill renders the variant for its entity instead of 
 inline. Applies to any report that work is finished, including outside `feature-implement`,
 `feature-followup`, `ship`, `end`.
 
-**The report is the last block of the turn** — no state table after it; a lettered question, if
-one is truly needed, sits under it.
+**The report is the last block of the turn**; a lettered question, if one is truly needed, sits
+under it.
 
 Reports are **written in the user's language**, in full sentences readable by a non-specialist,
 **printed to the terminal** — never to a file unless the user explicitly asks.
