@@ -508,5 +508,5 @@ and ends the conversation.
 
 ## Hand back
 
-Close the turn on the state table and the lettered questions of
+Close the turn on the sentences and the waiting line of
 `${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.

@@ -250,5 +250,5 @@ this at the boundary, and what it would cost to add.
 
 ## Hand back
 
-Close the turn on the state table and the lettered questions of
+Close the turn on the sentences and the waiting line of
 `${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.
