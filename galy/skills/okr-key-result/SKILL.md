@@ -58,9 +58,11 @@ Which route applies is settled by where the data is, never by which is faster to
 - `mcp__castalie__report_create`, `mcp__castalie__report_save_table` — build the report.
 - `mcp__castalie__report_read_table` — read a report as its page shows it: `report_id` alone lists
   its tables, `report_table_id` reads one. Open to every member.
-- `mcp__castalie__strategy_create_key_result` — create the key result (born unlinked).
-- `mcp__castalie__strategy_update_key_result` — link it: `report_id` (and `report_table_id` when the
-  value is not in the first table), or `external_report_url`. Also refines an existing key result.
+- `mcp__castalie__strategy_create_key_result` — create the key result already linked: `report_id`
+  (and `report_table_id` when the value is not in the first table), or `external_report_url`. A
+  refused link creates nothing.
+- `mcp__castalie__strategy_update_key_result` — refine an existing key result, or link one that
+  has no report yet.
 - `mcp__castalie__strategy_refresh_key_result` — recalculate from the linked workspace report.
 - `mcp__castalie__strategy_create_check_in` — the first value of a key result whose report lives
   elsewhere.
@@ -170,26 +172,31 @@ measure a key result.
 ### 6. Create the key result and link it
 
 `strategy_create_key_result(objective_id, title, metric_type, unit, start_value=<baseline>,
-target_value=<target>, previous_value_type)` — `metric_type` is `number`, `percent`, `currency` or
-`boolean`; `previous_value_type` is `period_start` (progress from the baseline, the default) or
-`previous_period` (a counter that restarts at zero for the period). **Get the baseline right now**:
-it is what progress is measured from.
+target_value=<target>, previous_value_type, <the link>)` — `metric_type` is `number`, `percent`,
+`currency` or `boolean`; `previous_value_type` is `period_start` (progress from the baseline, the
+default) or `previous_period` (a counter that restarts at zero for the period). **Get the baseline
+right now**: it is what progress is measured from.
 
-Link it **in the very next call** — the key result must not stay unlinked:
+**The link travels in the creation call itself**, so the key result never exists without its
+report — a refused link creates nothing:
 
-- *Workspace report*: `strategy_update_key_result(key_result_id, report_id=<report>)`, adding
-  `report_table_id` only when the value is not in the report's first table. Then
-  `strategy_refresh_key_result(key_result_id)`: the value it returns must equal table 1's first
-  cell. No check-in is written — a measurement is not something a person reported.
-- *External report*: `strategy_update_key_result(key_result_id, external_report_url=<address>)`,
-  then `strategy_create_check_in(key_result_id, new_value=<current value read off that report>,
+- *Workspace report*: pass `report_id=<report>`, adding `report_table_id` only when the value is
+  not in the report's first table. A new key result still shows its baseline until it is first
+  calculated, so call `strategy_refresh_key_result(key_result_id)` right away: the value it returns
+  must equal table 1's first cell. No check-in is written — a measurement is not something a
+  person reported.
+- *External report*: pass `external_report_url=<address>`, then
+  `strategy_create_check_in(key_result_id, new_value=<current value read off that report>,
   confidence=<the user's reading>, comment=<one sentence that cites the report's address>)`.
+
+An older server may not know these creation parameters (the answer omits `report_id`, or rejects
+them): then create, and link **in the very next call** with `strategy_update_key_result`.
 
 When refining an existing key result, the same `strategy_update_key_result` call carries the
 corrected definition and the link. A unit left out is kept; pass one only to change it.
 
 **If the link is refused** (`report_forbidden`, `report_not_found`, `report_table_not_in_report`,
-`external_report_url_https_required`): fix the cause and link again. If it cannot be fixed now, say
+`reports_unavailable`, `external_report_url_https_required`): fix the cause and try again. If it cannot be fixed now, say
 plainly that a key result exists without a report, name it with its link, and say what is
 missing. Never leave that silently.
 

@@ -402,7 +402,7 @@
     {
       "name": "strategy_create_key_result",
       "kind": "write",
-      "description": "Add a key result to an objective. A key result is what makes the objective measurable. It is born without a report link: the link is set right after, with strategy_update_key_result.",
+      "description": "Add a key result to an objective. A key result is what makes the objective measurable, and it is read off a report: pass report_id (a report of this workspace, computed by the engine) or external_report_url (a report elsewhere, computed by nothing) so it is born linked. A refused link creates nothing. The value arrives at the first calculation: call strategy_refresh_key_result right after creating with report_id.",
       "params": [
         {
           "name": "objective_id",
@@ -453,6 +453,24 @@
           "type": "string",
           "required": false,
           "description": "period_start (progress along the way, the default) | previous_period (a historical marker, the counter restarts at zero for this period)."
+        },
+        {
+          "name": "report_id",
+          "type": "int",
+          "required": false,
+          "description": "A report of THIS workspace that measures the key result: its value is the first cell of the report's first active table, its curve the second table. Must be an active main report the caller may read; refused otherwise (report_forbidden, report_not_found, reports_unavailable), and nothing is created."
+        },
+        {
+          "name": "report_table_id",
+          "type": "int",
+          "required": false,
+          "description": "One table of that report to read the value from instead of its first one. Must belong to the report (report_table_not_in_report)."
+        },
+        {
+          "name": "external_report_url",
+          "type": "string",
+          "required": false,
+          "description": "HTTPS address of a report that lives in ANOTHER system. A reader can open it; nothing is computed from it. Anything but https is refused (external_report_url_https_required). The address of a report of this workspace is read as its report_id."
         }
       ],
       "returns": {
