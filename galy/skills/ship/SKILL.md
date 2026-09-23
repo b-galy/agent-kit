@@ -13,7 +13,7 @@ merges** — merging is your own CI/process (the extension point below).
 
 **Instruction-only changes skip every step below.** When each changed file is Markdown or sits under
 `.claude/`, `.github/instructions/` or `.agents/`, run
-`node ${CLAUDE_PLUGIN_ROOT}/bin/push-instructions.mjs "<commit message>"`: it commits, opens and
+`node ${CLAUDE_PLUGIN_ROOT}/skills/ship/push-instructions.mjs "<commit message>"`: it commits, opens and
 merges them at once, without waiting for checks.
 
 When the change has a linked spec, read its covered phases and
