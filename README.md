@@ -517,7 +517,7 @@ quietly removed.
 
 `CLAUDE.md` is the one that was silently wrong. Twelve mentions told a session to propose an edit
 to a file Codex does not read, and — worse, because it was a hole in a feature one day old — five
-skills look for the `<!-- galy:instructions -->` marker in "the root instruction file", which
+skills look for the `<!-- castalie:instructions -->` marker in "the root instruction file", which
 under Codex is `AGENTS.md`. A host's own rules therefore reached the kit's skills under Claude
 Code and nowhere else, invisibly: no marker found and no marker written look identical from the
 inside. `host-instructions.md` now names that file by its role, and has a skill read every

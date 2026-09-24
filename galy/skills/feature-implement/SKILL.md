@@ -43,7 +43,7 @@ watchdog never fires — ideal.
    question.
 4. **Read the host's local rules**, once, before the first phase, following
    `${CLAUDE_PLUGIN_ROOT}/instructions/host-instructions.md`: the lines carrying
-   `<!-- galy:instructions -->` in the root instruction file name the files a skill must open, and a
+   `<!-- castalie:instructions -->` (legacy name `<!-- galy:instructions -->`) in the root instruction file name the files a skill must open, and a
    marker naming `feature-implement` is addressed to you. Their stack's conventions, their
    migrations, the writes that cost real data live there, not in the root file. **Nothing names you,
    or there is no such line: say nothing and carry on** — a team that never wrote one must not be

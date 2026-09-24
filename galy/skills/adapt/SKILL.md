@@ -93,7 +93,7 @@ committed, not that it is any particular file.
 The block itself:
 
 ```markdown
-<!-- galy:begin — géré par la prise en main Castalie, modifiable -->
+<!-- castalie:begin — géré par la prise en main Castalie, modifiable -->
 ## Castalie, à côté de ce qui existe
 
 <qui possède quoi — une ligne par système, tirée de la proposition de liaison>
@@ -104,7 +104,7 @@ The block itself:
 - <situation, dans les mots d'un développeur> → `<la skill>`
 - <situation> → `<la skill>`
 
-<!-- galy:instructions bug-fix feature-implement --> `<leur fichier de règles locales>` — <ce qu'il contient, en cinq mots>
+<!-- castalie:instructions bug-fix feature-implement --> `<leur fichier de règles locales>` — <ce qu'il contient, en cinq mots>
 
 <le cadrage précède le code et n'écrit rien : le pourquoi, puis le comment>
 
@@ -124,15 +124,17 @@ on n'y ajoute rien.
 
 - <fusionner un changement prêt> → `<la skill de fusion>`
 - <mettre en production> → `<la skill de mise en production>`
-<!-- galy:end -->
+<!-- castalie:end -->
 ```
 
 Three properties, each load-bearing:
 
 - **Delimited**, so a later pass updates it without touching a word the team wrote. The markers
-  keep the name `galy` on purpose, although the plugin is `cs` now: blocks already written in
-  customers' files carry it, and a later pass finds them by that name. Renaming the marker would
-  orphan every one of them.
+  are `castalie:begin` and `castalie:end`. A block written before 1.17.0 carries the legacy names
+  `<!-- galy:begin -->` and `<!-- galy:end -->` (and `<!-- galy:instructions -->` on its lines): a later pass finds the block
+  under either name, and when it rewrites it, it writes the `castalie:` markers in their place —
+  the one moment a legacy marker is renamed, inside a pull request the team reviews. Never write
+  the legacy names into a new block.
 - **Short.** It joins a file every session reads in full; anything long gets skipped, and a
   doctrine nobody finishes is a doctrine nobody applies.
 - **It names their system first**, Castalie second. The reader must see their own world described
@@ -189,7 +191,7 @@ this line exists to close.
 One line per file, anywhere in the block, with the marker naming the skills that must read it:
 
 ```markdown
-<!-- galy:instructions bug-fix --> `.github/instructions/diagnostics.md` — Datadog, la réplique, Site24x7.
+<!-- castalie:instructions bug-fix --> `.github/instructions/diagnostics.md` — Datadog, la réplique, Site24x7.
 ```
 
 Three ways to get it wrong, and each costs something different:

@@ -47,10 +47,10 @@ harnesses may want it in both, and that is their decision to make, not yours to 
 
 ## The line a host writes
 
-One line per file, inside the `<!-- galy:begin -->` block of the root instruction file:
+One line per file, inside the `<!-- castalie:begin -->` block of the root instruction file:
 
 ```markdown
-<!-- galy:instructions bug-fix feature-implement --> `.github/instructions/estate-diagnostics.md` — Datadog, the MySQL replica, Site24x7.
+<!-- castalie:instructions bug-fix feature-implement --> `.github/instructions/estate-diagnostics.md` — Datadog, the MySQL replica, Site24x7.
 ```
 
 - **The marker names the skills that read the file**, bare — `bug-fix`, never the namespaced
@@ -58,13 +58,19 @@ One line per file, inside the `<!-- galy:begin -->` block of the root instructio
   does not name never opens the file.
 - **The path is relative to the repository root.** What follows the dash is for whoever reads the
   block; no skill reads it.
-- **The marker keeps the name `galy`** for the same reason `<!-- galy:begin -->` does: the blocks
-  already written in customers' files carry it, and renaming it would orphan every one of them.
+- **Read both names, write only the new one.** The markers are `castalie:begin`, `castalie:end`
+  and `castalie:instructions`. A block written before 1.17.0 carries the legacy names
+  `<!-- galy:begin -->`, `<!-- galy:end -->` and `<!-- galy:instructions -->`, and a skill honours
+  them exactly as it honours the new ones: customers' files already hold them, and ignoring them
+  would orphan every block.
+  Whatever the kit writes uses `castalie:`; a legacy block is renamed only when `adapt` rewrites
+  it, inside a proposal the team reviews — never in passing.
 
 ## What a skill does with it
 
 1. In the root instruction file — already in your context, so this costs no tool call — find the
-   lines carrying the marker. **Then, if the repository root holds the other spelling as well,
+   lines carrying the marker, under either name (`<!-- castalie:instructions -->`, or the legacy
+   `<!-- galy:instructions -->`). **Then, if the repository root holds the other spelling as well,
    open it**: one read, once, and it is the only way a block written from the other harness ever
    reaches you.
 2. **Read in full every file whose marker names you**, before the step your skill names. Not
