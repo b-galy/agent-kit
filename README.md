@@ -404,7 +404,7 @@ documented extension point, not a gap.
 ## The `cs` CLI
 
 A shell-friendly companion to the MCP tools — search work items, read compact JSON cards, and pull/push
-the large markdown bodies of briefs and specs as local files:
+the large markdown bodies of briefs, specs and tickets as local files:
 
 ```
 cs search "seller onboarding"
@@ -412,6 +412,7 @@ cs brief 12
 cs spec 42
 cs content pull feature-spec 42     # → .tmp/galy-content/feature-spec/42.md
 cs content push feature-spec 42     # after you edit the buffer
+cs content push bug 7               # a ticket: sections description and technical-detail
 cs on-behalf                        # unattended or not, and the workspace's robot account
 cs codex                            # project the kit into .agents/ + .codex/ for a Codex session
 ```

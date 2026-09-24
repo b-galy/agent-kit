@@ -31,7 +31,7 @@
 //   cs search <query>
 //   cs brief <id>
 //   cs spec <id>
-//   cs content pull <type> <id>        # type = feature-brief | feature-spec
+//   cs content pull <type> <id>        # type = feature-brief | feature-spec | bug
 //   cs content push <type> <id>
 //   cs on-behalf                       # attended or not, and the workspace's robot account
 //   cs codex                           # project this kit into the layouts Codex reads
@@ -40,7 +40,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const TYPES = new Set(["feature-brief", "feature-spec"]);
+const TYPES = new Set(["feature-brief", "feature-spec", "bug"]);
 
 // ── Config ────────────────────────────────────────────────────────────────
 // `.cs/` is the folder; `.bg/` and `.galy/` are what it was called under the two names the kit
@@ -127,7 +127,7 @@ async function cmdSpec(args) {
 async function cmdContent(args) {
   const [action, type, id] = args._;
   if (!["pull", "push"].includes(action) || !TYPES.has(type) || !id) {
-    die("Usage: cs content pull|push <type> <id>   (type = feature-brief | feature-spec)");
+    die("Usage: cs content pull|push <type> <id>   (type = feature-brief | feature-spec | bug)");
   }
   const path = bufferPath(type, id);
   const route = `/api/pm/content/${type}/${encodeURIComponent(id)}/body`;
@@ -203,7 +203,7 @@ const HELP = `cs — Castalie project-management CLI
   cs search <query>                 # briefs + specs matching the query
   cs brief <id>                     # a brief with its user stories
   cs spec <id>                      # a spec with its phases, risks, acceptance tests
-  cs content pull <type> <id>       # type = feature-brief | feature-spec
+  cs content pull <type> <id>       # type = feature-brief | feature-spec | bug
   cs content push <type> <id>
   cs on-behalf                      # unattended or not, and the workspace's robot account
   cs codex [--verify|--check]       # project this kit's skills, instructions and agents into
