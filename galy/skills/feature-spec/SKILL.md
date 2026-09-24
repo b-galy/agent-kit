@@ -31,7 +31,7 @@ synced by the CLI.
    change lands, the existing patterns to follow, the seams to cut phases along. This never leaves the
    machine — Castalie sees none of it.
    **Read the host's own rules first**, following `${CLAUDE_PLUGIN_ROOT}/instructions/host-instructions.md`:
-   the lines carrying `<!-- galy:instructions -->` in the root instruction file name the files a skill
+   the lines carrying `<!-- castalie:instructions -->` (legacy name `<!-- galy:instructions -->`) in the root instruction file name the files a skill
    must open, and a marker naming `feature-spec` is addressed to you — their conventions, the writes
    that cost real data, how long a branch of theirs may live. A plan written against conventions nobody
    read is corrected phase by phase by the implementer, who then owns a design they did not choose.

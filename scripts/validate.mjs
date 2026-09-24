@@ -66,8 +66,9 @@
 //      What does NOT move, and is therefore not matched: the plugin's source folder `./galy`, the
 //      `renames` mapping that carries the plugin renames, the config folder's former names `.bg/`
 //      and `.galy/` — read as fallbacks so nobody loses a token — the identifiers that carry the
-//      code name (`GALY_ENDPOINT`, `GALY_TOKEN`, `galy-pm-v1`, `galy-setup`), the
-//      `<!-- galy:begin -->` markers already written into customers' files, and the REMOVAL of a
+//      code name (`GALY_ENDPOINT`, `GALY_TOKEN`, `galy-pm-v1`, `galy-setup`), the legacy
+//      managed-block markers (<!-- galy:begin -->, <!-- galy:end -->, <!-- galy:instructions -->) that skills still READ
+//      because customers' files carry them — the kit WRITES `castalie:*` since 1.17.0 — and the REMOVAL of a
 //      former marketplace, which is exactly what setup and the README tell a workstation to do.
 //
 //      The repository moved too, on 22 September 2026: it is `castalie-app/agent-kit`. It was the
@@ -200,13 +201,22 @@ const FORBIDDEN = [
   {
     // A skill or agent reference takes one of two written forms: backticked (`galy:adapt`) or
     // slash-invoked (/galy:analyse). The managed-block markers written into a customer's
-    // CLAUDE.md (`<!-- galy:begin -->`) take neither form, and they keep that name on purpose —
-    // renaming them would orphan every block already written — so they are not matched.
+    // CLAUDE.md take neither form. The kit writes them as `castalie:begin` since 1.17.0 and still
+    // reads the legacy `galy:` names, which customers' blocks carry — so they are not matched here;
+    // the check below refuses the legacy names only where the kit would WRITE them.
     // The `renames` mapping in marketplace.json carries `"galy": "bg"` and `"bg": "cs"`, which is
     // what keeps an installed workstation from becoming an orphan. Neither takes one of the two
     // written forms below, so neither is matched.
     pattern: /(`|\/)(galy|bg):[a-z][a-z-]*/,
     why: "a former plugin name as a skill prefix. The plugin is `cs` since the product became Castalie: write `cs:<skill>` and `/cs:<skill>`.",
+  },
+  {
+    // A legacy managed-block marker written as a full HTML comment with content after the name — a
+    // block delimiter or an instructions line the kit would WRITE into a customer's file. The bare
+    // mention (the name followed directly by the closing `-->`) stays allowed: that is how a skill
+    // says it still READS the legacy spelling.
+    pattern: /<!-- galy:(begin|end|instructions) (?!-->)/,
+    why: "a legacy managed-block marker in something the kit writes. Since 1.17.0 the kit writes `<!-- castalie:begin -->`, `<!-- castalie:end -->` and `<!-- castalie:instructions <skills> -->`; the `galy:` names are only read, because customers' files still carry them.",
   },
   {
     // The harness names its tools after the alias the server is registered under, and that alias
