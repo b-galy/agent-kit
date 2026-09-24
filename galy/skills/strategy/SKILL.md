@@ -39,3 +39,8 @@ objectives or key results. The output is your analysis, in the user's language.
 - **Don't dump the whole tree.** Navigate from an anchor; a full-strategy dump is noise, not insight.
 - **Hand off cleanly.** When the user is ready to turn a need into work, point to `feature-brief` with
   the objective id you converged on.
+
+## Hand back
+
+Close the turn on the reply and the verdict of
+`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.

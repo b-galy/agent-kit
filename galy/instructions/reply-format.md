@@ -1,52 +1,74 @@
 # How a turn ends — a short reply, then one verdict
 
-Shared convention for **how a skill speaks to the user and hands back**. Referenced by
-`acceptance`, `bug-fix`, `feature-brief`, `feature-implement`, `feature-spec`, `feature-followup`,
-`maturity-actions`, `ship` and `audit-organisation`. It governs the shape of the hand-back, not the
-content of a delivery report (`delivery-report.md`), which keeps its own form above the verdict.
+The shared convention for **how every skill of the kit speaks to the user and hands back**. Every
+skill that ends a turn in front of a person reads it and closes on it; a skill that only runs under
+another one (`retro`) inherits its caller's. It governs the shape of the hand-back, not the content
+of a delivery report (`delivery-report.md`), which keeps its own form above the verdict.
 
 A team that reads twenty hand-backs a day stops reading the ones it has to decode. Two sessions
 ending a turn two different ways cost more than either shape would have.
 
-## The reply
+## The two rules, verbatim
 
-- **Five bullets at most**, one idea each, what changed for the user first.
-- **Mechanics only on request**: no branch, commit, file path or phase unless they asked.
-- **Minimal and direct**: no politeness formula, no restating the request. Terse phrasing is fine.
-- **What the user must judge sits in the reply itself**, never behind a link they have to open.
-- **Plain language for a non-specialist**, in the user's language: translate opaque jargon, gloss
-  an unavoidable term once, keep the team's own abbreviations.
-- **No em dashes in text written for the user**: a colon, a semicolon, a comma or parentheses.
+**A turn ends** only on a delivered result or a cited legitimate stop, and names one of three
+verdicts: finished, the session can be closed — only once its work item is closed where it is
+tracked; waiting, on what; or, I need you: the decision, its options, what each costs. Never a
+topic name. Never two of them. Never end on a stated intention of your own ("I'll check X next",
+"j'enchaîne", "the loop/cron will resume it") — execute it in the same turn; a loop tick is a
+safety net for a dead turn, never a reason to defer work you can do now. A check the user asks for
+before a larger piece of work is the whole turn: deliver it and what it changes for that work, then
+stop. An errored or interrupted tool call is unfinished — re-issue it, never end the turn treating
+it as done.
 
-## The verdict closes the turn
+**Replies**: 5 bullets max, one idea per bullet, what changed for the user first; mechanics
+(branch, commit, path, phase) only on request; minimalist and direct, no politeness formulas, no
+restating the request. Content the user must judge goes in the reply body itself. The turn's
+verdict goes in its own blockquote (`>`) at the end, opened by a bold heading; when it asks
+something, each item carries its lettered options and what each costs, answerable with a single
+letter without reading back up. Never inside the recap bullets. Terse phrasing is fine. Correct,
+plain French for a non-specialist; translate opaque anglicisms (gloss an unavoidable one once),
+keep the team's established abbreviations. Avoid em dashes, in replies and in any text written for
+the user: prefer a colon, a semicolon, a comma or parentheses.
 
-A turn ends only on a delivered result or a legitimate stop. Its last block is **one verdict, in
-a blockquote opened by a bold heading**, never inside the bullets:
+"Plain French" reads as **the user's own language**: a French team gets French, anyone else gets
+theirs, with the same demands.
+
+## The three verdicts, as they print
+
+The rules above stay in English; the verdict is written in the user's language. In French:
 
 ```
-> **Finished, you can close the session.**
-> <a gesture only the user can perform, if one is left>
+> **Terminé** : la session peut être fermée.
 ```
 
 ```
-> **Waiting: <what>**
-> <who or what unblocks it, and when if known>
+> **En attente** : de la mise en production du correctif, pour la sonde de disponibilité.
 ```
 
 ```
-> **I need you: <the decision>**
-> a) <option>, <what it costs>
-> b) <option>, <what it costs>
+> **J'ai besoin de vous : comment donner l'accès aux deux prestataires ?**
+> **A.** Acheter la licence d'annuaire : ce que ça coûte.
+> **B.** Leur créer un compte local : ce que ça coûte.
+> **C.** Attendre : ce que ça coûte.
 ```
 
-- **Exactly one of the three.** Never two, never a topic name in their place.
-- **The options are lettered**, each with its cost, answerable with a single letter without
-  reading back up.
+In English the headings are **Finished**, **Waiting** and **I need you**. The blockquote is the
+whole mechanism: the terminal draws it as a vertical bar, and nothing else has to render it.
+
+- **Exactly one of the three**, and it is the last block of the turn.
+- **Finished waits for the tracker**: while the work item is still open where it is tracked, the
+  verdict is *Waiting*, on whatever closes it.
 - **A gesture only the user can perform**, once everything else is delivered, is a line under
   *Finished*, never an *I need you*; one another session already took on is not asked again.
-- **Never end on your own stated intention** ("I'll check X next"): do it in the same turn. A
-  wake-up loop is a safety net for a dead turn, never a reason to defer work you can do now.
-- **An errored or interrupted tool call is unfinished**: re-issue it, never hand back as if done.
+
+## The prose around it
+
+- **No bare technical identifier** (`#N`, a column, a file) and no raw enumeration value: use the
+  label the interface shows, and name an entity by its business name, carried by its clickable link.
+- **The fact comes in the first sentence.**
+- **No corrective antithesis** ("not X, it is Y"), **no meta-commentary**, **no closing aphorism**,
+  **no triads**, and **no final summary** that repeats what the bullets said.
+- **Bold on three words at most**, where it is used at all.
 
 ## What this is not
 

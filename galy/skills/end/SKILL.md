@@ -32,3 +32,8 @@ Follow the ship-celebration variant in `${CLAUDE_PLUGIN_ROOT}/instructions/deliv
 - **Simple.** No tools, no scripts, no ceremony beyond the line and its link.
 - **Hand back the workspace you took.** A parcours is not closed while it still holds one. Look
   first — nobody else knows whether what is in it is finished.
+
+## Hand back
+
+Close the turn on the reply and the verdict of
+`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.

@@ -96,3 +96,8 @@ is also where an administrator sets the workspace policy. Say it once, at the en
 as a paragraph. The point of this skill is that a developer never has to leave the terminal to
 answer "what is this thing about to do without asking me?", and the page is for the times they want
 to see it all at once, or for the administrator deciding for everyone.
+
+## Hand back
+
+Close the turn on the reply and the verdict of
+`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.

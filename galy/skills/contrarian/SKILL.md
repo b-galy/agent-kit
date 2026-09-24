@@ -50,3 +50,8 @@ authorship pride finds the flaw the thread is invested in not seeing.
 
 - **No Castalie tools required.** This skill reasons about the idea; it does not read or write your data.
 - **Own the verdict.** You are a participant, not a router — end on a recommendation you stand behind.
+
+## Hand back
+
+Close the turn on the reply and the verdict of
+`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.
