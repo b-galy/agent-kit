@@ -68,3 +68,8 @@ read, and publication requires the owner or article owner. Never work around a `
 after a conflict, preserving the proposed text and comparing it with the current version before
 retrying; ask the user for a review decision when the product needs one. Do not invent
 success or copy durable knowledge into a client repository to bypass the boundary.
+
+## Hand back
+
+Close the turn on the reply and the verdict of
+`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.

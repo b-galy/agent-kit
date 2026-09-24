@@ -83,3 +83,8 @@ needs a fix, never "none".
 - Vague drivers ("by default I prefer to confirm") — cite the rule or admit the heuristic.
 - Abstract principles ("I should test more") instead of one concrete diff.
 - Proposing "ask the user" as the fix — the assistant works autonomously.
+
+## Hand back
+
+Close the turn on the reply and the verdict of
+`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.

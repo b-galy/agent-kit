@@ -120,3 +120,8 @@ it changes nothing on its own.
   in clear for every process on the machine, and a token opens the whole workspace.
 - **Never guess the workspace address.** Ask. A wrong host does not fail loudly — it fails as a 401 that
   looks like a bad token, and sends the user hunting for the wrong problem.
+
+## Hand back
+
+Close the turn on the reply and the verdict of
+`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.

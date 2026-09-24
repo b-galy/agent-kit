@@ -341,5 +341,11 @@ what an agent proposes, and the impression it leaves decides everything that fol
 
 Four lines: the pull-request link, the collisions and what you did about each, **what came back
 `non constaté` and is therefore written as a hole rather than as a procedure**, and the single
-next step — usually "open a session in the repository and ask it where the practices stand",
+next step, as the verdict below them — usually "open a session in the repository and ask it where
+the practices stand",
 because that is what the added section now makes possible.
+
+## Hand back
+
+Close the turn on the reply and the verdict of
+`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.

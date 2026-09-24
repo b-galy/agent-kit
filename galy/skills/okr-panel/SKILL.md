@@ -27,3 +27,8 @@ the two things worth checking, and stop:
 
 The panel needs a terminal at least 110 columns wide under the fullscreen layout; narrower, the
 command says so rather than drawing a cramped dock.
+
+## Hand back
+
+Close the turn on the reply and the verdict of
+`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.

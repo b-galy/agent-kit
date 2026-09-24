@@ -179,4 +179,10 @@ id from their link or ask for that id only in this follow-up path. Do not start 
   `contract/pm-v1.json` for this skill.
 - Keep this skill and its instructions in English. Match the person's register in any short
   question or acknowledgement.
-- A useful result comes before explanation. The ticket link is the last line on the create path.
+- A useful result comes before explanation. The ticket link is the last line of the reply on the
+  create path, above the verdict.
+
+## Hand back
+
+Close the turn on the reply and the verdict of
+`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.
