@@ -109,19 +109,19 @@
       {
         "method": "GET",
         "path": "/api/pm/content/{type}/{id}/body",
-        "returns": "text/markdown (fields: brief = executive/problem/vision/hors-scope, spec = executive/problem/solution)"
+        "returns": "text/markdown (fields: brief = executive/problem/vision/hors-scope, spec = executive/problem/solution, bug = description/technical-detail)"
       },
       {
         "method": "PUT",
         "path": "/api/pm/content/{type}/{id}/body",
         "body": "{ \"Body\": \"<markdown>\" }",
-        "note": "a field absent from the submitted markdown is left unchanged; type = feature-brief | feature-spec"
+        "note": "a field absent from the submitted markdown is left unchanged; type = feature-brief | feature-spec | bug. A bug section is written only when it changes, by the same rule as bug_update_field, and its history keeps the value it replaced"
       }
     ]
   },
   "conventions": {
     "return_envelope": "Every tool returns a JSON string { success: bool, ... } and { success: false, error: string } on failure.",
-    "bodies": "Long markdown bodies (brief problem/vision, spec executive summary/problem/solution) are never passed as tool arguments — read and write them with the `cs content pull|push <type> <id>` CLI. Tools carry metadata only (title, phases, status, risks).",
+    "bodies": "Long markdown bodies (brief problem/vision, spec executive summary/problem/solution, ticket description/technical detail) are never passed as tool arguments — read and write them with the `cs content pull|push <type> <id>` CLI. Tools carry metadata only (title, phases, status, risks).",
     "forbidden_fields": "No tool declares a parameter named code, diff, patch, file_content or source_code. The flow is outward-only.",
     "addresses": "An entity answer MAY carry `url`, the absolute https address of that entity's own page, computed by the workspace that served it because it alone knows its host: on `feature_spec_get` and `feature_brief_get`, on each node of `strategy_get_objective_breadcrumb`, on each item of `strategy_navigate_children`, and on any objective a workspace answers outside this contract. It is optional in both directions — a workspace that serves none is conformant, and a client that reads it falls back to plain text when it is absent, and when it is an address its own surface would refuse."
   },
