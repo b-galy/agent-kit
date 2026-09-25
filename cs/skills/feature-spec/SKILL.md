@@ -61,9 +61,12 @@ synced by the CLI.
    Nothing matches →
    `mcp__castalie__feature_spec_create(featureBriefId=<briefId>, title, scope, category, initialEstimateHours?)`
    → capture `spec_id`. Write the body via `cs content pull feature-spec <spec_id>`, edit the buffer
-   (fields `executive`, `problem`, `solution`), `cs content push feature-spec <spec_id>`. **Draw what a
-   picture says faster** — the flow, the states, the screen, the before/after — following *Showing, not
-   only telling* below: a spec read on a screen by someone who did not write it is a spec that shows.
+   (fields `executive`, `problem`, `solution`), `cs content push feature-spec <spec_id>`. **The
+   executive summary opens on a picture of the change** whenever one says it faster than prose — a
+   before/after, the new flow, the screen as it will look — then a few sentences around it. It is the
+   one field every reader opens, and the place a person decides whether the change is the right one;
+   a summary that is only prose is the exception, kept for a change no picture clarifies. Pick the
+   tool from *Showing, not only telling* below; `problem` and `solution` draw what they need too.
 5. **Phases.** One `mcp__castalie__feature_spec_add_phase(specId, title, objectiveMd, actionPlanMd,
    validationCriterionMd, estimateHours)` per phase — cut at natural seams (layers, page sets,
    independent modules), each a coherent unit an implementer can finish and verify. Store its observable
@@ -105,6 +108,11 @@ synced by the CLI.
 
 ## Showing, not only telling
 
+**The summary's picture comes first.** Ask what a reader must understand in ten seconds — what
+changes, from what to what — and draw exactly that, nothing more: a before/after side by side, the
+path a request now takes, the states a thing moves through, the screen with the new part marked.
+Mermaid for a flow or a state machine, an illustration for a chart from real figures or a mock-up.
+
 What each field of a spec renders — read from what Castalie serves, not from what it stores:
 
 | Field | On the sheet | ```illustration | ```mermaid |
@@ -145,6 +153,7 @@ the next step.
 - **Check case completeness before handoff.** Each phase has concrete expected outcomes, suitable
   verification and existing tests considered; a green CI alone is never its completion criterion.
 - **Acceptance tests describe *how to check*, not code.** URLs, commands, queries.
+- **A summary that could be drawn is drawn.** Prose alone is the exception, not the default.
 - **What a person must see lives in a displayed field.** Never file it only in the plan or the criterion.
 
 ## Hand back
