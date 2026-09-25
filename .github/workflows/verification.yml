@@ -28,7 +28,7 @@ jobs:
       # La garantie produit : aucun verbe n'accepte de code, de diff ni de contenu de fichier.
       # La couche statique ne demande aucun reseau et se joue donc partout.
       - name: La conformite du contrat, couche statique
-        run: node galy/contract/conformance/runner.mjs
+        run: node cs/contract/conformance/runner.mjs
 
       - name: Les scripts s'analysent
         run: |
@@ -37,10 +37,10 @@ jobs:
           # Les binaires par le motif, pour la meme raison que les hooks : `bin/` est publie tel
           # quel dans le cache du plugin, donc un module ajoute la et absent d'une liste ecrite a
           # la main ne serait lu nulle part avant un poste de client.
-          for binary in galy/bin/*.mjs; do node --check "$binary"; done
+          for binary in cs/bin/*.mjs; do node --check "$binary"; done
           # Les hooks par le motif, jamais par la liste : un hook ajoute sans etre ajoute ici
           # serait le seul script publie que rien ne lit avant un poste de client.
-          for hook in galy/hooks/*.mjs galy/hooks/*/*.mjs; do node --check "$hook"; done
+          for hook in cs/hooks/*.mjs cs/hooks/*/*.mjs; do node --check "$hook"; done
           for script in scripts/*.mjs; do node --check "$script"; done
 
       # Le mod qui dessine le panneau a cote de la conversation est du TypeScript execute
@@ -78,7 +78,7 @@ jobs:
 
       # And the same projection run from SOMEWHERE ELSE, against the INSTALLED layout: in a
       # workstation's plugin cache, `skills/`, `instructions/` and `agents/` sit directly under the
-      # plugin root, where here they sit under `galy/`. That is the client's journey, and it is
+      # plugin root, where here they sit under `cs/`. That is the client's journey, and it is
       # played nowhere unless it is played here — the generator could only ever build inside this
       # repository, for as long as it existed, with every check green throughout.
       #
@@ -90,7 +90,7 @@ jobs:
           kit="$(mktemp -d)/cs"
           host="$(mktemp -d)"
           mkdir -p "$kit"
-          cp -r galy/. "$kit/"
+          cp -r cs/. "$kit/"
           cd "$host"
           node "$GITHUB_WORKSPACE/scripts/build-codex.mjs" --plugin-root "$kit" --repo-root . --quiet
           test -f .agents/skills/ship/SKILL.md
@@ -106,7 +106,7 @@ jobs:
       # plugin, from their own repository, with no flag at all. The step above proves the generator
       # works from a host repository; it proves nothing about whether anyone can get at it, because
       # it calls a path under `$GITHUB_WORKSPACE`. `scripts/` never reaches a client's machine — the
-      # plugin cache mirrors `galy/` alone — so until 21 September 2026 the file was correct and
+      # plugin cache mirrors `cs/` alone — so until 21 September 2026 the file was correct and
       # out of reach, and every check above was green the whole time.
       #
       # The two roots are therefore supplied by NOTHING: `--plugin-root` defaults to the installed
@@ -118,7 +118,7 @@ jobs:
           kit="$(mktemp -d)/cs"
           host="$(mktemp -d)"
           mkdir -p "$kit"
-          cp -r galy/. "$kit/"
+          cp -r cs/. "$kit/"
           cd "$host"
           node "$kit/bin/cs.mjs" codex --quiet
           # Read the produced tree, never the summary.
@@ -151,7 +151,7 @@ jobs:
           set -e
           kit="$(mktemp -d)/cs"
           mkdir -p "$kit"
-          cp -r galy/. "$kit/"
+          cp -r cs/. "$kit/"
           cd "$kit"
           if node "$kit/bin/cs.mjs" codex --quiet; then echo "the guard let it through"; exit 1; fi
           test ! -e "$kit/.agents"
@@ -167,7 +167,7 @@ jobs:
 
       - name: Le runner bug-evaluation rejoue ses contrats
         env:
-          GALY_BUG_EVALUATION_REQUIRE_SANDBOX: "1"
+          CASTALIE_BUG_EVALUATION_REQUIRE_SANDBOX: "1"
         run: |
           # Ubuntu's AppArmor user-namespace restriction blocks bwrap's loopback setup with
           # RTM_NEWADDR. This is an ephemeral GitHub VM: temporarily relax only that kernel
@@ -182,4 +182,4 @@ jobs:
           else
             echo "$apparmor_key is unavailable; continuing with the host sandbox policy"
           fi
-          npm run test:bug-evaluation --prefix galy
+          npm run test:bug-evaluation --prefix cs

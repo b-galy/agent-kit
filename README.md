@@ -14,7 +14,7 @@ This is the core guarantee, enforced end to end:
 - The flow is **strictly outward**. Your assistant *reads* strategy, briefs and specs from Castalie, and
   *writes back* plans, statuses and follow-ups. That's it.
 - **No tool accepts source code, a diff, or file content** — verified by the conformance suite
-  (`galy/contract/conformance`), which fails if any verb ever declares a `code` / `diff` / `file_content`
+  (`cs/contract/conformance`), which fails if any verb ever declares a `code` / `diff` / `file_content`
   parameter.
 - Your codebase is explored **locally** by your assistant. It never leaves your machine.
 
@@ -47,7 +47,7 @@ days by default, with preflight limits of 2 GiB per snapshot, 20 MiB per patch, 
 `--profile-file` and `--profile-root`; the runner re-runs the qualification probe before any model
 call. Production Castalie endpoints require an explicit `--allow-production` after the approved budget
 and worker are ready; otherwise point a qualification at a disposable local or staging endpoint.
-Keep `GALY_TOKEN` in the process environment. `cs bug-evaluation inspect --human` emits a separate
+Keep `CASTALIE_TOKEN` in the process environment. `cs bug-evaluation inspect --human` emits a separate
 opaque reviewer projection without model, configuration, verdict or billing fields, and
 `cs bug-evaluation rejudge` approves (or reuses `--protocol-revision`) and executes one judge-only
 protocol against the existing final archive. It records a new attempt/evaluation revision without
@@ -82,26 +82,28 @@ claude plugin marketplace add castalie-app/agent-kit
 claude plugin install cs@castalie
 ```
 
-**Installed while the marketplace was still called `b-galy` — or `galy` before that?** A workstation
+**Installed while the marketplace still carried one of its two former names?** A workstation
 keys the plugin by the marketplace's name, so an old entry stays registered and keeps serving its own
-cached copy beside the new one. Re-running the setup command above removes both; by hand it is:
+cached copy beside the new one. Re-running the setup command above removes both; by hand,
+`claude plugin marketplace list` shows every entry, and each one that points at this repository under
+a name other than `castalie` goes with:
 
 ```
-claude plugin marketplace remove b-galy
-claude plugin marketplace remove galy
+claude plugin marketplace remove <former-name>
 ```
 
-then the two lines of option B. **Two names, not three**, even though the repository has moved since:
-a marketplace is named by this repository's manifest, never by its owner, so `b-galy` becoming
-`castalie-app` left the marketplace called `castalie` and added no third name to leave behind.
+then the two lines of option B. **Two former names, not three**, even though the repository has moved
+since: a marketplace is named by this repository's manifest, never by its owner, so the last move of
+the organisation to `castalie-app` left the marketplace called `castalie` and added no third name to
+leave behind.
 
-What that rename *did* leave on an old workstation is the address the entry points at: your
-`known_marketplaces.json` still names the old `b-galy` organisation. GitHub redirects it, so updates
+What that move *did* leave on an old workstation is the address the entry points at: your
+`known_marketplaces.json` still names the organisation the repository lived under before. GitHub redirects it, so updates
 keep arriving and nothing looks wrong, which is exactly why it is worth saying — a redirect is a
 courtesy, not an address. Re-running setup re-points the entry at `castalie-app/agent-kit`.
 
 The plugin declares no MCP server of its own, so it has nothing to connect to yet. Open your agent in
-your repository and it will say so and point you at the `connect` skill — or run the `galy-setup`
+your repository and it will say so and point you at the `connect` skill — or run the setup
 command above, which does the same thing in one line.
 
 Your token never goes into a tracked file, a shell profile, or the Windows registry.
@@ -312,7 +314,7 @@ What comes out of it is not a report but a **pull request**, opened by `adapt`:
 
 Name collisions are the common case, not the edge case: a team already working this way has skills
 called `feature-spec` and `feature-implement` too. `adapt` never overwrites one. It either skips
-yours — saying what Castalie would have added — or ships its own under a `galy-` prefix, and tells you
+yours — saying what Castalie would have added — or ships its own under a `castalie-` prefix, and tells you
 how to tell them apart.
 
 No workflow is edited, no command renamed, no `.mcp.json` touched, and **the pull request is never
@@ -352,7 +354,7 @@ CS_ROBOT_USER_ID=<id>      # the workspace's automation account (or CS_ROBOT_EMA
 ```
 
 The robot can also live in `.cs/config.json` as `robot_user_id` / `robot_email`. `cs on-behalf`
-prints what a session sees. The rule, rung by rung, is in `galy/instructions/on-whose-behalf.md`.
+prints what a session sees. The rule, rung by rung, is in `cs/instructions/on-whose-behalf.md`.
 Without them, nothing changes: an attended session files the work under the person at the keyboard.
 
 ### Nothing leaves your instance
@@ -410,14 +412,15 @@ the large markdown bodies of briefs, specs and tickets as local files:
 cs search "seller onboarding"
 cs brief 12
 cs spec 42
-cs content pull feature-spec 42     # → .tmp/galy-content/feature-spec/42.md
+cs content pull feature-spec 42     # → .tmp/castalie-content/feature-spec/42.md
 cs content push feature-spec 42     # after you edit the buffer
 cs content push bug 7               # a ticket: sections description and technical-detail
 cs on-behalf                        # unattended or not, and the workspace's robot account
 cs codex                            # project the kit into .agents/ + .codex/ for a Codex session
 ```
 
-It reads its config from `GALY_ENDPOINT` / `GALY_TOKEN` or `.cs/config.json`. Like the tools, it only
+It reads its config from `CASTALIE_ENDPOINT` / `CASTALIE_TOKEN` or `.cs/config.json` (the variables and
+the folder the kit used under its former names are still read, after these). Like the tools, it only
 carries work items and their text — never your source.
 
 ## More than one harness
@@ -427,7 +430,7 @@ and tests it — its maturity catalogue carries no vendor name, so a client who 
 their score — and this repository is the side the client actually installs, so it has to hold the
 same line.
 
-`galy/skills/`, `galy/instructions/` and `galy/agents/` are the source of truth. A projection turns
+`cs/skills/`, `cs/instructions/` and `cs/agents/` are the source of truth. A projection turns
 them into the layouts Codex reads.
 
 ### From your own repository
@@ -464,13 +467,13 @@ node scripts/build-codex.mjs --verify   # assert every reference resolves, write
 node scripts/build-codex.mjs --check    # --verify, plus drift against your own built projection
 ```
 
-That script is a **caller, not a copy**: it runs `galy/bin/build-codex.mjs`, the same file the
-installed kit carries, and supplies only the two defaults that are true here — `galy/` as the
+That script is a **caller, not a copy**: it runs `cs/bin/build-codex.mjs`, the same file the
+installed kit carries, and supplies only the two defaults that are true here — `cs/` as the
 plugin root, this repository as the destination. One implementation, so the client's path and ours
 cannot drift.
 
 Until 21 September 2026 the implementation was the script, and `scripts/` is repository-only: the
-plugin cache mirrors `galy/` alone. The generator had already been taught to run from a host
+plugin cache mirrors `cs/` alone. The generator had already been taught to run from a host
 repository and was still out of reach of everyone who installed the kit rather than cloning it — a
 command nobody can type is the same defect as a path that resolves to nothing, one floor up.
 
@@ -497,7 +500,7 @@ Three properties make it trustworthy rather than decorative:
   `${CLAUDE_PLUGIN_ROOT}` names under Codex, so the projection reproduces the plugin root's shape
   one level down and the same relative path opens the same file. CI asserts it on every push:
   every `${CLAUDE_PLUGIN_ROOT}/<path>` a body spells must exist in the tree just built. Until
-  21 September 2026 only `galy/skills/` was projected, so eighteen references across nine skills
+  21 September 2026 only `cs/skills/` was projected, so eighteen references across nine skills
   and one agent pointed at nothing — a Codex tab running `feature-implement` was sent to read its
   acceptance criteria from a path that did not exist, and went on without them, green throughout.
 
@@ -535,7 +538,7 @@ The output is gitignored. It is a build artifact, not a second copy to maintain.
 
 ```
 .claude-plugin/marketplace.json   # marketplace entry
-galy/
+cs/
   .claude-plugin/plugin.json      # plugin manifest
   hooks/hooks.json                # the guard on CLAUDE.md, the work in hand (taken on a write, stamped with its session, sorted by owner at every start), two Stop hooks (work recorded, slot given back), and the pane's module
   hooks/where/                    # the pane beside the transcript: its rows are pure functions, its bind is register.ts

@@ -25,8 +25,8 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 
-const STATUSLINE = fileURLToPath(new URL("../galy/statusline/bg-statusline.mjs", import.meta.url));
-const HOOK = fileURLToPath(new URL("../galy/hooks/bg-work.mjs", import.meta.url));
+const STATUSLINE = fileURLToPath(new URL("../cs/statusline/bg-statusline.mjs", import.meta.url));
+const HOOK = fileURLToPath(new URL("../cs/hooks/bg-work.mjs", import.meta.url));
 
 const BENCH = mkdtempSync(join(tmpdir(), "bg-statusline-check-"));
 const SCRATCH = join(BENCH, "temp");
@@ -46,7 +46,7 @@ mkdirSync(CACHE_DIR, { recursive: true });
 const key = createHash("sha1").update(BASE).digest("hex").slice(0, 12);
 writeFileSync(join(CACHE_DIR, `catalog-${key}.json`), JSON.stringify({
   base: BASE,
-  specs: { 11: { title: "Profil : identité récoltée", brief: 32 }, 9: { title: "Le vocal passe sous pavillon Galy", brief: 32 } },
+  specs: { 11: { title: "Profil : identité récoltée", brief: 32 }, 9: { title: "Le vocal passe sous pavillon Castalie", brief: 32 } },
   briefs: { 32: { title: "La porte d'un locataire s'ouvre en clair", objective: 5 } },
   objectives: { 5: { title: "Croissance : dix locataires par mois" } },
 }));

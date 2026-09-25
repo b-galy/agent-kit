@@ -5,7 +5,7 @@
   "type": "module",
   "private": false,
   "bin": {
-    "galy-setup": "./setup/setup.mjs"
+    "castalie-setup": "./setup/setup.mjs"
   },
   "files": [
     "setup/setup.mjs"

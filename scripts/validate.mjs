@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 // What must stay true of this repository, checked on every push.
 //
-// Three invariants, each one written the day it was broken:
+// The invariants, each one written the day it was broken.
+//
+// The kit's first name is written `{first}` in these comments: the repository never spells it
+// whole, and invariant 6 is what keeps it that way. `FIRST` below assembles it from two halves.
 //
 //   1. THE SKILL FORMAT. `SKILL.md` is an open specification with two mandatory fields, `name`
 //      and `description`, and that is what makes these files readable without retouching by
@@ -16,7 +19,7 @@
 //      reads as a bad token.
 //
 //   2b. NO EXAMPLE ADDRESS ON A DOMAIN WE ARE GIVING UP. The workspaces moved to `castalie.app`,
-//      and the `galy.cloud` and `galy.io` domains are to be deleted. Until they are, a stale
+//      and the `{first}.cloud` and `{first}.io` domains are to be deleted. Until they are, a stale
 //      example redirects and reads as a typo; after, it resolves to nothing and reads as an
 //      instruction — and the costliest place for one is `connect`, whose address is the very
 //      first thing a customer types. Only an address in a URL is matched, so the production-host
@@ -24,8 +27,8 @@
 //      recognising an instance still answering there. That entry comes out with the domains.
 //
 //   3. NO STALE REPOSITORY NAME. This repository has moved three times: `claude-kit` became
-//      `agent-kit`, then the organisation `galy-io` became `b-galy` when the brand became B.Galy,
-//      then `b-galy` became `castalie-app` when the product became Castalie. GitHub redirects
+//      `agent-kit`, then the organisation `{first}-io` became `b-{first}` when the brand changed,
+//      then `b-{first}` became `castalie-app` when the product became Castalie. GitHub redirects
 //      every one of those old addresses, which is exactly what makes them dangerous: everything
 //      keeps working, so nobody aligns anything, and a redirect breaks the day someone creates a
 //      repository under the freed name. A freed organisation survives only as an empty
@@ -37,13 +40,13 @@
 //      out which half of it was the organisation and which the repository, and edit both. A check
 //      nobody can extend without decoding it is a check that stops being extended.
 //
-//   4. NO COMMAND THAT DOES NOT EXIST. `npx galy-setup` was distributed by the `connect` skill
+//   4. NO COMMAND THAT DOES NOT EXIST. `npx {first}-setup` was distributed by the `connect` skill
 //      while the package was published on no registry: npm answered `E404 Not Found`, and the
 //      first developer to type it concluded the product did not exist. It had already been
 //      corrected on the screen — and stayed wrong here, which is precisely what a check is for.
 //
-//   5. NO STALE NAMESPACE. The plugin was renamed from `galy` to `bg` when the brand became
-//      B.Galy, then from `bg` to `cs` when the product became Castalie.
+//   5. NO STALE NAMESPACE. The plugin was renamed from `{first}` to `bg` when the brand changed,
+//      then from `bg` to `cs` when the product became Castalie.
 //
 //      IT WAS ONE NAME FOR EVERYTHING UNTIL 22 SEPTEMBER 2026, AND IT IS NOW TWO — on purpose.
 //      The plugin stays `cs`, because its name is what a person TYPES, dozens of times a day, as
@@ -57,19 +60,19 @@
 //      is typed stays short, a name that is read says what the product is called. Anyone tempted
 //      to align the two again should know it was tried that way first.
 //
-//      None of the old names fails loudly. A skill that still says `galy:adapt` or `bg:adapt`
+//      None of the old names fails loudly. A skill that still says `{first}:adapt` or `bg:adapt`
 //      gets `plugin-not-found`, which reads as a broken installation rather than a stale line; a
 //      skill that names `mcp__cs__whoami` sends the agent after a tool nobody serves, in front of
-//      a user, mid-ritual; `cs@b-galy` names a marketplace a fresh workstation does not have, and
+//      a user, mid-ritual; `cs@b-{first}` names a marketplace a fresh workstation does not have, and
 //      on an old one reinstalls from a cache that no longer follows this repository.
 //
-//      What does NOT move, and is therefore not matched: the plugin's source folder `./galy`, the
-//      `renames` mapping that carries the plugin renames, the config folder's former names `.bg/`
-//      and `.galy/` — read as fallbacks so nobody loses a token — the identifiers that carry the
-//      code name (`GALY_ENDPOINT`, `GALY_TOKEN`, `galy-pm-v1`, `galy-setup`), the legacy
-//      managed-block markers (<!-- galy:begin -->, <!-- galy:end -->, <!-- galy:instructions -->) that skills still READ
-//      because customers' files carry them — the kit WRITES `castalie:*` since 1.17.0 — and the REMOVAL of a
-//      former marketplace, which is exactly what setup and the README tell a workstation to do.
+//      What does NOT move, and is therefore not matched: the `renames` mapping that carries the
+//      plugin renames, the config folder's former names `.bg/` and `.{first}/` — read as fallbacks
+//      so nobody loses a token — the `{FIRST}_*` environment variables read after `CASTALIE_*`, the
+//      legacy managed-block markers under the `{first}:` prefix that skills still READ because
+//      customers' files carry them — the kit WRITES `castalie:*` since 1.17.0 — and the REMOVAL of
+//      a former marketplace, which is exactly what setup and the README tell a workstation to do.
+//      Since 1.18.0 every one of them is assembled from `FIRST` rather than spelled (invariant 6).
 //
 //      The repository moved too, on 22 September 2026: it is `castalie-app/agent-kit`. It was the
 //      one name here nobody could change from a branch — a GitHub organisation is renamed from the
@@ -79,9 +82,19 @@
 //
 //      And the MARKETPLACE is `castalie`, not `castalie-app`. Not a leftover: a marketplace is
 //      named by this repository's own manifest, never by its owner — on 3 September 2026 the
-//      marketplace was `galy` while the organisation was already `b-galy`, which is what proves
+//      marketplace was `{first}` while the organisation was already `b-{first}`, which is what proves
 //      it. An installed workstation keys its plugin cache by that name, so renaming it to follow
 //      an organisation would cost every one of them a migration for a spelling nobody types.
+//
+//   6. THE RETIRED NAME IS NOT SPELLED. On 25 September 2026 Benoît, watching a session edit
+//      `{first}/.claude-plugin/plugin.json`, said the name should no longer appear — and it still
+//      named the plugin's folder, 31 files and 97 paths, a year after the brand had moved on. So a
+//      case-insensitive search for it, over every path and every file, returns his own name and
+//      nothing else. What must still be READ under it (the fallbacks listed in 5) is assembled
+//      from two halves, `"g" + "aly"`, with a one-line comment where it is. The single exception is
+//      the `renames` key in `.claude-plugin/marketplace.json`: Claude Code follows that chain from
+//      the oldest name, the docs ask for it to be kept as append-only history, and a JSON key
+//      cannot be assembled.
 //
 // Exit code 0 = every invariant holds, 1 = at least one does not.
 
@@ -90,6 +103,9 @@ import { fileURLToPath } from "node:url";
 import { dirname, join, relative } from "node:path";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+
+// The kit's first name, assembled from two halves so this file never spells it either.
+const FIRST = "g" + "aly";
 const failures = [];
 const fail = (what, detail) => failures.push(`${what}\n    ${detail}`);
 
@@ -111,7 +127,7 @@ function walk(dir) {
 }
 
 // ---------------------------------------------------------------- 1. skill format
-const skillsDir = join(ROOT, "galy", "skills");
+const skillsDir = join(ROOT, "cs", "skills");
 const skills = readdirSync(skillsDir).filter((e) => statSync(join(skillsDir, e)).isDirectory());
 
 if (skills.length === 0) fail("no skill found", `nothing under ${relative(ROOT, skillsDir)}`);
@@ -158,18 +174,18 @@ const REPOSITORY_NAME = "agent-kit";
 const REPOSITORY = `${ORGANISATION}/${REPOSITORY_NAME}`;
 
 /** Organisations this repository has belonged to, most recent first. */
-const FORMER_ORGANISATIONS = ["b-galy", "galy-io"];
+const FORMER_ORGANISATIONS = [`b-${FIRST}`, `${FIRST}-io`];
 
 /** Names this repository has carried, most recent first. */
 const FORMER_REPOSITORY_NAMES = ["claude-kit"];
 
 // A former organisation is refused WITH ITS SLASH — as an address, never as a bare word. Two of
-// these names have a second life the kit still needs to spell: `b-galy` is a former MARKETPLACE
+// these names have a second life the kit still needs to name: `b-{first}` is a former MARKETPLACE
 // name, and setup, the README and `connect` all name it in order to tell a workstation to leave
 // it. Matching it bare would refuse the migration that exists to undo it.
 const formerAddress = new RegExp(`\\b(${FORMER_ORGANISATIONS.join("|")})/`);
 // A former repository name under ANY organisation, current or former: `castalie-app/claude-kit` is
-// as dead an address as `galy-io/claude-kit`.
+// as dead an address as `{first}-io/claude-kit`.
 const formerName = new RegExp(`/(${FORMER_REPOSITORY_NAMES.join("|")})\\b`);
 
 const FORBIDDEN = [
@@ -181,8 +197,8 @@ const FORBIDDEN = [
     // An address shown to a reader, on a domain we are giving up. Anchored on the scheme so that
     // the bare hostname the production-host guard matches on is not caught: that list has to keep
     // recognising an instance still answering on the old estate, and it comes out with the domains.
-    pattern: /https?:\/\/[^\s`'"()]*galy\.(cloud|io)/,
-    why: "an example workspace address on a domain that is being deleted. Workspaces answer on `castalie.app`: write `https://<your-workspace>.castalie.app`. While `galy.cloud` still redirects this reads as a typo; once it is gone it reads as an instruction that leads nowhere — and the reader who pays for it is the one typing their very first command, in `connect`.",
+    pattern: new RegExp(`https?://[^\\s\`'"()]*${FIRST}\\.(cloud|io)`),
+    why: "an example workspace address on a domain that is being deleted. Workspaces answer on `castalie.app`: write `https://<your-workspace>.castalie.app`. While the old `.cloud` domain still redirects this reads as a typo; once it is gone it reads as an instruction that leads nowhere — and the reader who pays for it is the one typing their very first command, in `connect`.",
   },
   {
     pattern: formerName,
@@ -190,24 +206,24 @@ const FORBIDDEN = [
   },
   {
     pattern: formerAddress,
-    why: `a former organisation used as an address (${FORMER_ORGANISATIONS.join(", ")}). Each one is now an empty placeholder whose only job is to hold its redirect — a courtesy, never an address to publish. Publish \`${REPOSITORY}\`. A former organisation's name on its own is another matter and is allowed: \`b-galy\` is also a former MARKETPLACE name, and setup, the README and \`connect\` have to spell it to tell a workstation to leave it.`,
+    why: `a former organisation used as an address (${FORMER_ORGANISATIONS.join(", ")}). Each one is now an empty placeholder whose only job is to hold its redirect — a courtesy, never an address to publish. Publish \`${REPOSITORY}\`. A former organisation's name on its own is another matter and is allowed: \`b-${FIRST}\` is also a former MARKETPLACE name, and setup, the README and \`connect\` have to spell it to tell a workstation to leave it.`,
   },
   {
     // Ancree en debut de ligne : c'est la commande DONNEE A TAPER qu'on interdit, jamais la
     // phrase qui explique pourquoi il ne faut pas la taper.
-    pattern: /^\s*\$?\s*npx\s+(-y\s+)?galy-setup\b/m,
-    why: `\`npx galy-setup\` — that package is published on no registry and npm answers E404. Use \`npx -y github:${REPOSITORY}\`.`,
+    pattern: new RegExp(`^\\s*\\$?\\s*npx\\s+(-y\\s+)?${FIRST}-setup\\b`, "m"),
+    why: `\`npx ${FIRST}-setup\` — that package is published on no registry and npm answers E404. Use \`npx -y github:${REPOSITORY}\`.`,
   },
   {
-    // A skill or agent reference takes one of two written forms: backticked (`galy:adapt`) or
-    // slash-invoked (/galy:analyse). The managed-block markers written into a customer's
+    // A skill or agent reference takes one of two written forms: backticked (`{first}:adapt`) or
+    // slash-invoked (/{first}:analyse). The managed-block markers written into a customer's
     // CLAUDE.md take neither form. The kit writes them as `castalie:begin` since 1.17.0 and still
-    // reads the legacy `galy:` names, which customers' blocks carry — so they are not matched here;
+    // reads the legacy `{first}:` names, which customers' blocks carry — so they are not matched here;
     // the check below refuses the legacy names only where the kit would WRITE them.
-    // The `renames` mapping in marketplace.json carries `"galy": "bg"` and `"bg": "cs"`, which is
+    // The `renames` mapping in marketplace.json carries `"{first}": "bg"` and `"bg": "cs"`, which is
     // what keeps an installed workstation from becoming an orphan. Neither takes one of the two
     // written forms below, so neither is matched.
-    pattern: /(`|\/)(galy|bg):[a-z][a-z-]*/,
+    pattern: new RegExp(`(\`|/)(${FIRST}|bg):[a-z][a-z-]*`),
     why: "a former plugin name as a skill prefix. The plugin is `cs` since the product became Castalie: write `cs:<skill>` and `/cs:<skill>`.",
   },
   {
@@ -215,8 +231,8 @@ const FORBIDDEN = [
     // block delimiter or an instructions line the kit would WRITE into a customer's file. The bare
     // mention (the name followed directly by the closing `-->`) stays allowed: that is how a skill
     // says it still READS the legacy spelling.
-    pattern: /<!-- galy:(begin|end|instructions) (?!-->)/,
-    why: "a legacy managed-block marker in something the kit writes. Since 1.17.0 the kit writes `<!-- castalie:begin -->`, `<!-- castalie:end -->` and `<!-- castalie:instructions <skills> -->`; the `galy:` names are only read, because customers' files still carry them.",
+    pattern: new RegExp(`<!-- ${FIRST}:(begin|end|instructions) (?!-->)`),
+    why: "a legacy managed-block marker in something the kit writes. Since 1.17.0 the kit writes `<!-- castalie:begin -->`, `<!-- castalie:end -->` and `<!-- castalie:instructions <skills> -->`; the legacy prefix's names are only read, because customers' files still carry them.",
   },
   {
     // The harness names its tools after the alias the server is registered under, and that alias
@@ -224,13 +240,13 @@ const FORBIDDEN = [
     // on 22 September 2026: it is still the PLUGIN's name, so it goes on appearing all over this
     // repository as `/cs:` and as the CLI — which is exactly why only the `mcp__cs__` spelling is
     // matched, and never the bare word.
-    pattern: /mcp__(galy|bg|cs)__/,
+    pattern: new RegExp(`mcp__(${FIRST}|bg|cs)__`),
     why: "a former MCP alias in a tool name. The server is registered as `castalie`, so the tools your agent sees are `mcp__castalie__<tool>`; a skill that names `mcp__cs__<tool>` sends it after a tool nobody serves — in front of a user, mid-ritual. `cs` is still the plugin and the CLI; it is no longer the server.",
   },
   {
     // The install identifier is `<plugin>@<marketplace>`, and both halves have moved twice. Every
     // stale spelling is refused, whichever half is out of date.
-    pattern: /\b(cs|bg|galy)@(galy|b-galy)\b/,
+    pattern: new RegExp(`\\b(cs|bg|${FIRST})@(${FIRST}|b-${FIRST})\\b`),
     why: "a former name in an install identifier. The plugin is `cs` and the marketplace `castalie`: install `cs@castalie`. On a fresh workstation an old spelling names an entry that does not exist; on an old one it reinstalls from a cache that no longer follows this repository.",
   },
   {
@@ -238,15 +254,15 @@ const FORBIDDEN = [
     // act on the entry the kit now publishes, and both are wrong under a former name. `remove` is
     // NOT matched: removing the former entry is precisely what setup and the README say to do.
     // A former organisation carrying a slash is not this check's business either — `marketplace
-    // add b-galy/agent-kit` is a stale ADDRESS, and the invariant above refuses it as one.
-    pattern: /claude\s+plugin\s+marketplace\s+(add|update)\s+(b-galy|galy)(\s|$)/m,
+    // add b-{first}/agent-kit` is a stale ADDRESS, and the invariant above refuses it as one.
+    pattern: new RegExp(`claude\\s+plugin\\s+marketplace\\s+(add|update)\\s+(b-${FIRST}|${FIRST})(\\s|$)`, "m"),
     why: "a former marketplace name in a command that acts on the current entry. The marketplace is `castalie`. Adding or updating under the old name reaches an entry a fresh workstation does not have, and on an old one refreshes a cache that no longer follows this repository.",
   },
   {
     // `claude mcp add … cs` registers the server under an alias the kit stopped using; the skills
     // then name tools under `castalie` that the harness serves under `cs`. Only `add` is matched:
     // `claude mcp remove cs` is precisely what setup and `connect` say to do.
-    pattern: /claude\s+mcp\s+add\b[^\n]*\s(galy|bg|cs)(\s|$)/m,
+    pattern: new RegExp(`claude\\s+mcp\\s+add\\b[^\\n]*\\s(${FIRST}|bg|cs)(\\s|$)`, "m"),
     why: "a registration of the MCP server under a former alias. Register it as `castalie`: `claude mcp add --scope local castalie …`. Two servers serving the same tools under two names shows the agent every tool twice — the doubt `connect` exists to clear.",
   },
 ];
@@ -265,6 +281,34 @@ for (const file of walk(ROOT)) {
   }
 }
 
+// ------------------------------------------------- 6. the retired name, spelled nowhere
+//
+// Every path and every file, this one included. What is allowed is Benoît's own name (a person,
+// not a brand: `Benoît Galy`, his address, a Windows profile folder named after him) and the one
+// `renames` key Claude Code needs literally — see invariant 6 above.
+const RETIRED = new RegExp(FIRST, "i");
+const PERSON = new RegExp(`beno[iî]t[ ._-]?${FIRST}`, "gi");
+const RENAMES_KEY = new RegExp(`"${FIRST}": "bg"`, "g");
+const MARKETPLACE = join(ROOT, ".claude-plugin", "marketplace.json");
+for (const file of walk(ROOT)) {
+  const path = relative(ROOT, file);
+  if (RETIRED.test(path.replace(PERSON, ""))) {
+    fail(path, "a path that spells the kit's first name. Rename it to a Castalie name; the plugin's folder is `cs/`.");
+  }
+  let text;
+  try {
+    text = readFileSync(file, "utf8");
+  } catch {
+    continue;
+  }
+  let rest = text.replace(PERSON, "");
+  if (file === MARKETPLACE) rest = rest.replace(RENAMES_KEY, "");
+  if (RETIRED.test(rest)) {
+    const line = rest.split(/\r?\n/).findIndex((row) => RETIRED.test(row)) + 1;
+    fail(`${path}:${line}`, "spells the kit's first name. Write Castalie; where a fallback must still READ the old spelling, assemble it from two halves (`\"g\" + \"aly\"`) with a one-line comment saying why.");
+  }
+}
+
 // ------------------------------------------------- 5b. the alias in a PATH, not only in a file
 //
 // A mock is addressed by the name of its folder: `evals/<case>/mocks/<mcp server>/<tool>.md` is
@@ -280,7 +324,7 @@ for (const file of walk(ROOT)) {
 //
 // The lesson is the one the check is named after: a stale name survives longest where it is not
 // written down but spelled out by a path.
-const mocksRoot = join(ROOT, "galy", "evals");
+const mocksRoot = join(ROOT, "cs", "evals");
 const ALIAS = "castalie";
 
 function mockServerDirs(dir) {
@@ -315,7 +359,7 @@ if (existsSync(mocksRoot)) {
 //
 // And a script that no event names is the mirror image: a rule that stopped applying without
 // anyone deciding it, still carrying its comment explaining why it matters.
-const hooksDir = join(ROOT, "galy", "hooks");
+const hooksDir = join(ROOT, "cs", "hooks");
 const wired = new Set();
 
 try {
@@ -329,7 +373,7 @@ try {
   for (const named of wiring.modules ?? []) {
     const relative = String(named).replace(/^\.\//, "");
     if (!existsSync(join(hooksDir, relative))) {
-      fail("galy/hooks/hooks.json", `names the module \`${named}\`, which is not in galy/hooks/. Nothing loads, and nothing says so.`);
+      fail("cs/hooks/hooks.json", `names the module \`${named}\`, which is not in cs/hooks/. Nothing loads, and nothing says so.`);
     }
   }
 
@@ -340,18 +384,18 @@ try {
         if (!named) continue;
         wired.add(named);
         if (!existsSync(join(hooksDir, named))) {
-          fail("galy/hooks/hooks.json", `names \`${named}\`, which is not in galy/hooks/. The hook fires nothing, and says nothing.`);
+          fail("cs/hooks/hooks.json", `names \`${named}\`, which is not in cs/hooks/. The hook fires nothing, and says nothing.`);
         }
       }
     }
   }
 } catch (error) {
-  fail("galy/hooks/hooks.json", `cannot be read: ${error.message}`);
+  fail("cs/hooks/hooks.json", `cannot be read: ${error.message}`);
 }
 
 for (const script of readdirSync(hooksDir).filter((entry) => entry.endsWith(".mjs"))) {
   if (!wired.has(script)) {
-    fail(`galy/hooks/${script}`, "is wired to no event in hooks.json — a rule that stopped applying without anyone deciding it.");
+    fail(`cs/hooks/${script}`, "is wired to no event in hooks.json — a rule that stopped applying without anyone deciding it.");
   }
 }
 

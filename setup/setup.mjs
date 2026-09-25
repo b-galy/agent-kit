@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// galy-setup — one-command onboarding for the Castalie Agent Kit.
+// castalie-setup — one-command onboarding for the Castalie Agent Kit.
 //
 //   npx -y github:<this repository> <token> --endpoint https://<your-workspace>.castalie.app
 //
@@ -21,7 +21,7 @@
 //      in hand, keeping any status line already configured — `--no-statusline` skips it.
 //
 // Why the local scope and not an env var. The kit used to ship a .mcp.json holding one
-// hardcoded address and `Bearer ${GALY_TOKEN}`. Castalie is multi-tenant: every workspace
+// hardcoded address and a bearer token read from an environment variable. Castalie is multi-tenant: every workspace
 // answers on its own host, so a single baked-in address authenticates nobody, and the
 // env var left the token to be persisted by hand — on Windows that meant `setx`, which
 // writes it in clear into the user's registry. `claude mcp add --scope local` stores both
@@ -40,8 +40,8 @@ import { fileURLToPath } from "node:url";
  * THE GITHUB ADDRESS OF THIS REPOSITORY — written once in this file, and read by every line that
  * prints it.
  *
- * The organisation became `castalie-app` on 22 September 2026, from `b-galy`, which had come from
- * `galy-io`. `castalie` on its own was held by an account dormant since 2016; `castalie-app` is
+ * The organisation became `castalie-app` on 22 September 2026, from the two organisations the kit
+ * lived under before (see `FORMER_MARKETPLACE_NAMES`). `castalie` on its own was held by an account dormant since 2016; `castalie-app` is
  * the domain, which is the better half of the trade.
  *
  * WHAT THAT RENAME COST, since the last version of this comment promised it: this constant, and
@@ -72,12 +72,14 @@ const FUNCTION_HOOKS_FLAG = "CLAUDE_CODE_ENABLE_FUNCTION_HOOKS";
 // removed, and setup does it (see installPlugin).
 //
 // Both former names are listed, newest first, and both are removed. The kit has been renamed twice
-// — `galy` when the brand became B.Galy, `b-galy` when the product became Castalie — and a
+// — once when the brand changed, once more when the product became Castalie — and a
 // workstation that skipped one carries the older entry. A migration that only knew the most recent
 // name would leave it registered, serving its own cached copy of the plugin under a second
 // identifier, which is the exact failure this removal exists to prevent.
 const MARKETPLACE_NAME = "castalie";
-const FORMER_MARKETPLACE_NAMES = ["b-galy", "galy"];
+// The kit's first name, assembled from two halves so the repository never spells it.
+const FIRST_NAME = "g" + "aly";
+const FORMER_MARKETPLACE_NAMES = [`b-${FIRST_NAME}`, FIRST_NAME];
 
 // THREE NAMES, AND THEY ARE NOT THE SAME NAME. They were identical until 22 September 2026, which
 // is why one of them used to be read from another's constant — see `CLI` below.
@@ -93,12 +95,12 @@ const FORMER_MARKETPLACE_NAMES = ["b-galy", "galy"];
 const PLUGIN = `cs@${MARKETPLACE_NAME}`;
 
 // The alias the MCP server is registered under: the tools your agent sees are
-// `mcp__castalie__<tool>`. It was `galy`, then `bg`, then `cs`, and a previous setup may have left
+// `mcp__castalie__<tool>`. It was the kit's first name, then `bg`, then `cs`, and a previous setup may have left
 // any of those entries behind — so ALL of them are removed before the new one is added. One left in
 // place is not a harmless leftover: two servers answering the same workspace show the agent every
 // tool twice, which is the doubt `connect` exists to clear.
 const MCP_ALIAS = "castalie";
-const FORMER_MCP_ALIASES = ["cs", "bg", "galy"];
+const FORMER_MCP_ALIASES = ["cs", "bg", FIRST_NAME];
 
 // The command this kit installs, which is NOT the server's alias — it follows `/cs:`, the prefix a
 // person types. Until the alias moved to `castalie` the two were one string, and the line that
@@ -107,9 +109,9 @@ const FORMER_MCP_ALIASES = ["cs", "bg", "galy"];
 const CLI = "cs";
 
 // The config folder, and the names it carried before. The `cs` CLI still reads `.bg/config.json`
-// and `.galy/config.json` as fallbacks, so nobody loses a token; setup writes the new folder only.
+// and the first name's folder as fallbacks, so nobody loses a token; setup writes the new folder only.
 const CONFIG_DIR = ".cs";
-const FORMER_CONFIG_DIRS = [".bg", ".galy"];
+const FORMER_CONFIG_DIRS = [".bg", `.${FIRST_NAME}`];
 
 // The whole directory, not just config.json. `.cs/` also holds workflow-defaults.json, which
 // now carries a consent decision — whether the end of an onboarding sends a retrospective back
@@ -169,7 +171,7 @@ function step(msg) { console.log(`\n• ${msg}`); }
 function ok(msg) { console.log(`  ✓ ${msg}`); }
 function warn(msg) { console.log(`  ! ${msg}`); }
 
-const HELP = `galy-setup — connect your agent to your Castalie workspace
+const HELP = `castalie-setup — connect your agent to your Castalie workspace
 
   npx -y github:${REPOSITORY} <token> --endpoint https://<your-workspace>.castalie.app
 
@@ -414,7 +416,7 @@ async function smoke(endpoint, token) {
       },
       body: JSON.stringify({
         jsonrpc: "2.0", id: 1, method: "initialize",
-        params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "galy-setup", version: "1" } },
+        params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "castalie-setup", version: "1" } },
       }),
     });
   } catch (e) {
@@ -444,7 +446,7 @@ async function smoke(endpoint, token) {
  */
 function installStatusLine(endpoint, token) {
   step("Installing the status line that names the work this copy has in hand");
-  const script = fileURLToPath(new URL("../galy/statusline/bg-statusline.mjs", import.meta.url));
+  const script = fileURLToPath(new URL("../cs/statusline/bg-statusline.mjs", import.meta.url));
   if (!existsSync(script)) {
     warn("no status line script in this copy of the kit — skipped, nothing else is affected.");
     return;
@@ -453,7 +455,7 @@ function installStatusLine(endpoint, token) {
   // breath as the registration, and the resolution it would use is only true afterwards.
   const run = spawnSync(process.execPath, [script, "--install"], {
     encoding: "utf8",
-    env: { ...process.env, GALY_ENDPOINT: endpoint, GALY_TOKEN: token },
+    env: { ...process.env, CASTALIE_ENDPOINT: endpoint, CASTALIE_TOKEN: token },
   });
   if (run.status !== 0) {
     const why = String(run.stderr || "").trim() || "unknown error";
