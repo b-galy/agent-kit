@@ -38,7 +38,9 @@ synced by the CLI.
    read is corrected phase by phase by the implementer, who then owns a design they did not choose.
    **Nothing names you, or there is no such line: say nothing and carry on.**
 3. **Design.** Weigh **at least two** realistic options; pick the durable one (implementation speed is
-   never a factor — see the repo's own conventions). Write the one you rejected and the criterion that
+   never a factor — see the repo's own conventions). Retire the old path in the phase that replaces
+   it; a component kept alive "while it settles" stays only when a measured risk needs it, and
+   monitoring covers the rest. Write the one you rejected and the criterion that
    separated them into the `solution` field: an option nobody wrote down is proposed again by the next
    reader, and the same argument is had twice, the second time without the facts. If a decision is
    genuinely contested, invoke `contrarian` before committing.
