@@ -52,7 +52,7 @@
           },
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/reply-format.mjs\"",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/shared-conventions.mjs\"",
             "timeout": 5
           }
         ]

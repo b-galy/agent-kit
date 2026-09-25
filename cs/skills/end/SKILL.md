@@ -36,4 +36,4 @@ Follow the ship-celebration variant in `${CLAUDE_PLUGIN_ROOT}/instructions/deliv
 ## Hand back
 
 Close the turn on the reply and the verdict of
-`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.
+`${CLAUDE_PLUGIN_ROOT}/instructions/shared-conventions.md`.

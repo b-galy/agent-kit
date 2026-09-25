@@ -124,7 +124,7 @@ claude plugin marketplace update castalie
 **The kit says nothing at the opening of a session.** It puts no line in front of you. Open your
 agent in a connected repository and you get your agent, on the subject you came for.
 
-It hands your agent one thing, silently: **how a turn ends** (`cs/instructions/reply-format.md`) — a
+It hands your agent one thing, silently: **the kit's shared conventions** (`cs/instructions/shared-conventions.md`), the first of which is how a turn ends — a
 short reply, then one verdict. That convention used to reach only the turns a skill closed, so every
 repository of a team carried its own copy in its CLAUDE.md, and the copies drifted. Now it is in
 force in every turn of every repository the kit is installed in, and a correction reaches all of

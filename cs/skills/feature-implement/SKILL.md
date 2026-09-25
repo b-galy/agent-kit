@@ -98,10 +98,10 @@ silently changing a required outcome or treating an unverified case as complete.
 
 ## Report
 
-Read `${CLAUDE_PLUGIN_ROOT}/instructions/delivery-report.md` and `reply-format.md` now, not from
+Read `${CLAUDE_PLUGIN_ROOT}/instructions/delivery-report.md` and `shared-conventions.md` now, not from
 memory, then deliver the **ship — spec** variant.
 
 ## Hand back
 
 Close the turn on the reply and the verdict of
-`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.
+`${CLAUDE_PLUGIN_ROOT}/instructions/shared-conventions.md`.
