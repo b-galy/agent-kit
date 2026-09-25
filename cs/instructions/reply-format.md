@@ -72,6 +72,13 @@ whole mechanism: the terminal draws it as a vertical bar, and nothing else has t
   **no triads**, and **no final summary** that repeats what the bullets said.
 - **Bold on three words at most**, where it is used at all.
 
+## Work you hand off
+
+**What you delegate, you follow.** Parallel work goes to a background sub-agent, in a working
+copy of its own when it writes, and its result comes back to you; the turn then waits on it by
+name. A tab or a window the person has to watch hands the follow-up to them: open one only when
+they ask for it.
+
 ## What this is not
 
 - Not a progress log: a turn that did one thing says one thing.
