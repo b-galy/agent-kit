@@ -64,6 +64,8 @@ buffer synced by the CLI, never passed as a tool argument.
 5. **Write the body via the CLI.** `cs content pull feature-brief <brief_id>` to seed the buffer,
    edit `.tmp/castalie-content/feature-brief/<brief_id>.md` (fields `problem`, `vision`, `executive` —
    executive ≤ 375 words, readable without internal jargon), then `cs content push feature-brief <brief_id>`.
+   A diagram, an interactive illustration or a screenshot goes in these same fields — `${CLAUDE_PLUGIN_ROOT}/instructions/rich-content.md`
+   says which kind renders in which field.
 6. **User stories** (P0 first): `mcp__castalie__feature_brief_add_user_story(briefId, persona, action, benefit, priority)`.
 7. **Business success criteria:** a brief carries no acceptance test of its own — that verb belongs
    to specs. Capture measurable outcomes as **business follow-up checks** instead —

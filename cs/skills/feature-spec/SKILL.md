@@ -61,11 +61,15 @@ synced by the CLI.
    Nothing matches →
    `mcp__castalie__feature_spec_create(featureBriefId=<briefId>, title, scope, category, initialEstimateHours?)`
    → capture `spec_id`. Write the body via `cs content pull feature-spec <spec_id>`, edit the buffer
-   (fields `executive`, `problem`, `solution`), `cs content push feature-spec <spec_id>`.
+   (fields `executive`, `problem`, `solution`), `cs content push feature-spec <spec_id>`. A diagram, an
+   interactive illustration or a screenshot goes in these fields — `${CLAUDE_PLUGIN_ROOT}/instructions/rich-content.md` says which kind
+   renders where.
 5. **Phases.** One `mcp__castalie__feature_spec_add_phase(specId, title, objectiveMd, actionPlanMd,
    validationCriterionMd, estimateHours)` per phase — cut at natural seams (layers, page sets,
    independent modules), each a coherent unit an implementer can finish and verify. Store its observable
    completion criterion and case table in `validationCriterionMd`; no separate database structure.
+   Only `objectiveMd` shows on the sheet: the plan and the criterion are read by the implementer, never
+   by a person, so what a reviewer must see goes in the objective or the spec's `solution`.
    **Then say where the phases converge, in the first phase's plan.** A phase that reaches the default
    branch leaves the product in the state it left it, and on a chain where merging ships, that state is
    what customers get: when you would not show it, the phases land on an integration branch and one
