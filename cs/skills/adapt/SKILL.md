@@ -130,8 +130,8 @@ on n'y ajoute rien.
 Three properties, each load-bearing:
 
 - **Delimited**, so a later pass updates it without touching a word the team wrote. The markers
-  are `castalie:begin` and `castalie:end`. A block written before 1.17.0 carries the same markers under the legacy prefix
-  `host-instructions.md` defines (its `begin`, `end` and, on its lines, `instructions`): a later pass finds the block
+  are `castalie:begin` and `castalie:end`. A block written before 1.17.0 carries the same markers under the legacy prefix — `g` followed by `aly`, one word, as
+  `host-instructions.md` defines it (its `begin`, `end` and, on its lines, `instructions`): a later pass finds the block
   under either name, and when it rewrites it, it writes the `castalie:` markers in their place —
   the one moment a legacy marker is renamed, inside a pull request the team reviews. Never write
   the legacy names into a new block.

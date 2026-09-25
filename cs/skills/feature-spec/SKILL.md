@@ -32,7 +32,7 @@ synced by the CLI.
    machine — Castalie sees none of it. When the problem lives in a running system, observe that system
    first: a cause the plan depends on is established before writing, never scheduled as a phase.
    **Read the host's own rules first**, following `${CLAUDE_PLUGIN_ROOT}/instructions/host-instructions.md`:
-   the lines carrying `<!-- castalie:instructions -->` (or the same marker under the legacy prefix `host-instructions.md` defines) in the root instruction file name the files a skill
+   the lines carrying `<!-- castalie:instructions -->` (or the same marker under the legacy prefix — `g` followed by `aly`, one word, as `host-instructions.md` defines it) in the root instruction file name the files a skill
    must open, and a marker naming `feature-spec` is addressed to you — their conventions, the writes
    that cost real data, how long a branch of theirs may live. A plan written against conventions nobody
    read is corrected phase by phase by the implementer, who then owns a design they did not choose.

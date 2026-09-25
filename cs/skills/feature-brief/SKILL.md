@@ -39,7 +39,7 @@ buffer synced by the CLI, never passed as a tool argument.
    objective has no reason to exist: refuse to create one without it.
 2. **Read who this repository already writes for**, following
    `${CLAUDE_PLUGIN_ROOT}/instructions/host-instructions.md`: the lines carrying
-   `<!-- castalie:instructions -->` (or the same marker under the legacy prefix `host-instructions.md` defines) in the root instruction file name the files a skill must open, and a
+   `<!-- castalie:instructions -->` (or the same marker under the legacy prefix — `g` followed by `aly`, one word, as `host-instructions.md` defines it) in the root instruction file name the files a skill must open, and a
    marker naming `feature-brief` is addressed to you — their personas, their vocabulary, the customers
    they do not serve. **The story's persona is one of theirs**, never one invented at the moment of
    writing it: a brief framed for an average user gets a feature an average user does not buy.

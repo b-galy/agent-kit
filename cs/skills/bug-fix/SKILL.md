@@ -54,7 +54,7 @@ bug, and it follows the order below.
 
 **Read the host's local rules before you diagnose**, following
 `${CLAUDE_PLUGIN_ROOT}/instructions/host-instructions.md`: in the root instruction file, the lines
-carrying `<!-- castalie:instructions -->` (or the same marker under the legacy prefix `host-instructions.md` defines) name the files a skill must open, and a marker naming
+carrying `<!-- castalie:instructions -->` (or the same marker under the legacy prefix — `g` followed by `aly`, one word, as `host-instructions.md` defines it) name the files a skill must open, and a marker naming
 `bug-fix` is addressed to you. Their monitoring, their replica, the query that says what the
 production actually did — that is the half of a diagnosis nobody else can write for you, and it
 lives where they put it, not in the root file.
