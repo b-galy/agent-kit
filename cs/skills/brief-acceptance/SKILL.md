@@ -82,4 +82,4 @@ The detail lives on the page, where the verdicts are.
 
 ## Hand back
 
-Close the turn on the reply and the verdict of `${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.
+Close the turn on the reply and the verdict of `${CLAUDE_PLUGIN_ROOT}/instructions/shared-conventions.md`.

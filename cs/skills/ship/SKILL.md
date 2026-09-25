@@ -46,7 +46,7 @@ displays; visual evidence goes where `${CLAUDE_PLUGIN_ROOT}/instructions/rich-co
 4. **Mark the PR ready.** Confidence high and 0 blockers → mark it ready for review. Apply the
    `ship`/`auto_ship` default (see `${CLAUDE_PLUGIN_ROOT}/instructions/workflow-defaults.md`):
    `confident` + high confidence + low risk → finish hands-off; otherwise the human gate fires.
-5. **Report.** Read `${CLAUDE_PLUGIN_ROOT}/instructions/delivery-report.md` and `reply-format.md` now,
+5. **Report.** Read `${CLAUDE_PLUGIN_ROOT}/instructions/delivery-report.md` and `shared-conventions.md` now,
    not from memory. Print the PR link, the panel outcome (N found / M fixed, rounds), and the naked verdict.
 
 ## Extension point — merge and release (not done here)
@@ -97,4 +97,4 @@ any of them is set to.
 ## Hand back
 
 Close the turn on the reply and the verdict of
-`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.
+`${CLAUDE_PLUGIN_ROOT}/instructions/shared-conventions.md`.

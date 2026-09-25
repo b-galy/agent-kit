@@ -54,4 +54,4 @@ authorship pride finds the flaw the thread is invested in not seeing.
 ## Hand back
 
 Close the turn on the reply and the verdict of
-`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.
+`${CLAUDE_PLUGIN_ROOT}/instructions/shared-conventions.md`.

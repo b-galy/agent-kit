@@ -43,4 +43,4 @@ objectives or key results. The output is your analysis, in the user's language.
 ## Hand back
 
 Close the turn on the reply and the verdict of
-`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.
+`${CLAUDE_PLUGIN_ROOT}/instructions/shared-conventions.md`.

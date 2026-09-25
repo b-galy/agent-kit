@@ -1,14 +1,17 @@
-# How a turn ends — a short reply, then one verdict
+# Shared conventions — in force in every session of every project that uses Castalie
 
-The shared convention for **how every skill of the kit speaks to the user and hands back**. Every
-skill that ends a turn in front of a person reads it and closes on it; a skill that only runs under
-another one (`retro`) inherits its caller's. And it is in force outside any skill too: the `SessionStart` hook
-`hooks/reply-format.mjs` hands the sections below to every session, so a host repository carries
-no copy of these rules — at most a line in its CLAUDE.md saying they live here. It governs the shape of the hand-back, not the content
-of a delivery report (`delivery-report.md`), which keeps its own form above the verdict.
+The rules **every project that uses the kit shares**, whatever its host repository says. The
+`SessionStart` hook `hooks/shared-conventions.mjs` hands the sections below to every session, at
+its start and after a compaction, so a host repository carries no copy of them — at most a line in
+its CLAUDE.md saying they live here. A rule that must hold in every workspace goes here; a rule for
+one kind of work goes in the skill that does it. A correction here reaches every project at the
+next version.
 
-A team that reads twenty hand-backs a day stops reading the ones it has to decode. Two sessions
-ending a turn two different ways cost more than either shape would have.
+The first of them is how a turn ends: every skill that ends a turn in front of a person closes on
+it; a skill that only runs under another one (`retro`) inherits its caller's. It governs the shape
+of the hand-back, not the content of a delivery report (`delivery-report.md`), which keeps its own
+form above the verdict. A team that reads twenty hand-backs a day stops reading the ones it has to
+decode; two sessions ending a turn two different ways cost more than either shape would have.
 
 ## The two rules, verbatim
 
@@ -72,7 +75,14 @@ whole mechanism: the terminal draws it as a vertical bar, and nothing else has t
   **no triads**, and **no final summary** that repeats what the bullets said.
 - **Bold on three words at most**, where it is used at all.
 
-## What this is not
+## Work you hand off
+
+**What you delegate, you follow.** Parallel work goes to a background sub-agent, in a working
+copy of its own when it writes, and its result comes back to you; the turn then waits on it by
+name. A tab or a window the person has to watch hands the follow-up to them: open one only when
+they ask for it.
+
+## What the hand-back is not
 
 - Not a progress log: a turn that did one thing says one thing.
 - Not a place for evidence: a command, a query or a diff belongs where the skill already puts it.

@@ -48,4 +48,4 @@ business "why" on top, the naked verdict, the next check date (or "technical che
 ## Hand back
 
 Close the turn on the reply and the verdict of
-`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.
+`${CLAUDE_PLUGIN_ROOT}/instructions/shared-conventions.md`.

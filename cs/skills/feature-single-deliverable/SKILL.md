@@ -134,4 +134,4 @@ brief's link beside the spec's: this is the one journey where a reader has never
 ## Hand back
 
 Close the turn on the reply and the verdict of
-`${CLAUDE_PLUGIN_ROOT}/instructions/reply-format.md`.
+`${CLAUDE_PLUGIN_ROOT}/instructions/shared-conventions.md`.
