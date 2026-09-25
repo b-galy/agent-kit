@@ -1355,7 +1355,7 @@
     {
       "name": "feature_spec_add_phase",
       "kind": "write",
-      "description": "Add an implementation phase to a spec (title + plan + estimate).",
+      "description": "Add an implementation phase to a spec (title + plan + estimate). Only objectiveMd is displayed on the sheet; actionPlanMd and validationCriterionMd are read by agents only (instructions/rich-content.md).",
       "params": [
         {
           "name": "specId",
@@ -1396,7 +1396,7 @@
     {
       "name": "feature_spec_update_phase",
       "kind": "write",
-      "description": "Edit an existing phase (amend/correct after creation). Pass null to leave a field unchanged; empty string clears a markdown field. Use feature_spec_set_phase_status for status.",
+      "description": "Edit an existing phase (amend/correct after creation). Pass null to leave a field unchanged; empty string clears a markdown field. Use feature_spec_set_phase_status for status. Only objectiveMd is displayed on the sheet; actionPlanMd and validationCriterionMd are read by agents only (instructions/rich-content.md).",
       "params": [
         {
           "name": "phaseId",

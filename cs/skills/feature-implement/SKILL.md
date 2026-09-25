@@ -57,6 +57,8 @@ watchdog never fires — ideal.
      conventions. Cut PRs at natural seams; a small spec is a single PR.
    - Persist test references and observed evidence in the phase's coverage cells through
      `mcp__castalie__feature_spec_update_phase(phaseId, validationCriterionMd=...)`, preserving expected outcomes.
+     No screen displays that field: a screenshot or a diagram a person must see goes where
+     `${CLAUDE_PLUGIN_ROOT}/instructions/rich-content.md` says it renders.
    - Re-read the phase plan; if the implementation deviated, record it via
      `mcp__castalie__feature_spec_update_phase(phaseId, actionPlanMd=<updated with a "deviation" note>)` —
      never silence a deviation.

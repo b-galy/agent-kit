@@ -23,7 +23,8 @@ do not create a spec or a second test suite for an unlinked change. Give the rev
 expectations and test references alongside the diff, so it can challenge missing or weakened coverage.
 After review fixes, verify the affected cases on the delivered commit. An unverified required case
 prevents PR ready; report local-only coverage separately from actual CI selection. Keep the detailed
-reconciliation in QA/PR evidence and update the linked phase's coverage cells.
+reconciliation in QA/PR evidence and update the linked phase's coverage cells — which no screen
+displays; visual evidence goes where `${CLAUDE_PLUGIN_ROOT}/instructions/rich-content.md` says it renders.
 
 1. **Stage + commit.** Review the diff; write a clear commit message in the repo's convention. Branch if
    you are on the default branch.
