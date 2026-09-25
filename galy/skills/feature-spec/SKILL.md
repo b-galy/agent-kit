@@ -29,7 +29,8 @@ synced by the CLI.
    `mcp__castalie__strategy_get_objective_breadcrumb`.
 2. **Explore the codebase — locally.** Use Read/Grep/Glob over the client's repository to find where the
    change lands, the existing patterns to follow, the seams to cut phases along. This never leaves the
-   machine — Castalie sees none of it.
+   machine — Castalie sees none of it. When the problem lives in a running system, observe that system
+   first: a cause the plan depends on is established before writing, never scheduled as a phase.
    **Read the host's own rules first**, following `${CLAUDE_PLUGIN_ROOT}/instructions/host-instructions.md`:
    the lines carrying `<!-- castalie:instructions -->` (legacy name `<!-- galy:instructions -->`) in the root instruction file name the files a skill
    must open, and a marker naming `feature-spec` is addressed to you — their conventions, the writes
