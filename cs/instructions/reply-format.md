@@ -2,7 +2,9 @@
 
 The shared convention for **how every skill of the kit speaks to the user and hands back**. Every
 skill that ends a turn in front of a person reads it and closes on it; a skill that only runs under
-another one (`retro`) inherits its caller's. It governs the shape of the hand-back, not the content
+another one (`retro`) inherits its caller's. And it is in force outside any skill too: the `SessionStart` hook
+`hooks/reply-format.mjs` hands the sections below to every session, so a host repository carries
+no copy of these rules — at most a line in its CLAUDE.md saying they live here. It governs the shape of the hand-back, not the content
 of a delivery report (`delivery-report.md`), which keeps its own form above the verdict.
 
 A team that reads twenty hand-backs a day stops reading the ones it has to decode. Two sessions
