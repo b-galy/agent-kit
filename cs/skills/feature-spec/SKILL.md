@@ -61,15 +61,16 @@ synced by the CLI.
    Nothing matches →
    `mcp__castalie__feature_spec_create(featureBriefId=<briefId>, title, scope, category, initialEstimateHours?)`
    → capture `spec_id`. Write the body via `cs content pull feature-spec <spec_id>`, edit the buffer
-   (fields `executive`, `problem`, `solution`), `cs content push feature-spec <spec_id>`. A diagram, an
-   interactive illustration or a screenshot goes in these fields — `${CLAUDE_PLUGIN_ROOT}/instructions/rich-content.md` says which kind
-   renders where.
+   (fields `executive`, `problem`, `solution`), `cs content push feature-spec <spec_id>`. **Draw what a
+   picture says faster** — the flow, the states, the screen, the before/after — following *Showing, not
+   only telling* below: a spec read on a screen by someone who did not write it is a spec that shows.
 5. **Phases.** One `mcp__castalie__feature_spec_add_phase(specId, title, objectiveMd, actionPlanMd,
    validationCriterionMd, estimateHours)` per phase — cut at natural seams (layers, page sets,
    independent modules), each a coherent unit an implementer can finish and verify. Store its observable
    completion criterion and case table in `validationCriterionMd`; no separate database structure.
-   Only `objectiveMd` shows on the sheet: the plan and the criterion are read by the implementer, never
-   by a person, so what a reviewer must see goes in the objective or the spec's `solution`.
+   Only `objectiveMd` shows on the sheet (a ```mermaid diagram renders there, an ```illustration does
+   not): the plan and the criterion are read by the implementer, never by a person, so what a reviewer
+   must see goes in the objective or the spec's `solution`.
    **Then say where the phases converge, in the first phase's plan.** A phase that reaches the default
    branch leaves the product in the state it left it, and on a chain where merging ships, that state is
    what customers get: when you would not show it, the phases land on an integration branch and one
@@ -102,6 +103,36 @@ synced by the CLI.
    re-reading their own spec reads what they meant to write, which is why the gaps survive to the
    implementer, who fills them alone and unattended.
 
+## Showing, not only telling
+
+What each field of a spec renders — read from what Castalie serves, not from what it stores:
+
+| Field | On the sheet | ```illustration | ```mermaid |
+|---|---|---|---|
+| `executive`, `problem`, `solution` (buffer) | yes | yes | yes |
+| phase `objectiveMd` | yes | no — shows as code | yes |
+| phase `actionPlanMd`, `validationCriterionMd` | **no — displayed nowhere** | — | — |
+| acceptance test `verificationMd` | yes | no — shows as code | yes |
+
+- **```mermaid** — flows, sequences, states, dependencies. Small, diffable, and it renders in every
+  field the sheet shows. Runs with `securityLevel: "strict"`: no click handler, no HTML label.
+- **```illustration title="…" height=480** (both optional) — one complete HTML page, run in an
+  isolated frame: a chart from real figures, a clickable mock-up, a before/after. Scripts and styles
+  from `cdnjs.cloudflare.com` and `cdn.jsdelivr.net` only, fonts also from Google Fonts; **no other
+  network** (no `fetch`, no remote image — embed the data, images as `data:` URIs), no cookie, no
+  storage. Fence with four backticks when the page holds a line of three. **256 KiB per
+  illustration, 8 and 1 MiB per sheet**; beyond that the whole write is refused
+  (`illustration_too_large`, `too_many_illustrations`) and nothing is saved. An instance can switch
+  illustrations off — open the sheet once after the first push.
+- **Raw HTML** is kept to text tags (`p`, lists, tables, `a`, `img`, headings…): **no `svg`,
+  `iframe`, `style` nor `script`** — anything else comes back as text. Draw with Mermaid or an
+  illustration instead.
+- **A screenshot** of the running product: attach it to the spec's thread with
+  `discussion_attachment_upload` (base64, 16 MiB at most), then
+  `![alt](/Product/FeatureSpec/DownloadAttachment/<spec_id>/<attachment_id>)` in any rendered field.
+
+The same table for briefs and tickets is in `${CLAUDE_PLUGIN_ROOT}/instructions/rich-content.md`.
+
 ## Confirmation
 
 Print the spec title, its phases, and a clickable Castalie link; point to `feature-implement <spec_id>` as
@@ -114,6 +145,7 @@ the next step.
 - **Check case completeness before handoff.** Each phase has concrete expected outcomes, suitable
   verification and existing tests considered; a green CI alone is never its completion criterion.
 - **Acceptance tests describe *how to check*, not code.** URLs, commands, queries.
+- **What a person must see lives in a displayed field.** Never file it only in the plan or the criterion.
 
 ## Hand back
 
