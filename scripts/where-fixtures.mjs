@@ -7,7 +7,7 @@
 // reworded, and no address or credential is carried — an answer names work, never a host.
 //
 //   back office : PascalCase on the feature verbs, snake_case on the strategy ones
-//   galy        : snake_case throughout, phases beside the spec rather than inside it
+//   castalie        : snake_case throughout, phases beside the spec rather than inside it
 
 /** Green Acres back office — `feature_spec_get { specId: 1109 }`. */
 export const backOfficeSpec = {
@@ -77,7 +77,7 @@ export const backOfficeObjective = {
 };
 
 /** Castalie — `feature_spec_get { id: 54 }`: phases beside the spec, everything snake_case. */
-export const galySpec = {
+export const castalieSpec = {
   success: true,
   spec: {
     id: 54,
@@ -96,7 +96,7 @@ export const galySpec = {
 };
 
 /** Castalie — `feature_brief_get { id: 61 }`: a brief that serves no objective. */
-export const galyBrief = {
+export const castalieBrief = {
   success: true,
   brief: {
     id: 61,
@@ -110,7 +110,7 @@ export const galyBrief = {
 };
 
 /** Castalie — `feature_spec_list { feature_brief_id: 61 }`: a brief's specs, listed apart. */
-export const galySpecList = {
+export const castalieSpecList = {
   success: true,
   specs: [
     { id: 54, feature_brief_id: 61, title: "Le panneau à droite du plein écran montre l'arbre stratégique", status: "InProgress", priority: "P2" },
@@ -118,15 +118,15 @@ export const galySpecList = {
 };
 
 /** Castalie — `strategy_get_objective_breadcrumb { objective_id: 8 }`: `breadcrumb`, not `chain`. */
-export const galyChain = {
+export const castalieChain = {
   success: true,
   breadcrumb: [
-    { id: 8, period_id: 20, parent_objective_id: null, title: "Recette du poste de developpement Galy", status: "active", computed_progress: 100 },
+    { id: 8, period_id: 20, parent_objective_id: null, title: "Recette du poste de developpement Castalie", status: "active", computed_progress: 100 },
   ],
 };
 
 /** Castalie — `strategy_navigate_children {}`: the objective nested under its row, with its key results. */
-export const galyChildren = {
+export const castalieChildren = {
   success: true,
   objectives: [
     {
@@ -137,7 +137,7 @@ export const galyChildren = {
       ],
     },
     {
-      objective: { id: 8, period_id: 20, title: "Recette du poste de developpement Galy", status: "active", computed_progress: 100 },
+      objective: { id: 8, period_id: 20, title: "Recette du poste de developpement Castalie", status: "active", computed_progress: 100 },
       parent_title: "",
       key_results: [
         { id: 8, objective_id: 8, title: "Etapes de recette franchies", metric_type: "number", unit: "etapes", start_value: 0, target_value: 6, current_value: 6, computed_progress: 100 },
@@ -151,7 +151,7 @@ export const galyChildren = {
  * the other spelling. What the tree builds from both must be the same tree, or the pane
  * draws one workspace and an empty frame for the other.
  */
-export const galyShapedSpec = {
+export const castalieShapedSpec = {
   success: true,
   spec: {
     id: 1109,
@@ -165,7 +165,7 @@ export const galyShapedSpec = {
   ],
 };
 
-export const galyShapedBrief = {
+export const castalieShapedBrief = {
   success: true,
   brief: {
     id: 135,
@@ -176,17 +176,17 @@ export const galyShapedBrief = {
   },
 };
 
-export const galyShapedSpecList = {
+export const castalieShapedSpecList = {
   success: true,
   specs: backOfficeBrief.brief.Specs.map((spec) => ({ id: spec.Id, title: spec.Title, status: spec.Status })),
 };
 
-export const galyShapedChain = {
+export const castalieShapedChain = {
   success: true,
   breadcrumb: backOfficeChain.chain.map((node) => ({ id: node.id, title: node.title, period_name: node.period_name })),
 };
 
-export const galyShapedObjective = {
+export const castalieShapedObjective = {
   success: true,
   objectives: [
     {

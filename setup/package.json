@@ -1,10 +1,10 @@
 {
-  "name": "galy-setup",
+  "name": "castalie-setup",
   "version": "1.0.0",
   "description": "One-command onboarding for the Castalie Agent Kit — installs the plugin, writes your local config, and connects your assistant. Castalie never sees your code.",
   "type": "module",
   "bin": {
-    "galy-setup": "./setup.mjs"
+    "castalie-setup": "./setup.mjs"
   },
   "engines": {
     "node": ">=18"

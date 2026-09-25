@@ -6,7 +6,7 @@
   "plugins": [
     {
       "name": "cs",
-      "source": "./galy",
+      "source": "./cs",
       "description": "Castalie project-management kit: strategy → briefs → specs → code, driven by your own agent. Skills answer to /cs:<skill>."
     }
   ],

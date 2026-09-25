@@ -17,23 +17,23 @@ import {
   backOfficeChain,
   backOfficeObjective,
   backOfficeSpec,
-  galyBrief,
-  galyChain,
-  galyChildren,
-  galyShapedBrief,
-  galyShapedChain,
-  galyShapedObjective,
-  galyShapedSpec,
-  galyShapedSpecList,
-  galySpec,
-  galySpecList,
+  castalieBrief,
+  castalieChain,
+  castalieChildren,
+  castalieShapedBrief,
+  castalieShapedChain,
+  castalieShapedObjective,
+  castalieShapedSpec,
+  castalieShapedSpecList,
+  castalieSpec,
+  castalieSpecList,
 } from "./where-fixtures.mjs";
 
-import { HORIZON_MS, MARKS, REFRESH_AFTER_WRITE_MS, TOO_LARGE_TEXT } from "../galy/hooks/where/names.mjs";
-import { heldOf, holdsSomething, joinPath, parentOf, workingCopyRootOf } from "../galy/hooks/where/work-file.mjs";
-import { payloadOf, readerOf, serverOf, serversOf } from "../galy/hooks/where/reader.mjs";
-import { buildModel, namesToForget, namesTouched } from "../galy/hooks/where/tree.mjs";
-import { burstOf, touchedBy, writeVerbOf } from "../galy/hooks/where/writes.mjs";
+import { HORIZON_MS, MARKS, REFRESH_AFTER_WRITE_MS, TOO_LARGE_TEXT } from "../cs/hooks/where/names.mjs";
+import { heldOf, holdsSomething, joinPath, parentOf, workingCopyRootOf } from "../cs/hooks/where/work-file.mjs";
+import { payloadOf, readerOf, serverOf, serversOf } from "../cs/hooks/where/reader.mjs";
+import { buildModel, namesToForget, namesTouched } from "../cs/hooks/where/tree.mjs";
+import { burstOf, touchedBy, writeVerbOf } from "../cs/hooks/where/writes.mjs";
 import {
   displayWidth,
   dockRows,
@@ -44,7 +44,7 @@ import {
   phaseLineText,
   plainOf,
   titleText,
-} from "../galy/hooks/where/render.mjs";
+} from "../cs/hooks/where/render.mjs";
 
 let failed = 0;
 function check(what, condition, detail) {
@@ -67,7 +67,7 @@ const WANTS = {
     strategy_navigate_children: "objectiveId",
     followup_check_list: "featureSpecId",
   },
-  galy: {
+  castalie: {
     feature_spec_get: "id",
     feature_brief_get: "id",
     feature_spec_list: "feature_brief_id",
@@ -176,12 +176,12 @@ const BACK_OFFICE = {
   strategy_get_objective_breadcrumb: backOfficeChain,
   strategy_get_objective: backOfficeObjective,
 };
-const GALY_SHAPED = {
-  feature_spec_get: galyShapedSpec,
-  feature_brief_get: galyShapedBrief,
-  feature_spec_list: galyShapedSpecList,
-  strategy_get_objective_breadcrumb: galyShapedChain,
-  strategy_navigate_children: galyShapedObjective,
+const CASTALIE_SHAPED = {
+  feature_spec_get: castalieShapedSpec,
+  feature_brief_get: castalieShapedBrief,
+  feature_spec_list: castalieShapedSpecList,
+  strategy_get_objective_breadcrumb: castalieShapedChain,
+  strategy_navigate_children: castalieShapedObjective,
 };
 
 const held1109 = { specs: [{ id: 1109, at: NOW - 60_000, server: "back-office" }], briefs: [] };
@@ -214,7 +214,7 @@ const held1109 = { specs: [{ id: 1109, at: NOW - 60_000, server: "back-office" }
   const roots = new Set(["C:\\VisualStudioOnline\\wt-10\\.git", "/home/dev/repo/.git"]);
   const exists = async (path) => roots.has(path);
   check("a worktree under Windows is found by its .git file",
-    (await workingCopyRootOf("C:\\VisualStudioOnline\\wt-10\\galy\\hooks", exists)) === "C:\\VisualStudioOnline\\wt-10");
+    (await workingCopyRootOf("C:\\VisualStudioOnline\\wt-10\\castalie\\hooks", exists)) === "C:\\VisualStudioOnline\\wt-10");
   check("and a checkout under a POSIX path too",
     (await workingCopyRootOf("/home/dev/repo/src/deep", exists)) === "/home/dev/repo");
   check("outside any repository the climb answers nothing",
@@ -284,10 +284,10 @@ const held1109 = { specs: [{ id: 1109, at: NOW - 60_000, server: "back-office" }
 let backOfficeRows;
 {
   const backOffice = workspace({ spelling: "contract", answers: BACK_OFFICE });
-  const galyStyle = workspace({ spelling: "galy", answers: GALY_SHAPED });
+  const castalieStyle = workspace({ spelling: "castalie", answers: CASTALIE_SHAPED });
 
   const one = await modelOf(backOffice, held1109);
-  const two = await modelOf(galyStyle, held1109);
+  const two = await modelOf(castalieStyle, held1109);
 
   backOfficeRows = plainOf(dockRows(one, { columns: 96 }));
   const otherRows = plainOf(dockRows(two, { columns: 96 }));
@@ -315,31 +315,31 @@ let backOfficeRows;
 
 // ── 5. A refused spelling is tried the other way, once (P2/T2b) ───────────
 {
-  const galyStyle = workspace({ spelling: "galy", answers: GALY_SHAPED });
-  await modelOf(galyStyle, held1109);
-  const specCalls = galyStyle.calls.filter((call) => call.tool === "feature_spec_get");
+  const castalieStyle = workspace({ spelling: "castalie", answers: CASTALIE_SHAPED });
+  await modelOf(castalieStyle, held1109);
+  const specCalls = castalieStyle.calls.filter((call) => call.tool === "feature_spec_get");
   check("the contract's spelling is tried first, then the workspace's",
     specCalls.length === 2 && "specId" in specCalls[0].args && "id" in specCalls[1].args,
     JSON.stringify(specCalls.map((call) => call.args)));
-  const briefCalls = galyStyle.calls.filter((call) => call.tool === "feature_brief_get");
+  const briefCalls = castalieStyle.calls.filter((call) => call.tool === "feature_brief_get");
   check("once a server has answered, the rest of the reads use its spelling",
     briefCalls.length === 1 && "id" in briefCalls[0].args, JSON.stringify(briefCalls.map((call) => call.args)));
-  check("and the spelling is kept for the next session", galyStyle.store.get("spelling/back-office") === "galy");
+  check("and the spelling is kept for the next session", castalieStyle.store.get("spelling/back-office") === "castalie");
 }
 
 // ── 6. A brief that serves no objective (P2/T3) ───────────────────────────
 {
-  const galyReal = workspace({
-    spelling: "galy",
+  const castalieReal = workspace({
+    spelling: "castalie",
     answers: {
-      feature_spec_get: galySpec,
-      feature_brief_get: galyBrief,
-      feature_spec_list: galySpecList,
-      strategy_get_objective_breadcrumb: galyChain,
-      strategy_navigate_children: galyChildren,
+      feature_spec_get: castalieSpec,
+      feature_brief_get: castalieBrief,
+      feature_spec_list: castalieSpecList,
+      strategy_get_objective_breadcrumb: castalieChain,
+      strategy_navigate_children: castalieChildren,
     },
   });
-  const model = await modelOf(galyReal, { specs: [{ id: 54, at: NOW, server: "castalie" }], briefs: [] });
+  const model = await modelOf(castalieReal, { specs: [{ id: 54, at: NOW, server: "castalie" }], briefs: [] });
   const rows = plainOf(dockRows(model, { columns: 96 }));
   check("a brief outside the strategy says so rather than drawing a chain",
     rows.includes("brief hors stratégie"), rows.join("\n"));
@@ -438,8 +438,8 @@ let backOfficeRows;
     phases: [{ id: 1, title: "Le socle", status: "Done" }],
   });
   const together = workspace({
-    spelling: "galy",
-    answers: { feature_spec_get: specOf, feature_brief_get: galyBrief, feature_spec_list: galySpecList },
+    spelling: "castalie",
+    answers: { feature_spec_get: specOf, feature_brief_get: castalieBrief, feature_spec_list: castalieSpecList },
   });
   const held = {
     specs: [
@@ -464,7 +464,7 @@ let backOfficeRows;
 
   // Two briefs remain two subtrees, newest first.
   const apart = workspace({
-    spelling: "galy",
+    spelling: "castalie",
     answers: {
       feature_spec_get: (args) => ({
         success: true,
@@ -633,13 +633,13 @@ let backOfficeRows;
   // own arguments name, with the list of its specs, and the refresh that follows reads
   // them again; the spec in hand, which the write never touched, is not read again.
   const answers = {
-    feature_spec_get: galySpec,
-    feature_brief_get: galyBrief,
-    feature_spec_list: galySpecList,
-    strategy_get_objective_breadcrumb: galyChain,
-    strategy_navigate_children: galyChildren,
+    feature_spec_get: castalieSpec,
+    feature_brief_get: castalieBrief,
+    feature_spec_list: castalieSpecList,
+    strategy_get_objective_breadcrumb: castalieChain,
+    strategy_navigate_children: castalieChildren,
   };
-  const bench = workspace({ spelling: "galy", answers });
+  const bench = workspace({ spelling: "castalie", answers });
   const held = { specs: [{ id: 54, at: NOW, server: "castalie" }], briefs: [] };
   const clock = clockOf();
   const session = sessionOf(bench, held, clock);
@@ -649,7 +649,7 @@ let backOfficeRows;
   check("a brief attached to nothing reads as outside the strategy", before.includes("brief hors stratégie"));
 
   // The write itself: the brief now serves objective 8.
-  answers.feature_brief_get = { ...galyBrief, brief: { ...galyBrief.brief, objective_id: 8 } };
+  answers.feature_brief_get = { ...castalieBrief, brief: { ...castalieBrief.brief, objective_id: 8 } };
 
   const stale = plainOf(dockRows(await modelOf(bench, held), { columns: 96 }));
   check("a drawing that forgets nothing keeps the answer from before the write",
@@ -680,8 +680,8 @@ let backOfficeRows;
 
 // ── 20. An address the engine would refuse is drawn as text (P3/T1) ───────
 {
-  const GALY = "https://benoit.castalie.app/specs/56";
-  check("an https address is kept as the engine spells it", hrefOf(GALY) === GALY, String(hrefOf(GALY)));
+  const CASTALIE = "https://benoit.castalie.app/specs/56";
+  check("an https address is kept as the engine spells it", hrefOf(CASTALIE) === CASTALIE, String(hrefOf(CASTALIE)));
   check("and so is the back office's",
     hrefOf("https://back.green-acres.com/fr/Product/FeatureSpec/Detail/1109") ===
       "https://back.green-acres.com/fr/Product/FeatureSpec/Detail/1109");
@@ -929,7 +929,7 @@ let backOfficeRows;
 
   // Two trees, two leaves: a key result drawn under one of them costs that one alone.
   const twoLeaves = workspace({
-    spelling: "galy",
+    spelling: "castalie",
     answers: {
       feature_spec_get: (args) => ({
         success: true,
@@ -948,8 +948,8 @@ let backOfficeRows;
       strategy_get_objective: (args) => ({
         success: true,
         objective: {
-          ...galyChildren.objectives.find((row) => row.objective.id === args.id).objective,
-          key_results: galyChildren.objectives.find((row) => row.objective.id === args.id).key_results,
+          ...castalieChildren.objectives.find((row) => row.objective.id === args.id).objective,
+          key_results: castalieChildren.objectives.find((row) => row.objective.id === args.id).key_results,
         },
       }),
     },
@@ -1034,18 +1034,18 @@ let backOfficeRows;
   // behind an empty one — and none struck through, since a struck line is a line nobody
   // reads; and a title is drawn whole, wrapping under its own first character past a lead
   // the view draws once. The inline summary keeps the compact form, within its eight rows.
-  const galyReal = workspace({
-    spelling: "galy",
+  const castalieReal = workspace({
+    spelling: "castalie",
     answers: {
       feature_spec_get: {
-        ...galySpec,
-        phases: galySpec.phases.map((phase, index) => ({ ...phase, status: ["Done", "InProgress", "NotStarted"][index] })),
+        ...castalieSpec,
+        phases: castalieSpec.phases.map((phase, index) => ({ ...phase, status: ["Done", "InProgress", "NotStarted"][index] })),
       },
-      feature_brief_get: galyBrief,
-      feature_spec_list: galySpecList,
+      feature_brief_get: castalieBrief,
+      feature_spec_list: castalieSpecList,
     },
   });
-  const model = await modelOf(galyReal, { specs: [{ id: 54, at: NOW, server: "castalie" }], briefs: [] });
+  const model = await modelOf(castalieReal, { specs: [{ id: 54, at: NOW, server: "castalie" }], briefs: [] });
   const rows = dockRows(model, { columns: 96 });
   const specRow = rows.find((row) => row.key.endsWith("-spec-54"));
   const phaseRows = rows.filter((row) => row.key.includes("-spec-54-phase-"));
@@ -1056,7 +1056,7 @@ let backOfficeRows;
   check("none is struck through, the done one included",
     phaseRows.every((row) => row.segments.every((segment) => segment.strikethrough === undefined)));
   check("each is named whole", phaseRows.map((row) => row.segments[0].text).join("|") ===
-    galySpec.phases.map((phase) => phase.title).join("|"), phaseRows.map((row) => row.segments[0].text).join("|"));
+    castalieSpec.phases.map((phase) => phase.title).join("|"), phaseRows.map((row) => row.segments[0].text).join("|"));
   check("and drawn one level under its spec",
     phaseRows.every((row) => row.lead.indent === specRow.lead.indent + 4), JSON.stringify(phaseRows.map((row) => row.lead)));
   check("the count of phases done stays on the spec's own row",
@@ -1067,8 +1067,8 @@ let backOfficeRows;
       phaseRows[0].lead.bold === undefined && phaseRows[2].segments[0].bold === undefined);
   const briefRow = boxedRows(rows)[0];
   check("the brief is framed whole at the margin, and the spec is named whole on a row that wraps",
-    briefRow.lead === undefined && briefRow.segments[0].text === galyBrief.brief.title &&
-      specRow.lead.indent === 2 && specRow.segments[0].text === galySpec.spec.title);
+    briefRow.lead === undefined && briefRow.segments[0].text === castalieBrief.brief.title &&
+      specRow.lead.indent === 2 && specRow.segments[0].text === castalieSpec.spec.title);
 
   // Inline, above the prompt, the budget is eight rows: the phases stay one compact line.
   const inline = inlineRows(model, { columns: 80 });
@@ -1106,8 +1106,8 @@ let backOfficeRows;
     phases: ["Done", "Done", "InProgress", "NotStarted", "NotStarted"].map((status, index) => ({ id: id * 10 + index, title: `Étape ${index + 1}`, status })),
   });
   const twoSpecs = workspace({
-    spelling: "galy",
-    answers: { feature_spec_get: (args) => five(args.id), feature_brief_get: galyBrief, feature_spec_list: galySpecList },
+    spelling: "castalie",
+    answers: { feature_spec_get: (args) => five(args.id), feature_brief_get: castalieBrief, feature_spec_list: castalieSpecList },
   });
   const both = await modelOf(twoSpecs, {
     specs: [{ id: 56, at: NOW - 1000, server: "castalie" }, { id: 54, at: NOW - 2000, server: "castalie" }],
@@ -1149,7 +1149,7 @@ let backOfficeRows;
   // Outside the strategy, the note stands where the chain would, and the brief still parts
   // from it.
   const outside = await modelOf(
-    workspace({ spelling: "galy", answers: { feature_spec_get: galySpec, feature_brief_get: galyBrief, feature_spec_list: galySpecList } }),
+    workspace({ spelling: "castalie", answers: { feature_spec_get: castalieSpec, feature_brief_get: castalieBrief, feature_spec_list: castalieSpecList } }),
     { specs: [{ id: 54, at: NOW, server: "castalie" }], briefs: [] },
   );
   const outsideRows = dockRows(outside, { columns: 96 });
@@ -1160,15 +1160,15 @@ let backOfficeRows;
 
   // Two held briefs: each parts from its own chain, each in its own frame.
   const twoBriefs = workspace({
-    spelling: "galy",
+    spelling: "castalie",
     answers: {
       feature_brief_get: (args) => ({
         success: true,
         brief: { id: args.id, title: `Brief ${args.id}`, status: "Ready", objective_id: 8 },
       }),
       feature_spec_list: { success: true, specs: [] },
-      strategy_get_objective_breadcrumb: galyChain,
-      strategy_navigate_children: galyChildren,
+      strategy_get_objective_breadcrumb: castalieChain,
+      strategy_navigate_children: castalieChildren,
     },
   });
   const pair = await modelOf(twoBriefs, { specs: [], briefs: [{ id: 62, at: NOW - 1000, server: "castalie" }, { id: 61, at: NOW - 2000, server: "castalie" }] });
@@ -1276,12 +1276,12 @@ let backOfficeRows;
 
   // Castalie: the spec answers no such field, so the checks are read on their own verb, once
   // per spec in hand, in Castalie's spelling.
-  const galyChecks = workspace({
-    spelling: "galy",
+  const castalieChecks = workspace({
+    spelling: "castalie",
     answers: {
-      feature_spec_get: galySpec,
-      feature_brief_get: galyBrief,
-      feature_spec_list: galySpecList,
+      feature_spec_get: castalieSpec,
+      feature_brief_get: castalieBrief,
+      feature_spec_list: castalieSpecList,
       followup_check_list: (args) => ({
         success: true,
         followup_checks: args.feature_spec_id === 54
@@ -1290,22 +1290,22 @@ let backOfficeRows;
       }),
     },
   });
-  const galyModel = await modelOf(galyChecks, { specs: [{ id: 54, at: NOW, server: "castalie" }], briefs: [] });
-  const listCalls = galyChecks.calls.filter((call) => call.tool === "followup_check_list");
+  const castalieModel = await modelOf(castalieChecks, { specs: [{ id: 54, at: NOW, server: "castalie" }], briefs: [] });
+  const listCalls = castalieChecks.calls.filter((call) => call.tool === "followup_check_list");
   check("a spec answering no checks has them read on their own verb, once, in the workspace's spelling",
     listCalls.length === 1 && listCalls[0].args.feature_spec_id === 54, JSON.stringify(listCalls));
-  const galyRows = dockRows(galyModel, { columns: 96 });
-  const galyCheckRows = galyRows.filter((row) => row.key.includes("-spec-54-followup-"));
+  const castalieRows = dockRows(castalieModel, { columns: 96 });
+  const castalieCheckRows = castalieRows.filter((row) => row.key.includes("-spec-54-followup-"));
   check("a check Castalie answers is drawn without a mark, since no run is known",
-    plainOf(galyCheckRows).join("|") === "      ↻ Le panneau survit à la mise à jour suivante de Claude Code · J+7" &&
-      galyRows.some((row) => row.key.endsWith("-spec-54-followups")), plainOf(galyRows).join("\n"));
-  await modelOf(galyChecks, { specs: [{ id: 54, at: NOW, server: "castalie" }], briefs: [] });
+    plainOf(castalieCheckRows).join("|") === "      ↻ Le panneau survit à la mise à jour suivante de Claude Code · J+7" &&
+      castalieRows.some((row) => row.key.endsWith("-spec-54-followups")), plainOf(castalieRows).join("\n"));
+  await modelOf(castalieChecks, { specs: [{ id: 54, at: NOW, server: "castalie" }], briefs: [] });
   check("and the second draw reads them from the cache",
-    galyChecks.calls.filter((call) => call.tool === "followup_check_list").length === 1);
+    castalieChecks.calls.filter((call) => call.tool === "followup_check_list").length === 1);
 
   // A spec nobody scheduled a check for draws no heading; and where the workspace serves
   // no list verb and the spec carries none, nothing is asked and nothing is drawn.
-  const none = await modelOf(galyChecks, { specs: [{ id: 56, at: NOW, server: "castalie" }], briefs: [] });
+  const none = await modelOf(castalieChecks, { specs: [{ id: 56, at: NOW, server: "castalie" }], briefs: [] });
   const noneRows = dockRows(none, { columns: 96 });
   check("no check, no heading and no row",
     !noneRows.some((row) => row.key.includes("-followup")), plainOf(noneRows).join("\n"));

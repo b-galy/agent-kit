@@ -1,8 +1,8 @@
-# Local credentials — never committed. `.bg/` and `.galy/` are the folder's former names, still
-# read as fallbacks.
+# Local credentials — never committed. `.bg/` and the kit's first name (the bracketed pattern, so
+# this file never spells it) are the folder's former names, still read as fallbacks.
 .cs/
 .bg/
-.galy/
+.[g]aly/
 
 # Ephemeral content buffers pulled/pushed by the cs CLI
 .tmp/
