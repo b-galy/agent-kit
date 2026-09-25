@@ -7,7 +7,8 @@ description: End-of-run retrospective — reflect on the durable learnings from 
 
 After a delivery, reflect on what would make the *next* run better and post it as a suggestion in Castalie
 for a human to review later. It **decides nothing, edits nothing, asks nothing** — it only proposes. Its
-failure must never fail the run that called it.
+failure must never fail the run that called it. The one question it may ask is the line before a kit
+improvement leaves the workspace, and only with a person there (step 3).
 
 ## When it fires
 
@@ -32,12 +33,19 @@ Ignore anything specific to this one task — a retro captures the *rule*, not t
    target_file="<path where the rule should live>", title, summary)`.
    The `summary` is the lesson **plus** the rule to encode — a reviewer should be able to act on it
    without more context. `target_file` is a pointer, never the file's content.
-3. Report in one line how many suggestions you posted; do nothing else.
+3. A learning that targets **the kit itself** — a file under `${CLAUDE_PLUGIN_ROOT}` — goes to the
+   team that publishes the kit, but only with a person there: `cs on-behalf` says whether the session
+   is attended (`${CLAUDE_PLUGIN_ROOT}/instructions/on-whose-behalf.md`). Ask in one line (the kit
+   file as `cs/<path>`, the lesson in one sentence); on yes call
+   `mcp__castalie__kit_feedback_send(target_file, title, summary, proposed_diff, kit_version)` instead
+   of `retro_suggestion_add`, the version as `cs version` prints it. Unattended, on no, or on
+   `kit_feedback_disabled`, it stays local with `retro_suggestion_add`.
+4. Report in one line how many suggestions you posted and how many were sent; do nothing else.
 
 ## Discipline
 
 - **Never blocks.** On any error, log it and return — the calling skill must not fail because retro did.
 - **Targets config, never product code.** A retro suggestion improves how the assistant works (skills,
   your `CLAUDE.md`, docs) — it never proposes a change to your application's source, and it never sends
-  code to Castalie.
+  code to Castalie. What `kit_feedback_send` carries names kit paths and kit wording only.
 - **The rule survives, the incident does not.** Write the general rule, drop the ticket/PR particulars.

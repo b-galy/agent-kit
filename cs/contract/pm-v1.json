@@ -1,6 +1,6 @@
 {
   "contract": "castalie-pm-v1",
-  "description": "The project-management verbs the Castalie MCP server exposes to your agent. Strictly outward: your assistant reads strategy, briefs and specs and writes back statuses, plans and follow-ups. No verb accepts source code, a diff, or file content — Castalie never sees your repository. And no verb sends anything out of your tenant: everything written here stays in your own instance. Support is blind by construction — nothing in this contract can change that, and no skill asks a user to.",
+  "description": "The project-management verbs the Castalie MCP server exposes to your agent. Strictly outward: your assistant reads strategy, briefs and specs and writes back statuses, plans and follow-ups. No verb accepts source code, a diff, or file content — Castalie never sees your repository. And no verb sends anything out of your tenant but one: kit_feedback_send, which sends to the team that publishes the kit, on a person's yes, an improvement to the kit itself — the kit file, the diagnosis, the change proposed to the kit, the kit version. Never your code, your files or your data. Everything else written here stays in your own instance. Support is blind by construction — nothing in this contract can change that, and no skill asks a user to.",
   "transport": {
     "type": "http",
     "url": "https://<your-workspace>.castalie.app/mcp (every workspace answers on its own host; registered per project by the setup command, never hardcoded)",
@@ -2113,7 +2113,7 @@
     {
       "name": "onboarding_retro_record",
       "kind": "write",
-      "description": "Record the retrospective of an onboarding pass - what worked, what rubbed, the open questions, the suggestions - about the PROCESS, not about the team's work. It is written to the client's own tenant and stays there; no policy guards it, because writing in your own workspace asks nobody's permission. The four fields carry process feedback only: never code, file excerpts, paths, host names, command output, secrets, customer or product names, nor any recorded observation. The server redacts as a net and says so; a redaction that fires means something was written that should not have been. STAYS IN YOUR WORKSPACE, like every verb in this contract. Whether the instance forwards anything to Castalie is an instance setting the client's administrator holds, disabled by default - no verb here decides it, and no user is asked.",
+      "description": "Record the retrospective of an onboarding pass - what worked, what rubbed, the open questions, the suggestions - about the PROCESS, not about the team's work. It is written to the client's own tenant and stays there; no policy guards it, because writing in your own workspace asks nobody's permission. The four fields carry process feedback only: never code, file excerpts, paths, host names, command output, secrets, customer or product names, nor any recorded observation. The server redacts as a net and says so; a redaction that fires means something was written that should not have been. STAYS IN YOUR WORKSPACE, like every verb in this contract but kit_feedback_send. Whether the instance forwards anything to Castalie is an instance setting the client's administrator holds, disabled by default - no verb here decides it, and no user is asked.",
       "params": [
         {
           "name": "run_id",
@@ -2155,7 +2155,7 @@
     {
       "name": "retro_suggestion_add",
       "kind": "write",
-      "description": "Post an end-of-run retrospective suggestion (status pending) — a durable learning about how the assistant should work. Targets the plugin's own skills or your CLAUDE.md, never your product code. The summary is the lesson + the rule to encode. STAYS IN YOUR WORKSPACE, like every verb here. Pick between the two retrospective verbs by SUBJECT, not by destination: a learning about YOUR work belongs here; feedback about the ONBOARDING PROCESS belongs to onboarding_retro_record. Neither leaves your tenant.",
+      "description": "Post an end-of-run retrospective suggestion (status pending) — a durable learning about how the assistant should work. Targets the plugin's own skills or your CLAUDE.md, never your product code. The summary is the lesson + the rule to encode. STAYS IN YOUR WORKSPACE. An improvement to the kit ITSELF goes to kit_feedback_send instead, after a person's yes. Pick between the two retrospective verbs by SUBJECT, not by destination: a learning about YOUR work belongs here; feedback about the ONBOARDING PROCESS belongs to onboarding_retro_record. Neither leaves your tenant.",
       "params": [
         {
           "name": "source",
@@ -2191,6 +2191,74 @@
         "success": "bool",
         "id": "int",
         "status": "string"
+      }
+    },
+    {
+      "name": "kit_feedback_send",
+      "kind": "write",
+      "description": "Send an improvement to the Castalie kit ITSELF — a skill, instruction, agent, hook or contract under cs/ — to the team that publishes the kit. The ONE verb that leaves your tenant, and only after a person answered yes to a line showing what leaves: the kit file, the diagnosis, the change proposed to the kit, the kit version. Never your code, your files or your data: proposed_diff may only name paths under cs/ (diff_outside_kit) and is capped at 64 KiB. Keeps a local copy (a retro suggestion, target_kind kit) and returns it with upstream_id once delivered. kit_feedback_disabled: this instance sends nothing, keep the suggestion local with retro_suggestion_add. kit_feedback_send_failed: the copy is kept, call again with its id to resend it without a duplicate. Owner or member only.",
+      "params": [
+        {
+          "name": "target_file",
+          "type": "string",
+          "required": false,
+          "description": "Path of the kit file concerned, under cs/. Required unless id is given."
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "required": false,
+          "description": "One-line diagnosis. Required unless id is given."
+        },
+        {
+          "name": "summary",
+          "type": "string",
+          "required": false,
+          "description": "What went wrong and the rule the kit should encode. Required unless id is given."
+        },
+        {
+          "name": "proposed_diff",
+          "type": "string",
+          "required": false,
+          "description": "The change proposed to the kit — paths under cs/ only, never the workspace's files."
+        },
+        {
+          "name": "kit_version",
+          "type": "string",
+          "required": false,
+          "description": "The running kit version, as `cs version` prints it. Required unless id is given."
+        },
+        {
+          "name": "id",
+          "type": "int",
+          "required": false,
+          "description": "Resend a local copy that did not reach the publisher."
+        }
+      ],
+      "returns": {
+        "success": "bool",
+        "retro_suggestion": "object (id, status, delivery sent|send_failed, upstream_id)",
+        "url": "string",
+        "error": "string"
+      }
+    },
+    {
+      "name": "kit_feedback_status",
+      "kind": "write",
+      "description": "Read back the publisher's decision on a kit improvement sent with kit_feedback_send, and update the local copy: status (pending, accepted, rejected or applied), decision_reason, and pr_url once applied. Owner or member only.",
+      "params": [
+        {
+          "name": "id",
+          "type": "int",
+          "required": true,
+          "description": "The local copy's id, as kit_feedback_send returned it."
+        }
+      ],
+      "returns": {
+        "success": "bool",
+        "retro_suggestion": "object (status, decision_reason, pr_url)",
+        "url": "string",
+        "error": "string"
       }
     },
     {

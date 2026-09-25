@@ -34,6 +34,7 @@
 //   cs content pull <type> <id>        # type = feature-brief | feature-spec | bug
 //   cs content push <type> <id>
 //   cs on-behalf                       # attended or not, and the workspace's robot account
+//   cs version                         # the running kit version
 //   cs codex                           # project this kit into the layouts Codex reads
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
@@ -211,6 +212,7 @@ const HELP = `cs — Castalie project-management CLI
   cs content pull <type> <id>       # type = feature-brief | feature-spec | bug
   cs content push <type> <id>
   cs on-behalf                      # unattended or not, and the workspace's robot account
+  cs version                        # the version of the kit that is running
   cs codex [--verify|--check]       # project this kit's skills, instructions and agents into
                                     #   .agents/ and .codex/ here, for a Codex session
   cs bug-evaluation help              # local isolated bug-evaluation runner
@@ -241,6 +243,9 @@ async function main() {
     case "spec": return cmdSpec(args);
     case "content": return cmdContent(args);
     case "on-behalf": return cmdOnBehalf();
+    // What `kit_feedback_send` reports as `kit_version`: read from the manifest beside this file,
+    // so a Claude and a Codex session name the same number without knowing where the plugin sits.
+    case "version": return console.log(installedVersion());
     case undefined:
     case "-h":
     case "--help":
