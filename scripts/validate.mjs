@@ -309,6 +309,36 @@ for (const file of walk(ROOT)) {
   }
 }
 
+// ------------------------------------------------- 6b. the legacy markers stay readable
+//
+// No code reads `<!-- castalie:instructions -->`: a skill's prose tells the agent to, and nothing
+// else. So the only thing that keeps a customer's pre-1.17.0 block alive is that sentence. Each
+// skill that reads the markers must say, on its own, how the legacy prefix is formed, and that
+// sentence must still produce the name customers' files carry: a fixture marker is built from it
+// and has to match the one those files hold.
+const SPELLED = /`(\w+)` followed by `(\w+)`, one word/;
+const LEGACY_FIXTURE = `<!-- ${FIRST}:instructions bug-fix --> \`docs/x.md\``;
+const markerFrom = (prefix) => new RegExp(`<!-- ${prefix}:instructions ([a-z0-9 -]+?) -->`);
+const hostInstructions = join(ROOT, "cs", "instructions", "host-instructions.md");
+for (const file of [hostInstructions, ...walk(join(ROOT, "cs", "skills")).filter((f) => f.endsWith("SKILL.md"))]) {
+  const text = readFileSync(file, "utf8");
+  if (file !== hostInstructions && !/castalie:(instructions|begin)/.test(text)) continue;
+  const where = relative(ROOT, file);
+  const spelled = file === hostInstructions
+    ? /`(\w+)` followed by `(\w+)`, joined into one word/.exec(text)
+    : SPELLED.exec(text);
+  if (!spelled) {
+    fail(where, "reads the `castalie:` markers but no longer says how the legacy prefix is formed (`` `g` followed by `aly`, one word ``). A customer's block written before 1.17.0 would be ignored without a word.");
+    continue;
+  }
+  if (!markerFrom(spelled[1] + spelled[2]).test(LEGACY_FIXTURE)) {
+    fail(where, "spells a legacy prefix that does not match the markers customers' files carry.");
+  }
+  if (file !== hostInstructions && !text.includes("host-instructions.md")) {
+    fail(where, "reads the legacy markers without pointing at `host-instructions.md`, where the rule is defined.");
+  }
+}
+
 // ------------------------------------------------- 5b. the alias in a PATH, not only in a file
 //
 // A mock is addressed by the name of its folder: `evals/<case>/mocks/<mcp server>/<tool>.md` is
