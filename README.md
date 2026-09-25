@@ -362,10 +362,17 @@ The robot can also live in `.cs/config.json` as `robot_user_id` / `robot_email`.
 prints what a session sees. The rule, rung by rung, is in `cs/instructions/on-whose-behalf.md`.
 Without them, nothing changes: an attended session files the work under the person at the keyboard.
 
-### Nothing leaves your instance
+### Nothing leaves your instance, but a kit fix you say yes to
 
-No verb in this kit sends anything out of your tenant. **Support is blind by construction**, and
-nothing in the contract can change that.
+No verb in this kit sends anything out of your tenant but one. **Support is blind by construction**,
+and nothing in the contract can change that.
+
+The one is `kit_feedback_send`. When `analyse` or `retro` finds that the cause is in the kit itself,
+it shows you in one line what would leave (the kit file, the diagnosis, the change proposed to the
+kit, the kit version) and sends it to the team that publishes the kit only if you answer yes. Never
+your code, your files or your data: the server refuses a change that names a path outside the kit.
+It is listed on your instance's "Where does my data go" page, where your administrator can switch it
+off.
 
 The first pass finishes by **writing** a retrospective — what worked, what was awkward, the
 questions it could not answer, your suggestions — about the onboarding process itself. It is

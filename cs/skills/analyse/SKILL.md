@@ -20,8 +20,9 @@ guess.
 
 ## What to produce
 
-A single reply, four short sections. No tool calls beyond reading files to ground the answer. No action
-plan for the original task, no offer to continue, no apology.
+A single reply, four short sections. No tool calls beyond reading files to ground the answer — and,
+once a person said yes, the one send of step 5. No action plan for the original task, no offer to
+continue, no apology.
 
 ### 1. What actually happened
 
@@ -55,8 +56,9 @@ The deliverable. Concrete diffs the user can approve or reject. Targets, in orde
 1. **A plugin skill** (`skills/**`) — if the behavior is skill-specific.
 2. **A plugin instruction** (`instructions/*.md`) — a cross-skill convention.
 
-Both live in the plugin's own repository — edit and push there. `${CLAUDE_PLUGIN_ROOT}` is a build
-output: a fix written there lasts one workstation, until the next update.
+Both live in the kit, which you do not edit: `${CLAUDE_PLUGIN_ROOT}` is a build output, and a fix
+written there lasts one workstation, until the next update. A kit edit is sent to the team that
+publishes the kit — step 5.
 
 3. **The client's `CLAUDE.md`** — last resort, cross-cutting rules only.
 
@@ -76,6 +78,25 @@ about the incident.
 If no edit is warranted, say so ("a judgment call the current rules already cover; a single miss, not a
 pattern") — don't invent a rule to look productive. But an actual error against an existing rule always
 needs a fix, never "none".
+
+### 5. A kit edit goes to the team that publishes the kit
+
+Only when the edit targets the kit itself — a skill, an instruction, an agent, a hook or the
+contract, a file under `${CLAUDE_PLUGIN_ROOT}`. A cause in the client's `CLAUDE.md` or their own code
+proposes nothing here.
+
+End the reply by asking, in one line, whether to send it: the kit file as `cs/<path under the plugin
+root>`, the diagnosis in one sentence, the size of the diff. That line is everything that leaves: the
+diff and the summary name kit paths and kit wording only — never a file, a path, a name or a value
+from the client's repository.
+
+- **Yes** → `mcp__castalie__kit_feedback_send(target_file, title, summary, proposed_diff,
+  kit_version)`, the version as `cs version` prints it. Give back its `url`. This call is the answer
+  to the question, not a resumption of the original task.
+- **No** → nothing is sent, and nothing else is said about it.
+- **`kit_feedback_disabled`** → one line: this workspace does not send to Castalie; the edit is kept
+  here with `retro_suggestion_add`.
+- **`kit_feedback_send_failed`** → the copy is kept; the same verb with its `id` sends it again.
 
 ## Anti-patterns
 
